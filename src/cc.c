@@ -1,5 +1,8 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 void print_usage()
@@ -74,6 +77,18 @@ int main(int argc, char **argv)
 	}
 
 	for (int i = optind; i < argc; i++) {
+		struct stat sb;
+
+		if (stat(argv[i], &sb) == -1) {
+			fprintf(stderr, "%s: error: %s: input file unused: %s\n", TARGET, argv[i], strerror(errno));
+			continue;
+		}
+
+		if ((sb.st_mode & S_IFMT) == S_IFDIR) {
+			fprintf(stderr, "%s: error: %s: input file unused: %s\n", TARGET, argv[i], strerror(EISDIR));
+			continue;
+		}
+
 		printf("[FILE]: %s\n", argv[i]);
 	}
 
