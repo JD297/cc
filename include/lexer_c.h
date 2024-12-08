@@ -201,7 +201,7 @@ typedef struct Token_C {
  * RETURN VALUE
  *	On success returns a pointer to the created Token_C. On error, the value TOKEN_CREATION_FAILED (that is, (void *) -1) is returned, and errno is set to indicate the error.
  */
-extern void *lexer_c_create_token(TokenType_C type, const char* value);
+extern void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len);
 
 /**
  * Returns the string representation of a TokenType_C.
