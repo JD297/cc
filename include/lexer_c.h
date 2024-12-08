@@ -1,4 +1,6 @@
 #include <stddef.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #ifndef JD297_CC_LEXER_C_H
 #define JD297_CC_LEXER_C_H
@@ -227,25 +229,30 @@ extern int lexer_c_token_type_is_in_expected_token_types(TokenType_C type, size_
  *
  *   MEMBERS
  *	pathname  : is set to the input file
+ *	sb        : holds stats about input file like st_size
  *	buf       : contains the source code the input file
  *	pbuf      : is a pointer to the current position
  *	tokens    : is a list of pointers to Token_C's
- *	num_tokens: is set to the current number of elements in tokens
+ *	token_len : is set to the current size of possible elements in tokens
+ *	tokens_num: is set to the current number of elements in tokens
  *	error     : is set to the latest error message in the lexing process
  */
 typedef struct Lexer_C {
 	char* pathname;
+	struct stat sb;
 
 	char* buf;
 	char* pbuf;
 
 	Token_C **tokens;
-	size_t num_tokens;
+	size_t tokens_len;
+	size_t tokens_num;
 
 	char* error;
 } Lexer_C;
 
 #define LEXER_CREATION_FAILED (void *) -1
+#define LEXER_CREATION_TOKENS_LEN sysconf(_SC_PAGESIZE) / sizeof(Token_C *)
 
 /**
  * Create a Lexer_C structure from an input file (pathname).

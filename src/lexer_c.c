@@ -1,5 +1,6 @@
 #include "lexer_c.h"
 
+#include <fcntl.h>
 #include <sys/mman.h>
 
 void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len)
@@ -27,7 +28,47 @@ int lexer_c_token_type_is_in_expected_token_types(TokenType_C type, size_t num_t
 
 void *lexer_c_create_lexer(char* pathname)
 {
-	return LEXER_CREATION_FAILED;
+	Lexer_C *lexer = (Lexer_C *)mmap(NULL, sizeof(Lexer_C), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+	if (lexer == MAP_FAILED) {
+		return LEXER_CREATION_FAILED;
+	}
+
+	lexer->pathname = pathname;
+
+	if (stat(lexer->pathname, &lexer->sb) == -1) {
+		return LEXER_CREATION_FAILED;
+	}
+
+	int fd;
+
+	if ((fd = open(lexer->pathname, O_RDONLY)) == -1) {
+		return LEXER_CREATION_FAILED;
+	}
+
+	lexer->buf = (char *)mmap(NULL, lexer->sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+	if (lexer->buf == MAP_FAILED) {
+		return LEXER_CREATION_FAILED;
+	}
+
+	if (close(fd) == -1) {
+		return LEXER_CREATION_FAILED;
+	}
+
+	lexer->pbuf = lexer->buf;
+
+	lexer->tokens_len = LEXER_CREATION_TOKENS_LEN;
+	lexer->tokens_num = 0;
+	lexer->tokens = (Token_C **)mmap(NULL, lexer->tokens_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+	if (lexer->tokens == MAP_FAILED) {
+		return LEXER_CREATION_FAILED;
+	}
+
+	lexer->error = NULL;
+
+	return lexer;
 }
 
 int lexer_c_push_back_token(Lexer_C *lexer, Token_C *token)
