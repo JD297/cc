@@ -7,8 +7,13 @@ TARGETDIR	= bin
 BUILDDIR	= build
 SRCDIR		= src
 SRCINCLUDEDIR	= include
-SRC_FILES	= $(wildcard $(SRCDIR)/*.c)
-OBJ_FILES	= $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRC_FILES))
+TESTDIR		= tests
+
+SRCFILEEXT	= c
+SRCFILES	= $(wildcard $(SRCDIR)/*.$(SRCFILEEXT))
+OBJFILEEXT	= o
+OBJFILES	= $(patsubst $(SRCDIR)/%.$(SRCFILEEXT),$(BUILDDIR)/%.$(OBJFILEEXT),$(SRCFILES))
+
 
 CC		= gcc
 CCLIBS		= -static
@@ -16,17 +21,22 @@ CCFLAGS		= -Wall -Wextra -Wpedantic -g
 CCINCLUDE	= -I $(SRCINCLUDEDIR)
 CCFLAGSPROG	= -DTARGET=\"$(TARGET)\"
 
-$(TARGET): $(OBJ_FILES)
-	$(CC) $(CCFLAGS) $(CCINCLUDE) $(OBJ_FILES) -o $(TARGETDIR)/$(TARGET) $(CCLIBS)
+$(TARGET): $(OBJFILES)
+	$(CC) $(CCFLAGS) $(CCINCLUDE) $(OBJFILES) -o $(TARGETDIR)/$(TARGET) $(CCLIBS)
 
-$(BUILDDIR)/%.o: $(SRCDIR)/%.c
+$(BUILDDIR)/%.$(OBJFILEEXT): $(SRCDIR)/%.$(SRCFILEEXT)
 	$(CC) $(CCFLAGS) $(CCINCLUDE) $(CCFLAGSPROG) -c -o $@ $<
 
 clean:
-	rm -f $(BUILDDIR)/*.o $(TARGETDIR)/$(TARGET)
+	rm -f $(BUILDDIR)/*.$(OBJFILEEXT) $(TARGETDIR)/$(TARGET)
 
 install: $(TARGET)
 	cp $(TARGETDIR)/$(TARGET) $(BINDIR)/$(TARGET)
 
 uninstall:
 	rm -f $(BINDIR)/$(TARGET)
+
+.PHONY: tests-always-fail
+
+tests: $(TARGETDIR)/$(TARGET) tests-always-fail
+	make -f $(TESTDIR)/Makefile TESTDIR="$(TESTDIR)" CC="$(CC)" CCINCLUDE="$(CCINCLUDE)" CCFLAGS="$(CCFLAGS)" BUILDDIR="$(BUILDDIR)" TARGET="$(TARGET)" SRCFILEEXT="$(SRCFILEEXT)" OBJFILEEXT="$(OBJFILEEXT)" OBJFILES="$(OBJFILES)"
