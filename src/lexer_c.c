@@ -1,6 +1,7 @@
 #include "lexer_c.h"
 
 #include <fcntl.h>
+#include <stdarg.h>
 #include <sys/mman.h>
 
 void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len)
@@ -25,6 +26,23 @@ char *lexer_c_token_type_representation(TokenType_C type)
 
 int lexer_c_token_type_is_in_expected_token_types(TokenType_C type, size_t num_types, /* TokenType_C types */...)
 {
+	if (num_types == 0) {
+		return 0;
+	}
+
+	va_list ap;
+	va_start(ap, num_types);
+
+	for (int i = 0; i < num_types; i++) {
+		if (type == va_arg(ap, TokenType_C)) {
+			va_end(ap);
+
+			return 1;
+		}
+	}
+
+	va_end(ap);
+
 	return 0;
 }
 
