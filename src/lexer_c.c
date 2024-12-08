@@ -14,6 +14,8 @@ void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len
 	token->type = type;
 	token->value = value;
 	token->value_len = value_len;
+
+	return token;
 }
 
 char *lexer_c_token_type_representation(TokenType_C type)
