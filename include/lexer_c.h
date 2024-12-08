@@ -266,7 +266,7 @@ extern void *lexer_c_create_lexer(char* pathname);
  * Appends a Token_C to the list of tokens in the given Lexer_C.
  *
  * DESCRIPTION
- *	Lexer_C->tokens will be resized if the Lexer_C->num_tokens reached Lexer_C->tokens length.
+ *	Lexer_C->tokens will be resized if the Lexer_C->tokens_num reached Lexer_C->tokens_len.
  *
  * RETURN VALUE
  *	On success 0 is returned. On error, -1 is returned, and errno is set to indicate the error.

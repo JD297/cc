@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "lexer_c.h"
 
 #include <fcntl.h>
@@ -80,7 +82,7 @@ void *lexer_c_create_lexer(char* pathname)
 
 	lexer->tokens_len = LEXER_CREATION_TOKENS_LEN;
 	lexer->tokens_num = 0;
-	lexer->tokens = (Token_C **)mmap(NULL, lexer->tokens_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	lexer->tokens = (Token_C **)mmap(NULL, lexer->tokens_len * sizeof(Token_C *), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 	if (lexer->tokens == MAP_FAILED) {
 		return LEXER_CREATION_FAILED;
@@ -93,7 +95,23 @@ void *lexer_c_create_lexer(char* pathname)
 
 int lexer_c_push_back_token(Lexer_C *lexer, Token_C *token)
 {
-	return -1;
+	if (lexer->tokens_num == lexer->tokens_len) {
+		size_t tokens_new_len = lexer->tokens_len + LEXER_CREATION_TOKENS_LEN;
+
+		lexer->tokens = (Token_C **)mremap(lexer->tokens, lexer->tokens_len * sizeof(Token_C *), tokens_new_len * sizeof(Token_C *), MREMAP_MAYMOVE);
+
+		if (lexer->tokens == MAP_FAILED) {
+			return -1;
+		}
+
+		lexer->tokens_len = tokens_new_len;
+	}
+
+	lexer->tokens[lexer->tokens_num] = token;
+
+	lexer->tokens_num++;
+
+	return 0;
 }
 
 void *lexer_c_next(Lexer_C *lexer)
