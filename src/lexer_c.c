@@ -15,12 +15,12 @@ void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len
 	token->value_len = value_len;
 }
 
-char *lexar_c_token_type_representation(TokenType_C type)
+char *lexer_c_token_type_representation(TokenType_C type)
 {
 	return "!";
 }
 
-int lexar_c_token_type_is_in_expected_token_types(TokenType_C type, size_t num_types, /* TokenType_C types */...)
+int lexer_c_token_type_is_in_expected_token_types(TokenType_C type, size_t num_types, /* TokenType_C types */...)
 {
 	return 0;
 }

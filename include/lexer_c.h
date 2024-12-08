@@ -209,7 +209,7 @@ extern void *lexer_c_create_token(TokenType_C type, const char* value, size_t va
  * RETURN VALUE
  *	The token type is returned as a string token symbol. For example, the TokenType_C T_PLUS would return the value "+".
  */
-extern char *lexar_c_token_type_representation(TokenType_C type);
+extern char *lexer_c_token_type_representation(TokenType_C type);
 
 /**
  * Checks if a TokenType_C is present in a variadic list of TokenType_C's.
@@ -217,7 +217,7 @@ extern char *lexar_c_token_type_representation(TokenType_C type);
  * RETURN VALUE
  *	If the TokenType_C is present, 1 is returned; 0 otherwise.
  */
-extern int lexar_c_token_type_is_in_expected_token_types(TokenType_C type, size_t num_types, /* TokenType_C types */...);
+extern int lexer_c_token_type_is_in_expected_token_types(TokenType_C type, size_t num_types, /* TokenType_C types */...);
 
 /**
  * Lexer structure for the c language
