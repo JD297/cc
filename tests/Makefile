@@ -8,8 +8,10 @@ TESTTARGETS	= $(patsubst $(TESTSRCDIR)/%.$(SRCFILEEXT),$(TESTBINDIR)/%,$(TESTSRC
 
 OBJFILESNOTARGET= $(patsubst $(BUILDDIR)/$(TARGET).$(OBJFILEEXT),,$(OBJFILES))
 
+.PHONY: build-always-fail
+
 all: $(TESTTARGETS)
 	testsh --test
 
-$(TESTBINDIR)/%: $(TESTSRCDIR)/%.$(SRCFILEEXT)
+$(TESTBINDIR)/%: $(TESTSRCDIR)/%.$(SRCFILEEXT) build-always-fail
 	$(CC) $(CCINCLUDE) $(CCFLAGS) -o $@ $< $(OBJFILESNOTARGET)
