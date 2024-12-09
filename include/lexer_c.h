@@ -141,6 +141,7 @@ typedef enum TokenType_C {
 	T_MACRO_DEFINE,
 	T_MACRO_UNDEF,
 	T_MACRO_INCLUDE,
+	T_MACRO_INCLUDE_LIBRARY_PATH,
 	T_MACRO_EMBED,
 	T_MACRO_LINE,
 	T_MACRO_ERROR,
@@ -152,6 +153,10 @@ typedef enum TokenType_C {
 	T_MACRO___HAS_C_ATTRIBUTE,
 	T_MACRO_ASM,
 	T_MACRO_FORTRAN,
+
+	/* COMMENTS */
+	T_COMMENT_LINE,
+	T_COMMENT_MULTILINE,
 
 	/* WHITESPACE */
 	T_WHITESPACE_TAB,
@@ -191,10 +196,10 @@ typedef struct Token_C {
  * RETURN VALUE
  *	On success returns a pointer to the created Token_C. On error, the value TOKEN_CREATION_FAILED (that is, (void *) -1) is returned, and errno is set to indicate the error.
  */
-extern void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len);
+extern void *lexer_c_create_token(TokenType_C type, const char* value);
 
-#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM 4
-#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION T_IDENTIFIER, T_STRING, T_TYPE_CAST, T_NUMBER
+#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM 7
+#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION T_IDENTIFIER, T_STRING, T_TYPE_CAST, T_NUMBER, T_MACRO_INCLUDE_LIBRARY_PATH, T_COMMENT_LINE, T_COMMENT_MULTILINE
 
 /**
  * Returns the string representation of a TokenType_C.
