@@ -179,13 +179,11 @@ typedef enum TokenType_C {
  *   MEMBERS
  *	type      : is set to TokenType_C enum
  *	value     : is a pointer to the beginning of the token value
- *	value_len : is the length of the token value
  */
 typedef struct Token_C {
 	TokenType_C type;
 
 	char* value;
-	size_t value_len;
 } Token_C;
 
 #define TOKEN_CREATION_FAILED (void *) -1

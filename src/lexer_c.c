@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <sys/mman.h>
 
-void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len)
+void *lexer_c_create_token(TokenType_C type, const char* value)
 {
 	Token_C *token = (Token_C *)mmap(NULL, sizeof(Token_C), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
@@ -17,7 +17,6 @@ void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len
 
 	token->type = type;
 	token->value = value;
-	token->value_len = value_len;
 
 	return token;
 }

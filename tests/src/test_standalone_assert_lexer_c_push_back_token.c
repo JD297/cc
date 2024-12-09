@@ -19,7 +19,7 @@ int main()
 	for (size_t j = 0; j < LEXER_CREATION_TOKENS_LEN / 8; j++) { for (size_t i = 0; i < 8; i++) {
 		Token_C *token;
 
-		assert((token = lexer_c_create_token(token_types[i], token_values[i], strlen(token_values[i]))) != TOKEN_CREATION_FAILED);
+		assert((token = lexer_c_create_token(token_types[i], token_values[i])) != TOKEN_CREATION_FAILED);
 		assert(lexer_c_push_back_token(lexer, token) == 0);
 		assert(lexer_c_token_type_is_in_expected_token_types(lexer->tokens[lexer->tokens_num-1]->type, 1, token->type) == 1);
 	} }
@@ -28,7 +28,7 @@ int main()
 	assert(lexer->tokens_len == LEXER_CREATION_TOKENS_LEN);
 
 	Token_C *token;
-	assert((token = lexer_c_create_token(token_types[0], token_values[0], strlen(token_values[0]))) != TOKEN_CREATION_FAILED);
+	assert((token = lexer_c_create_token(token_types[0], token_values[0])) != TOKEN_CREATION_FAILED);
 
 	assert(lexer_c_push_back_token(lexer, token) == 0);
 	assert(lexer_c_token_type_is_in_expected_token_types(lexer->tokens[lexer->tokens_num-1]->type, 1, T_DOT) == 1);
