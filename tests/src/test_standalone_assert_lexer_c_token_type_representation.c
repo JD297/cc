@@ -8,6 +8,7 @@ int main()
 	/* TOKENS */
 	assert(lexer_c_token_type_representation(T_IDENTIFIER) == NULL);
 	assert(lexer_c_token_type_representation(T_STRING) == NULL);
+	assert(lexer_c_token_type_representation(T_NUMBER) == NULL);
 
 	/* SYMBOLS */
 	assert(strcmp(lexer_c_token_type_representation(T_OPEN_BRACKET), "[") == 0);

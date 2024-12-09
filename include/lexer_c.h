@@ -9,6 +9,7 @@ typedef enum TokenType_C {
 	/* TOKENS */
 	T_IDENTIFIER,
 	T_STRING,
+	T_NUMBER,
 
 	/* SYMBOLS */
 	T_OPEN_BRACKET,

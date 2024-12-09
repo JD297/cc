@@ -28,6 +28,7 @@ char *lexer_c_token_type_representation(TokenType_C type)
 		case T_IDENTIFIER:
 		case T_STRING:
 		case T_TYPE_CAST:
+		case T_NUMBER:
 		    return NULL;
 		case T_OPEN_BRACKET: return "[";
 		case T_CLOSING_BRACKET: return "]";
