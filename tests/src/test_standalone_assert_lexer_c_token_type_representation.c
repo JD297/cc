@@ -1,6 +1,7 @@
 #include "lexer_c.h"
 
 #include <assert.h>
+#include <string.h>
 
 int main()
 {
@@ -13,12 +14,12 @@ int main()
 	assert(strcmp(lexer_c_token_type_representation(T_CLOSING_BRACKET), "]") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_OPEN_PARENT), "(") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_CLOSING_PARENT), ")") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_OPEN_BRACES), "{") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_CLOSING_BRACES), "}") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_OPEN_BRACE), "{") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_CLOSING_BRACE), "}") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_DOT), ".") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_ARROW), "->") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_COMMA), ",") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_SEMICOLN), ";") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_SEMICOLON), ";") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_ASTERISK), "*") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_ASSIGNMENT), "=") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_TILDE), "~") == 0);
@@ -28,7 +29,7 @@ int main()
 	assert(strcmp(lexer_c_token_type_representation(T_MINUS), "-") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MULTIPLY), "*") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_DIVIDE), "/") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_MODULUS), "") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_MODULUS), "%") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_UNARY_PLUS), "+") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_UNARY_MINUS), "-") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_INCREMENT), "++") == 0);
@@ -59,13 +60,13 @@ int main()
 	assert(strcmp(lexer_c_token_type_representation(T_BITWISE_RIGHTSHIFT_ASSIGN), ">>=") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_BITWISE_LEFTSHIFT_ASSIGN), "<<=") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_TERNARY), "?") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_TYPE_CAST) == NULL);
+	assert(lexer_c_token_type_representation(T_TYPE_CAST) == NULL);
 	assert(strcmp(lexer_c_token_type_representation(T_ADDRESSOF), "&") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_DEREFERENCE), "*") == 0);
 
 	/* NORMAL KEYWORDS */
 	assert(strcmp(lexer_c_token_type_representation(T_ALIGNAS), "alignas") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_ALIGOF), "aligof") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_ALIGNOF), "alignof") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_AUTO), "auto") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_BOOL), "bool") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_BREAK), "break") == 0);
@@ -122,17 +123,17 @@ int main()
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_DEFINE), "#define") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_UNDEF), "#undef") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_INCLUDE), "#include") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_MACRO_EMBED), "#emded") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_MACRO_EMBED), "#embed") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_LINE), "#line") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_ERROR), "#error") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_WARNING), "#warning") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_PRAGMA), "#pragma") == 0);
 	assert(strcmp(lexer_c_token_type_representation(T_MACRO_DEFINDED), "#defined") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_MACRO___HAS_INCLUDE), "#__HAS_INCLUDE") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_MACRO___HAS_EMBED), "#__HAS_EMBED") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_MACRO___HAS_C_ATTRIBUTE), "#__HAS_C_ATTRIBUTE") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_MACRO_ASM), "_asm") == 0);
-	assert(strcmp(lexer_c_token_type_representation(T_MACRO_FORTRAN), "_fortran") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_MACRO___HAS_INCLUDE), "__has_include") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_MACRO___HAS_EMBED), "__has_embed") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_MACRO___HAS_C_ATTRIBUTE), "__has_c_attribute") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_MACRO_ASM), "__asm__") == 0);
+	assert(strcmp(lexer_c_token_type_representation(T_MACRO_FORTRAN), "__fortran__") == 0);
 
 	/* WHITESPACE */
 	assert(strcmp(lexer_c_token_type_representation(T_WHITESPACE_TAB), "\t") == 0);
