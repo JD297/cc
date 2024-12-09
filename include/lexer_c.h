@@ -193,6 +193,9 @@ typedef struct Token_C {
  */
 extern void *lexer_c_create_token(TokenType_C type, const char* value, size_t value_len);
 
+#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM 4
+#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION T_IDENTIFIER, T_STRING, T_TYPE_CAST, T_NUMBER
+
 /**
  * Returns the string representation of a TokenType_C.
  *

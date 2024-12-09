@@ -5,6 +5,13 @@
 
 int main()
 {
+	TokenType_C token_types_with_no_representation[TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM] = { TOKEN_TYPE_C_WITH_NO_REPRESENTATION };
+
+	for (size_t i = 0; i < TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM; i++) {
+		assert(lexer_c_token_type_is_in_expected_token_types(token_types_with_no_representation[i], TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM, TOKEN_TYPE_C_WITH_NO_REPRESENTATION));
+		assert(lexer_c_token_type_representation(token_types_with_no_representation[i]) == NULL);
+	}
+
 	/* TOKENS */
 	assert(lexer_c_token_type_representation(T_IDENTIFIER) == NULL);
 	assert(lexer_c_token_type_representation(T_STRING) == NULL);
