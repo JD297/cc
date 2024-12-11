@@ -3,8 +3,10 @@
 #include "lexer_c.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <string.h>
 #include <sys/mman.h>
 
 void *lexer_c_create_token(TokenType_C type, const char* value)
@@ -252,6 +254,304 @@ int lexer_c_push_back_token(Lexer_C *lexer, Token_C *token)
 
 void *lexer_c_next(Lexer_C *lexer)
 {
+	for (TokenType_C type = 0; type <= T_EOF; type++) {
+		if (lexer_c_token_type_is_in_expected_token_types(type, TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM, TOKEN_TYPE_C_WITH_NO_REPRESENTATION)) {
+			switch (type) {
+				/**
+				 * If the previous TOKEN_TYPE_C (excluding all whitespaces)
+				 * is T_MACRO_INCLUDE, this function searches for '<' in lexer->pbuf.
+				 * If found, it then searches for '>'. The text between '<' and '>'
+				 * is set as Token_C->value.
+				 *
+				 * ERRORS
+				 *	If no '>' character will be encountered, LEXER_NEXT_FAILED is returned and Lexer_C->error is set to 'missing terminating > character'..
+				 *	If Token_C_>value would exceed T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN, LEXER_NEXT_FAILED is returned and Lexer_C->error is set to 'file name too long'.
+				 */
+				case T_MACRO_INCLUDE_LIBRARY_PATH: {
+					for (int i = lexer->tokens_num - 1; i >= 0; i--) {
+						if (lexer_c_token_type_is_in_expected_token_types(lexer->tokens[i]->type, TOKEN_TYPE_C_ALL_WHITESPACES)) {
+							continue;
+						}
+
+						if (!lexer_c_token_type_is_in_expected_token_types(lexer->tokens[i]->type, 1, T_MACRO_INCLUDE)) {
+							break;
+						}
+
+						if (*lexer->pbuf != '<') {
+							break;
+						}
+
+						char *start = lexer->pbuf + 1;
+						char *end = strstr(start, ">");
+
+						if (end == NULL) {
+							lexer->error = "missing terminating > character";
+
+							return LEXER_NEXT_FAILED;
+						}
+
+						if (end == start) {
+							break;
+						}
+
+						size_t length = end - start;
+
+						if (length >= T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN) {
+							lexer->error = "filename too long";
+
+							return LEXER_NEXT_FAILED;
+						}
+
+						char value[T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN] = { 0 };
+
+						strncpy(value, start, length);
+
+						lexer->pbuf = end + 1;
+
+						return lexer_c_create_token(type, value);
+					}
+				} break;
+				/**
+				 * If Lexer_C->pbuf (i.e., the first character) is an '_' or an alpha character,
+				 * and as long as the character is either '_' or alphanumeric, all valid characters
+				 * are stored as the value of the identifier, and pbuf is advanced past the identifier.
+				 */
+				case T_IDENTIFIER: {
+					char *end;
+
+					for (end = lexer->pbuf; *end != '\0'; end++) {
+						if (end == lexer->pbuf) {
+							if (*end == '_' || isalpha(*end) != 0) {
+								continue;
+							} else {
+								end = NULL;
+
+								break;
+							}
+						}
+
+						if (*end != '_' && isalnum(*end) == 0) {
+							break;
+						}
+					}
+
+					if (*end == '\0') {
+						break;
+					}
+
+					size_t length = end - lexer->pbuf;
+
+                                        if (length >= T_IDENTIFIER_MAX_LEN) {
+						lexer->error = "identifier too long";
+
+                                                return LEXER_NEXT_FAILED;
+                                        }
+
+                                        char value[T_IDENTIFIER_MAX_LEN] = { 0 };
+
+                                        strncpy(value, lexer->pbuf, length);
+
+                                        lexer->pbuf = end;
+
+                                        return lexer_c_create_token(type, value);
+				} break;
+				/**
+				 * If Lexer_C->pbuf matches the string "//", all characters are read as a comment until a newline or EOF is encountered.
+				 */
+				case T_COMMENT_LINE: {
+					if (strlen(lexer->pbuf) < 2) {
+						break;
+					}
+
+					if (strncmp(lexer->pbuf, "//" , 2) != 0) {
+						break;
+					}
+
+					char *end = NULL;
+
+					for (end = lexer->pbuf; *end != '\0' && *end != '\n'; end++);
+
+					if (end == NULL) {
+						return lexer_c_create_token(type, "//");
+					}
+
+					size_t length = end - lexer->pbuf;
+
+					if (length >= T_COMMENT_LINE_MAX_LEN) {
+						lexer->error = "comment too long";
+
+						return LEXER_NEXT_FAILED;
+					}
+
+					char value[T_COMMENT_LINE_MAX_LEN] = { 0 };
+
+					strncpy(value, lexer->pbuf, length);
+
+					lexer->pbuf = end;
+
+					return lexer_c_create_token(type, value);
+				} break;
+				/**
+				 * If Lexer_C->pbuf matches the character '/' followed by a '*', all characters are read as a multi line comment until a '*' and a '/' is encountered.
+				 */
+				case T_COMMENT_MULTILINE: {
+					if (strlen(lexer->pbuf) < 2) {
+						break;
+					}
+
+					if (strncmp(lexer->pbuf, "/*" , 2) != 0) {
+						break;
+					}
+
+					const char *start = lexer->pbuf + 2;
+					char *end = strstr(start, "*/");
+
+					if (end == NULL) {
+						lexer->error = "unterminated comment";
+
+						return LEXER_NEXT_FAILED;
+					}
+
+					if (end == start) {
+
+						return lexer_c_create_token(type, "/**/");
+					}
+
+					end++;
+
+					size_t length = end + 1 - lexer->pbuf;
+
+					if (length >= T_COMMENT_MULTILINE_MAX_LEN) {
+						lexer->error = "multi line comment too long";
+
+						return LEXER_NEXT_FAILED;
+					}
+
+					char value[T_COMMENT_MULTILINE_MAX_LEN] = { 0 };
+
+					strncpy(value, lexer->pbuf, length);
+
+					lexer->pbuf = end + 1;
+
+					return lexer_c_create_token(type, value);
+				} break;
+				/**
+				 * If Lexer_C->pbuf matches the character '"', all characters are read as a string until another '"' is encountered (unless it is escaped with '\').
+				 */
+				case T_STRING: {
+					if (*lexer->pbuf != '"') {
+						break;
+					}
+
+					char *start = lexer->pbuf + 1;
+					char *end;
+
+					for (end = start; *end != '\0'; end++) {
+						if (start == end && *start == '"') {
+							return lexer_c_create_token(type, "");
+						}
+
+						if (*end == '"' && *end - 1 == '\\') {
+							continue;
+						}
+
+						if (*end == '"') {
+							break;
+						}
+
+						if (*end == '\0') {
+							lexer->error = "missing terminating \" character";
+
+							return LEXER_NEXT_FAILED;
+						}
+					}
+
+					size_t length = end - start;
+
+					if (length >= T_STRING_MAX_LEN) {
+						lexer->error = "string too long";
+
+						return LEXER_NEXT_FAILED;
+					}
+
+					char value[T_STRING_MAX_LEN] = { 0 };
+
+					strncpy(value, start, length);
+
+					lexer->pbuf = end + 1;
+
+					return lexer_c_create_token(type, value);
+				} break;
+				case T_TYPE_CAST:
+
+				break;
+				/**
+				 * If Lexer_C->pbuf is a digit, all subsequent characters are read as a number as long as they are digits or a '.'.
+				 *
+				 * ERRORS
+				 *	If more than one '.' is encountered, LEXER_NEXT_FAILED is returned and Lexer_C->error is set to 'too many decimal points in number'.
+				 */
+				case T_NUMBER: {
+					if (isdigit(*lexer->pbuf) == 0) {
+						break;
+					}
+
+					char *start = lexer->pbuf;
+					char *end;
+
+					size_t decimal_points = 0;
+
+					for (end = start; *end != '\0'; end++) {
+						assert(*end != 'x' && "TODO: hex numbers are not supported!");
+
+						if (*end == '.') {
+							decimal_points++;
+						}
+
+						if (decimal_points >= 2) {
+							lexer->error = "too many decimal points in number";
+
+							return LEXER_NEXT_FAILED;
+						}
+
+						if (isdigit(*end) == 0 && *end != '.') {
+							break;
+						}
+					}
+
+					size_t length = end - start;
+
+					if (length >= T_NUMBER_MAX_LEN) {
+						lexer->error = "number too long";
+
+						return LEXER_NEXT_FAILED;
+					}
+
+					char value[T_NUMBER_MAX_LEN] = { 0 };
+
+					strncpy(value, start, length);
+
+					lexer->pbuf = end;
+
+					return lexer_c_create_token(type, value);
+				} break;
+				default: assert(0 && "TokenType_C (type) not implemented!");
+			}
+
+			continue;
+		}
+
+		const char* token_type_representation = lexer_c_token_type_representation(type);
+
+		char *found = strstr(lexer->pbuf, token_type_representation);
+
+		if (found == lexer->pbuf && (type != T_EOF) == (*lexer->pbuf != '\0')) {
+			lexer->pbuf += strlen(token_type_representation);
+
+			return lexer_c_create_token(type, token_type_representation);
+		}
+	}
+
 	return LEXER_NEXT_FAILED;
 }
 

@@ -273,6 +273,13 @@ extern int lexer_c_push_back_token(Lexer_C *lexer, Token_C *token);
 
 #define LEXER_NEXT_FAILED (void *) -1
 
+#define T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN 4096
+#define T_IDENTIFIER_MAX_LEN 512
+#define T_COMMENT_LINE_MAX_LEN 256
+#define T_COMMENT_MULTILINE_MAX_LEN 4096 * 2
+#define T_STRING_MAX_LEN 4096
+#define T_NUMBER_MAX_LEN 20
+
 /**
  * Retrieve the next token from a Lexer_C
  *
