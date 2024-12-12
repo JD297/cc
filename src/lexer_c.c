@@ -1,5 +1,4 @@
 #define _GNU_SOURCE
-
 #include "lexer_c.h"
 
 #include <assert.h>
@@ -302,7 +301,7 @@ void *lexer_c_next(Lexer_C *lexer)
 							return LEXER_NEXT_FAILED;
 						}
 
-						char value[T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN] = { 0 };
+						char *value = (char *)mmap(NULL, T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 						strncpy(value, start, length);
 
@@ -347,7 +346,7 @@ void *lexer_c_next(Lexer_C *lexer)
                                                 return LEXER_NEXT_FAILED;
                                         }
 
-                                        char value[T_IDENTIFIER_MAX_LEN] = { 0 };
+					char *value = (char *)mmap(NULL, T_IDENTIFIER_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
                                         strncpy(value, lexer->pbuf, length);
 
@@ -383,7 +382,7 @@ void *lexer_c_next(Lexer_C *lexer)
 						return LEXER_NEXT_FAILED;
 					}
 
-					char value[T_COMMENT_LINE_MAX_LEN] = { 0 };
+					char *value = (char *)mmap(NULL, T_COMMENT_LINE_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 					strncpy(value, lexer->pbuf, length);
 
@@ -427,7 +426,7 @@ void *lexer_c_next(Lexer_C *lexer)
 						return LEXER_NEXT_FAILED;
 					}
 
-					char value[T_COMMENT_MULTILINE_MAX_LEN] = { 0 };
+					char *value = (char *)mmap(NULL, T_COMMENT_MULTILINE_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 					strncpy(value, lexer->pbuf, length);
 
@@ -474,7 +473,7 @@ void *lexer_c_next(Lexer_C *lexer)
 						return LEXER_NEXT_FAILED;
 					}
 
-					char value[T_STRING_MAX_LEN] = { 0 };
+					char *value = (char *)mmap(NULL, T_STRING_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 					strncpy(value, start, length);
 
@@ -527,7 +526,7 @@ void *lexer_c_next(Lexer_C *lexer)
 						return LEXER_NEXT_FAILED;
 					}
 
-					char value[T_NUMBER_MAX_LEN] = { 0 };
+					char *value = (char *)mmap(NULL, T_NUMBER_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 					strncpy(value, start, length);
 
@@ -557,5 +556,17 @@ void *lexer_c_next(Lexer_C *lexer)
 
 int lexer_c_run(Lexer_C *lexer)
 {
-	return -1;
+	Token_C *token;
+
+	do {
+		if ((token = lexer_c_next(lexer)) == LEXER_NEXT_FAILED) {
+			return -1;
+		}
+
+		if (lexer_c_push_back_token(lexer, token) == -1) {
+			return -1;
+		}
+	} while (token->type != T_EOF);
+
+	return 0;
 }
