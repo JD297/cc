@@ -8,25 +8,25 @@
 
 int main()
 {
-	#include "asset_test_hello_world.h"
+    #include "asset_test_hello_world.h"
 
-	Lexer_C *lexer;
+    Lexer_C *lexer;
 
-	assert((lexer = lexer_c_create_lexer("tests/assets/asset_test_hello_world.c")) != LEXER_CREATION_FAILED);
+    assert((lexer = lexer_c_create("tests/assets/asset_test_hello_world.c")) != LEXER_CREATION_FAILED);
 
-	assert(lexer_c_run(lexer) == 0);
+    assert(lexer_c_run(lexer) == 0);
 
-	assert(*lexer->pbuf == '\0');
-	assert(lexer->tokens_len == LEXER_CREATION_TOKENS_LEN);
-	assert(lexer->tokens_num == ASSET_TEST_C_TOKEN_NUM);
-	assert(lexer->error == NULL);
+    assert(*lexer->pbuf == '\0');
+    assert(lexer->tokens->len == LIST_INIT_LEN);
+    assert(lexer->tokens->num == ASSET_TEST_C_TOKEN_NUM);
+    assert(lexer->error == NULL);
 
-	for (size_t i = 0; i < ASSET_TEST_C_TOKEN_NUM; i++) {
-		assert(lexer->tokens[i]->type == asset_test_tokens[i].type);
-		assert(strcmp(lexer->tokens[i]->value, asset_test_tokens[i].value) == 0);
-	}
+    for (size_t i = 0; i < ASSET_TEST_C_TOKEN_NUM; i++) {
+        assert(lexer->tokens->elements[i]->type == asset_test_tokens[i].type);
+        assert(strcmp(lexer->tokens->elements[i]->value, asset_test_tokens[i].value) == 0);
+    }
 
-	FREE(lexer);
+    FREE(lexer);
 
-	return 0;
+    return 0;
 }

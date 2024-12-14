@@ -1,305 +1,314 @@
-#include <stddef.h>
+#include "token_list_c.h"
+
 #include <sys/stat.h>
-#include <unistd.h>
 
 #ifndef JD297_CC_LEXER_C_H
 #define JD297_CC_LEXER_C_H
 
-typedef enum TokenType_C {
-	/* TOKENS */
-	T_STRING,
-	T_NUMBER,
-
-	/* PREPROCESSOR KEYWORD */
-	T_MACRO_INCLUDE_LIBRARY_PATH,
-
-	/* COMMENTS */
-	T_COMMENT_LINE,
-	T_COMMENT_MULTILINE,
-
-	/* CAST */
-	T_TYPE_CAST,
-
-	/* SYMBOLS */
-	T_OPEN_BRACKET,
-	T_CLOSING_BRACKET,
-	T_OPEN_PARENT,
-	T_CLOSING_PARENT,
-	T_OPEN_BRACE,
-	T_CLOSING_BRACE,
-	T_DOT,
-	T_ARROW,
-	T_COMMA,
-	T_COLON,
-	T_SEMICOLON,
-	T_ASTERISK,
-	T_ASSIGNMENT,
-	T_TILDE,
-
-	/* OPERATORS */
-	/* ARITHMETRIC */
-	T_PLUS,
-	T_MINUS,
-	T_MULTIPLY,
-	T_DIVIDE,
-	T_MODULUS,
-	T_UNARY_PLUS,
-	T_UNARY_MINUS,
-	T_INCREMENT,
-	T_DECREMENT,
-
-	/* RELATIONAL */
-	T_LESS_THAN,
-	T_GREATER_THAN,
-	T_LESS_THAN_OR_EQUAL_TO,
-	T_GREATER_THAN_OR_EQUAL_TO,
-	T_EQUAL_TO,
-	T_NOT_EQUAL_TO,
-
-	/* LOGICAL */
-	T_LOGICAL_AND,
-	T_LOGICAL_OR,
-	T_LOGICAL_NOT,
-
-	/* BITWISE */
-	T_BITWISE_AND,
-	T_BITWISE_OR,
-	T_BITWISE_XOR,
-	T_BITWISE_FIRST_COMPLEMENT,
-	T_BITWISE_LEFTSHIFT,
-	T_BITWISE_RIGHTSHIFT,
-
-	/* ASSIGNMENT */
-	// T_ASSIGNMENT
-	T_PLUS_ASSIGN,
-	T_MINUS_ASSIGN,
-	T_MULTIPLY_ASSIGN,
-	T_DIVIDE_ASSIGN,
-	T_MODULUS_ASSIGN,
-	T_BITWISE_AND_ASSIGN,
-	T_BITWISE_OR_ASSIGN,
-	T_BITWISE_XOR_ASSIGN,
-	T_BITWISE_RIGHTSHIFT_ASSIGN,
-	T_BITWISE_LEFTSHIFT_ASSIGN,
-
-	/* CONDITIONAL */
-	T_TERNARY,
-
-	T_ADDRESSOF,
-	T_DEREFERENCE,
-
-	/* NORMAL KEYWORDS */
-	T_ALIGNAS,
-	T_ALIGNOF,
-	T_AUTO,
-	T_BOOL,
-	T_BREAK,
-	T_CASE,
-	T_CHAR,
-	T_CONST,
-	T_CONSTEXPR,
-	T_CONTINUE,
-	T_DEFAULT,
-	T_DO,
-	T_DOUBLE,
-	T_ELSE,
-	T_ENUM,
-	T_EXTERN,
-	T_FALSE,
-	T_FLOAT,
-	T_FOR,
-	T_GOTO,
-	T_IF,
-	T_INLINE,
-	T_INT,
-	T_LONG,
-	T_NULLPTR,
-	T_REGISTER,
-	T_RESTRICT,
-	T_RETURN,
-	T_SHORT,
-	T_SIGNED,
-	T_SIZEOF,
-	T_STATIC,
-	T_STATIC_ASSERT,
-	T_STRUCT,
-	T_SWITCH,
-	T_THREAD_LOCAL,
-	T_TRUE,
-	T_TYPEDEF,
-	T_TYPEOF,
-	T_TYPEOF_UNQUAL,
-	T_UNION,
-	T_UNSIGNED,
-	T_VOID,
-	T_VOLATILE,
-	T_WHILE,
-
-	/* PREPROCESSOR KEYWORDS*/
-	T_MACRO_IF,
-	T_MACRO_ELIF,
-	T_MACRO_ELSE,
-	T_MACRO_ENDIF,
-	T_MACRO_IFDEF,
-	T_MACRO_IFNDEF,
-	T_MACRO_ELIFDEF,
-	T_MACRO_ELIFNDEF,
-	T_MACRO_DEFINE,
-	T_MACRO_UNDEF,
-	T_MACRO_INCLUDE,
-	T_MACRO_EMBED,
-	T_MACRO_LINE,
-	T_MACRO_ERROR,
-	T_MACRO_WARNING,
-	T_MACRO_PRAGMA,
-	T_MACRO_DEFINDED,
-	T_MACRO___HAS_INCLUDE,
-	T_MACRO___HAS_EMBED,
-	T_MACRO___HAS_C_ATTRIBUTE,
-	T_MACRO_ASM,
-	T_MACRO_FORTRAN,
-
-	/* WHITESPACE */
-	T_WHITESPACE_TAB,
-	T_WHITESPACE_LINE_FEED,
-	T_WHITESPACE_LINE_TABULATION,
-	T_WHITESPACE_FORM_FEED,
-	T_WHITESPACE_CARRIAGE_RETURN,
-	T_WHITESPACE_SPACE,
-	T_WHITESPACE_NEXT_LINE,
-
-	T_IDENTIFIER,
-
-	T_EOF
-} TokenType_C;
-
 /**
- * Token structure for c language
+ * Lexer structure for the C language.
  *
  * DESCRIPTION
- *	This structure is used for tokens of c language only.
+ *     This structure is used for parsing C language source code. It holds 
+ *     information about the input file, the source code, and the tokens 
+ *     generated during the lexing process.
  *
- *   MEMBERS
- *	type      : is set to TokenType_C enum
- *	value     : is a pointer to the beginning of the token value
- */
-typedef struct Token_C {
-	TokenType_C type;
-
-	char* value;
-} Token_C;
-
-#define TOKEN_CREATION_FAILED (void *) -1
-
-/**
- * Create a Token_C structure from type and value.
+ * MEMBERS
+ *     pathname   : A string representing the path to the input file.
  *
- * RETURN VALUE
- *	On success returns a pointer to the created Token_C. On error, the value TOKEN_CREATION_FAILED (that is, (void *) -1) is returned, and errno is set to indicate the error.
- */
-extern void *lexer_c_create_token(TokenType_C type, const char* value);
-
-#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION_NUM 7
-#define TOKEN_TYPE_C_WITH_NO_REPRESENTATION T_IDENTIFIER, T_STRING, T_TYPE_CAST, T_NUMBER, T_MACRO_INCLUDE_LIBRARY_PATH, T_COMMENT_LINE, T_COMMENT_MULTILINE
-#define TOKEN_TYPE_C_ALL_WHITESPACES 7, T_WHITESPACE_TAB, T_WHITESPACE_LINE_FEED, T_WHITESPACE_LINE_TABULATION, T_WHITESPACE_FORM_FEED, T_WHITESPACE_CARRIAGE_RETURN, T_WHITESPACE_SPACE, T_WHITESPACE_NEXT_LINE
-
-/**
- * Returns the string representation of a TokenType_C.
+ *     sb         : A struct stat that holds statistics about the input file, 
+ *                  such as its size (st_size).
  *
- * RETURN VALUE
- *	The token type is returned as a string token symbol. For example, the TokenType_C T_PLUS would return the value "+".
- */
-extern char *lexer_c_token_type_representation(TokenType_C type);
-
-/**
- * Checks if a TokenType_C is present in a variadic list of TokenType_C's.
+ *     buf        : A buffer containing the source code read from the input file.
  *
- * RETURN VALUE
- *	If the TokenType_C is present, 1 is returned; 0 otherwise.
- */
-extern int lexer_c_token_type_is_in_expected_token_types(TokenType_C type, size_t num_types, /* TokenType_C types */...);
-
-/**
- * Lexer structure for the c language
+ *     pbuf       : A pointer to the current position in the source code buffer.
  *
- * DESCRIPTION
- *	This structure is used for parsing c language only.
+ *     tokens     : A pointer to a TokenList_C structure that holds the tokens 
+ *                  generated from the source code.
  *
- *   MEMBERS
- *	pathname  : is set to the input file
- *	sb        : holds stats about input file like st_size
- *	buf       : contains the source code the input file
- *	pbuf      : is a pointer to the current position
- *	tokens    : is a list of pointers to Token_C's
- *	token_len : is set to the current size of possible elements in tokens
- *	tokens_num: is set to the current number of elements in tokens
- *	error     : is set to the latest error message in the lexing process
+ *     error      : A string that contains the latest error message encountered 
+ *                  during the lexing process.
  */
 typedef struct Lexer_C {
-	char* pathname;
-	struct stat sb;
+    char *pathname;
+    struct stat sb;
 
-	char* buf;
-	char* pbuf;
+    char *buf;
+    char *pbuf;
 
-	Token_C **tokens;
-	size_t tokens_len;
-	size_t tokens_num;
+    TokenList_C *tokens;
 
-	char* error;
+    char *error;
 } Lexer_C;
 
 #define LEXER_CREATION_FAILED (void *) -1
-#define LEXER_CREATION_TOKENS_LEN sysconf(_SC_PAGESIZE) / sizeof(Token_C *)
 
 /**
- * Create a Lexer_C structure from an input file (pathname).
- *
- * RETURN VALUE
- * 	On success returns a pointer to the created Lexer_C. On error, the value LEXER_CREATION_FAILED (that is, (void *) -1) is returned, and errno is set to indicate the error.
- */
-extern void *lexer_c_create_lexer(char* pathname);
-
-/**
- * Appends a Token_C to the list of tokens in the given Lexer_C.
+ * Creates a Lexer_C structure from the specified input file (pathname).
  *
  * DESCRIPTION
- *	Lexer_C->tokens will be resized if the Lexer_C->tokens_num reached Lexer_C->tokens_len.
+ *     This function allocates and initializes a new Lexer_C structure using 
+ *     the provided pathname. It reads the contents of the input file into 
+ *     a buffer and prepares the lexer for parsing the C language source code.
  *
  * RETURN VALUE
- *	On success 0 is returned. On error, -1 is returned, and errno is set to indicate the error.
+ *     On success, a pointer to the created Lexer_C is returned. On error, 
+ *     the value LEXER_CREATION_FAILED (i.e., (void *) -1) is returned, and 
+ *     errno is set to indicate the specific error.
  */
-extern int lexer_c_push_back_token(Lexer_C *lexer, Token_C *token);
+extern void *lexer_c_create(char *pathname);
 
+#define LEXER_NEXT_SKIPPED (void *) 0
 #define LEXER_NEXT_FAILED (void *) -1
 
-#define T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN 4096
-#define T_IDENTIFIER_MAX_LEN 512
-#define T_COMMENT_LINE_MAX_LEN 256
-#define T_COMMENT_MULTILINE_MAX_LEN 4096 * 2
-#define T_STRING_MAX_LEN 4096
-#define T_NUMBER_MAX_LEN 20
-
 /**
- * Retrieve the next token from a Lexer_C
+ * Processes the next T_MACRO_INCLUDE_LIBRARY_PATH from the Lexer_C.
  *
  * DESCRIPTION
- *	The next token will be processed via Lexer_C->pbuf. After success Lexer_C_>pbuf will be incremented to the next position.
+ *     If the previous TOKEN_TYPE_C (excluding all whitespaces) is 
+ *     T_MACRO_INCLUDE, this function searches for the '<' character in 
+ *     lexer->pbuf. If found, it then searches for the '>' character. The 
+ *     text between '<' and '>' is set as Token_C->value. If either 
+ *     character is not found, the value LEXER_NEXT_SKIPPED (i.e., (void *) 0) 
+ *     is returned, indicating that no action was taken and pbuf remains unchanged.
  *
  * RETURN VALUE
- *	On succes returns a pointer to the next Token_C. On error, the value LEXER_NEXT_FAILED (that is, (void *) -1) is returned, and Lexer_C->error is set to indicate the error.
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED, which indicates that the pattern was not 
+ *     matched (pbuf will stay the same). On error, the value 
+ *     LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and Lexer_C->error is set 
+ *     to indicate the specific error.
  *
- * Notes
- * 	When Token_C->type is T_EOF than the input file was lexed successfully. When this function is called by lexer_c_run(Lexer_C *lexer) the method should return 0 in this case.
- *	When an error occures and this function is called by lexer_c_run(Lexer_C *lexer) the method should return -1 in this case.
+ * ERRORS
+ *     If no '>' character is encountered, LEXER_NEXT_FAILED is returned, 
+ *     and Lexer_C->error is set to 'missing terminating > character'.
+ *
+ *     If Token_C->value exceeds T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'filename too long'.
+ */
+extern void *lexer_c_next_macro_include_library_path(Lexer_C *lexer);
+
+/**
+ * Processes the T_IDENTIFIER from the Lexer_C.
+ *
+ * DESCRIPTION
+ *     If the first character of Lexer_C->pbuf is an '_' or an alphabetic 
+ *     character, and as long as the subsequent characters are either '_' 
+ *     or alphanumeric, all valid characters are stored as the value of 
+ *     the identifier. The pbuf is then advanced past the identifier.
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED, which indicates that the pattern was not 
+ *     matched (pbuf will stay the same). On error, the value 
+ *     LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and 
+ *     Lexer_C->error is set to indicate the specific error.
+ *
+ * ERRORS
+ *     If Token_C->value exceeds T_IDENTIFIER_MAX_LEN, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'identifier too long'.
+ */
+extern void *lexer_c_next_identifier(Lexer_C *lexer);
+
+/**
+ * Processes the next T_COMMENT_LINE from the Lexer_C.
+ *
+ * DESCRIPTION
+ *     If Lexer_C->pbuf matches the string "//", all characters are read 
+ *     as a comment until a newline or EOF is encountered. The comment 
+ *     is stored as the value of the Token_C.
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED, which indicates that the pattern was not 
+ *     matched (pbuf will stay the same). On error, the value 
+ *     LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and 
+ *     Lexer_C->error is set to indicate the specific error.
+ *
+ * ERRORS
+ *     If Token_C->value exceeds T_COMMENT_LINE_MAX_LEN, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'comment too long'.
+ */
+extern void *lexer_c_next_comment_line(Lexer_C *lexer);
+
+/**
+ * Processes the next T_COMMENT_MULTILINE from the Lexer_C.
+ *
+ * DESCRIPTION
+ *     If Lexer_C->pbuf matches the character '/' followed by a '*', all 
+ *     characters are read as a multiline comment until a '*' followed by 
+ *     a '/' is encountered. The comment is stored as the value of the 
+ *     Token_C.
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED (i.e., (void *) 0), which indicates that 
+ *     the pattern was not matched (pbuf will stay the same). On error, 
+ *     the value LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and 
+ *     Lexer_C->error is set to indicate the specific error.
+ *
+ * ERRORS
+ *     If Token_C->value exceeds T_COMMENT_LINE_MAX_LEN, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'multiline comment too long'.
+ *
+ *     If no terminating '*' followed by a '/' is found, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'unterminated comment'.
+ */
+extern void *lexer_c_next_comment_multiline(Lexer_C *lexer);
+
+/**
+ * Processes the next T_STRING from the Lexer_C.
+ *
+ * DESCRIPTION
+ *     If Lexer_C->pbuf matches the character '"', all characters are read 
+ *     as a string until another '"' is encountered (unless it is escaped 
+ *     with '\'). The string is stored as the value of the Token_C.
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED (i.e., (void *) 0), which indicates that 
+ *     the pattern was not matched (pbuf will stay the same). On error, 
+ *     the value LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and 
+ *     Lexer_C->error is set to indicate the specific error.
+ *
+ * ERRORS
+ *     If Token_C->value exceeds T_STRING_MAX_LEN, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'string too long'.
+ *
+ *     If no terminating '"' is found, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'missing terminating " character'.
+ */
+extern void *lexer_c_next_string(Lexer_C *lexer);
+
+/**
+ * Processes the next T_TYPE_CAST from the Lexer_C.
+ *
+ * DESCRIPTION
+ *     TODO: Not implemented will just return LEXER_NEXT_SKIPPED (i.e., (void *) 0)!
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED (i.e., (void *) 0), which indicates that 
+ *     the pattern was not matched (pbuf will stay the same). On error, 
+ *     the value LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and 
+ *     Lexer_C->error is set to indicate the specific error.
+ *
+ * ERRORS
+ *     TODO: Not implemented errors will not be returned!
+ */
+extern void *lexer_c_next_type_cast(Lexer_C *lexer);
+
+/**
+ * Processes the next T_NUMBER from the Lexer_C.
+ *
+ * DESCRIPTION
+ *     If Lexer_C->pbuf is a digit, all subsequent characters are read as 
+ *     a number as long as they are digits or a '.' (decimal point). The 
+ *     number is stored as the value of the Token_C.
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED (i.e., (void *) 0), which indicates that 
+ *     the pattern was not matched (pbuf will stay the same). On error, 
+ *     the value LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and 
+ *     Lexer_C->error is set to indicate the specific error.
+ *
+ * ERRORS
+ *     If more than one '.' is encountered, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'too many decimal points in number'.
+ *
+ *     If Token_C->value exceeds T_NUMBER_MAX_LEN, 
+ *     LEXER_NEXT_FAILED is returned, and Lexer_C->error is set to 
+ *     'number too long'.
+ */
+extern void *lexer_c_next_number(Lexer_C *lexer);
+
+/**
+ * Processes a token that can be represented from the Lexer_C.
+ *
+ * DESCRIPTION
+ *     This function analyzes the current position in the Lexer_C and 
+ *     attempts to identify and create a corresponding Token_C. It 
+ *     handles various token types that can be easily represented, 
+ *     such as T_PLUS, which corresponds to the "+" symbol. 
+ *     However, a number cannot be represented in the same way, 
+ *     as it has a variable value.
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the created Token_C is returned, or the 
+ *     value LEXER_NEXT_SKIPPED (i.e., (void *) 0), which indicates that 
+ *     the pattern was not matched (pbuf will stay the same).
+ *
+ * NOTES
+ *     If Token_C->type is T_EOF, it indicates that the input file has been 
+ *     lexed successfully. In this case, when this function is called by 
+ *     lexer_c_run, the method should return 0.
+ *
+ * SEE ALSO
+ *     include/lexer_c.h: lexer_c_run(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next(Lexer_C *lexer)
+ */
+extern void *lexer_c_next_with_representation(Lexer_C *lexer, TokenType_C type);
+
+/**
+ * Retrieves the next token from a Lexer_C.
+ *
+ * DESCRIPTION
+ *     The next token is processed using the current position indicated by 
+ *     Lexer_C->pbuf. Upon successful retrieval of the token, 
+ *     Lexer_C->pbuf is incremented to point to the next position in the 
+ *     source code buffer.
+ *
+ * RETURN VALUE
+ *     On success, a pointer to the next Token_C is returned. On error, 
+ *     the value LEXER_NEXT_FAILED (i.e., (void *) -1) is returned, and 
+ *     Lexer_C->error is set to indicate the specific error.
+ *
+ * NOTES
+ *     If Token_C->type is T_EOF, it indicates that the input file has been 
+ *     lexed successfully. In this case, when this function is called by 
+ *     lexer_c_run, the method should return 0.
+ *     If an error occurs and this function is called by lexer_c_run(Lexer_C *lexer), 
+ *     the method should return -1.
+ *
+ * SEE ALSO
+ *     include/lexer_c.h: lexer_c_run(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_macro_include_library_path(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_identifier(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_comment_line(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_comment_multiline(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_string(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_number(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_type_cast(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_next_with_representation(Lexer_C *lexer)
  */
 extern void *lexer_c_next(Lexer_C *lexer);
 
 /**
- * Runs the lexing process for the given Lexer_C
+ * Runs the lexing process for the given Lexer_C.
+ *
+ * DESCRIPTION
+ *     This function initiates the lexing process for the specified 
+ *     Lexer_C structure. It processes the input file, generating tokens 
+ *     and storing them in the associated TokenList_C. The function will 
+ *     continue until the end of the file is reached or an error occurs.
  *
  * RETURN VALUE
- *	Return 0 on success. On error, -1 is returned, and Lexer_C->error is set to indicate the error.
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Lexer_C->error is set to indicate the specific error encountered 
+ *     during the lexing process.
+ *
+ * SEE ALSO
+ *     include/lexer_c.h: lexer_c_next(Lexer_C *lexer)
+ *     include/token_list_c.h: token_list_c_push_back(TokenList_C *list, Token_C *element)
  */
 extern int lexer_c_run(Lexer_C *lexer);
 
