@@ -30,7 +30,7 @@
  *                  during the lexing process.
  */
 typedef struct Lexer_C {
-    char *pathname;
+    const char *pathname;
     struct stat sb;
 
     char *buf;
@@ -56,7 +56,7 @@ typedef struct Lexer_C {
  *     the value LEXER_CREATION_FAILED (i.e., (void *) -1) is returned, and 
  *     errno is set to indicate the specific error.
  */
-extern void *lexer_c_create(char *pathname);
+extern void *lexer_c_create(const char *pathname);
 
 #define LEXER_NEXT_SKIPPED (void *) 0
 #define LEXER_NEXT_FAILED (void *) -1
