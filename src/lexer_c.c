@@ -13,7 +13,7 @@
 #include <string.h>
 #include <sys/mman.h>
 
-void *lexer_c_create(char* pathname)
+void *lexer_c_create(const char* pathname)
 {
     Lexer_C *lexer = (Lexer_C *)mmap(NULL, sizeof(Lexer_C), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
