@@ -149,7 +149,6 @@ typedef enum TokenType_C {
     T_MACRO_EMBED,
     T_MACRO_LINE,
     T_MACRO_ERROR,
-    T_MACRO_WARNING,
     T_MACRO_PRAGMA,
     T_MACRO_DEFINDED,
     T_MACRO___HAS_INCLUDE,

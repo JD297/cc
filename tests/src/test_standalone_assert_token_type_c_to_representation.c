@@ -138,7 +138,6 @@ int main()
     assert(strcmp(token_type_c_to_representation(T_MACRO_EMBED), "#embed") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_LINE), "#line") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_ERROR), "#error") == 0);
-    assert(strcmp(token_type_c_to_representation(T_MACRO_WARNING), "#warning") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_PRAGMA), "#pragma") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_DEFINDED), "#defined") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO___HAS_INCLUDE), "__has_include") == 0);

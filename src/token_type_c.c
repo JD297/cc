@@ -124,7 +124,6 @@ const char *token_type_c_to_representation(TokenType_C type)
         case T_MACRO_EMBED: return "#embed";
         case T_MACRO_LINE: return "#line";
         case T_MACRO_ERROR: return "#error";
-        case T_MACRO_WARNING: return "#warning";
         case T_MACRO_PRAGMA: return "#pragma";
         case T_MACRO_DEFINDED: return "#defined";
         case T_MACRO___HAS_INCLUDE: return "__has_include";
