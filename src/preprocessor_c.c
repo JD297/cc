@@ -316,7 +316,7 @@ int preprocessor_c_parse_whitespace(Preprocessor_C *preprocessor, TokenList_C *t
         return 0;
     }
     
-    for (Token_C **token = (*ptoken); token != tokens->elements; token--) {
+    for (Token_C **token = (*ptoken) - 1; token != tokens->elements; token--) {
         if ((*token)->type == T_WHITESPACE_LINE_FEED) {
             if (token_list_c_push_back(preprocessor->output, (*token)) == -1) {
                 preprocessor->error = strerror(errno);
