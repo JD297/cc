@@ -130,44 +130,176 @@ extern int preprocessor_c_parse_include(Preprocessor_C *preprocessor, TokenList_
 
 /**
  * Replaces a token T_IDENTIFIER if it is in Preprocessor_C->defines.
- * The T_IDENTIFIER will be replaced by tokens in Preprocessor_C->defines->elements[i] with the index: "i" where the identifier is found Preprocessor_C->defines->elements_names[i]
- * the search will take place in reversed order, so if a define exists multiple times this would act like a override of this value.
- * TODO
+ *
+ * DESCRIPTION
+ *     This function searches for a token of type T_IDENTIFIER within the 
+ *     Preprocessor_C->defines list. If a matching definition is found, 
+ *     the T_IDENTIFIER is replaced with the corresponding define tokens, 
+ *     which are then stored in the output. If no matching definition is 
+ *     found, the original identifier is retained and stored in the output 
+ *     as is.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
  */
 extern int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
+ * Processes a token of type T_MACRO_DEFINE.
+ *
+ * DESCRIPTION
+ *     This function processes a token of type T_MACRO_DEFINE by first 
+ *     skipping all whitespace tokens that follow it. If the identifier 
+ *     of the token is not of type T_IDENTIFIER, -1 is returned, and 
+ *     Preprocessor_C->error is set to "macro names must be identifiers". 
+ *     The value (name) of the T_IDENTIFIER token is then temporarily 
+ *     stored. A TokenList_C is allocated to hold subsequent tokens. 
+ *     These tokens are stored until either a T_WHITESPACE_LINE_FEED or 
+ *     T_EOF token is encountered. Only a single T_WHITESPACE_SPACE is 
+ *     added between the found tokens if a T_WHITESPACE_X token is 
+ *     encountered. The resulting TokenList_C is then added to the 
+ *     TokenListNamed_C preprocessor->defines with the name of the 
+ *     originally discovered identifier.
+ *
+ * NOTES
+ *     An empty TokenList is also valid, which can be useful for checking 
+ *     if a name is defined, as is the case with the macros T_MACRO_IFDEF 
+ *     and T_MACRO_IFNDEF.
+ *
  * TODO
+ *     The function currently does not handle the case where a 
+ *     T_WHITESPACE_LINE_FEED can be escaped with '\' for multi-line 
+ *     defines.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
  */
 extern int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
- * TODO
+ * Parses the T_MACRO_IFNDEF token and processes conditional compilation.
+ *
+ * DESCRIPTION
+ *     This function skips all T_WHITESPACE_SPACE and T_WHITESPACE_TAB tokens 
+ *     until a non-whitespace token is found. It then checks if the next token 
+ *     is of type T_IDENTIFIER. If not, it sets 
+ *     Preprocessor_C->error to "macro names must be identifiers" and returns -1. 
+ *     The value of the found T_IDENTIFIER token is stored for later use. 
+ *     The function then searches for the next T_MACRO_ENDIF token. If the 
+ *     depth is 0, it checks if the identifier's value exists in 
+ *     Preprocessor_C->defines. If other T_MACRO tokens that also use 
+ *     T_MACRO_IFNDEF are encountered, the depth is incremented. 
+ *     If the depth is greater than 0 and no T_MACRO_ENDIF is found, 
+ *     Preprocessor_C->error is set to "unterminated #ifndef" and -1 is returned.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
+ *
+ * SEE ALSO
+ *     include/preprocessor_c.h: preprocessor_c_parse_define
  */
 extern int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
+
 /**
- * TODO
+ * Skips all whitespace tokens and processes line breaks.
+ *
+ * DESCRIPTION
+ *     This function skips all whitespace tokens in the TokenList_C, 
+ *     ensuring that the pointer ptoken does not point to any whitespace 
+ *     tokens. It then checks if the last added element is a line break; 
+ *     if so, the function exits. Otherwise, it traverses backward through 
+ *     the current file until it encounters either a non-whitespace token 
+ *     or the beginning of the list. If a line break is found during this 
+ *     traversal, the function exits and adds a line break to the output. 
+ *     If no line break is found, a space is added instead.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
  */
 extern int preprocessor_c_parse_whitespace(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
- * TODO
+ * Calls the appropriate subroutines for the current token pointed to by ptoken.
+ *
+ * DESCRIPTION
+ *     This function processes the token currently pointed to by ptoken. 
+ *     By default, ptoken is added to the Preprocessor_C->output list, 
+ *     and the cursor is incremented by 1. If ptoken is of type T_EOF, 
+ *     a no-operation (NOP) is performed, and 0 is returned. Tokens that 
+ *     are used for optimization are skipped (the cursor is incremented by 
+ *     1, and 0 is returned). All types of comments are also skipped. 
+ *     If ptoken is of type T_MACRO_ENDIF, it is similarly skipped. 
+ *     Unimplemented tokens are handled as errors by calling assert(3), 
+ *     and the message "TokenType_C (ptoken->type) not implemented!" 
+ *     should be displayed. The program will terminate, and the function 
+ *     will not return. T_IDENTIFIER and T_MACRO_X tokens are processed 
+ *     separately in their own subroutines.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
+ *
+ * SEE ALSO
+ *     include/preprocessor_c.h: preprocessor_c_parse_include
+ *     include/preprocessor_c.h: preprocessor_c_parse_identifier
+ *     include/preprocessor_c.h: preprocessor_c_parse_define
+ *     include/preprocessor_c.h: preprocessor_c_parse_ifndef
+ *     include/preprocessor_c.h: preprocessor_c_parse_whitespace
  */
 extern int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
- * TODO
+ * Parses a single source file given by filepath, appending the result to 
+ * Preprocessor_C->output list.
+ *
+ * DESCRIPTION
+ *     This function creates a Lexer_C using the provided filepath and 
+ *     adds it to the Preprocessor_C->lexers list. It then calls 
+ *     lexer_c_run with the created lexer to process the file. The resulting 
+ *     tokens are processed using the function preprocessor_c_parse_next 
+ *     until a token of type T_EOF is encountered. The parsed tokens are 
+ *     appended to the Preprocessor_C->output list.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
+ *
+ * NOTES
+ *     This function is called by preprocessor_c_run.
+ *
+ * SEE ALSO
+ *     include/preprocessor_c.h: preprocessor_c_run(Preprocessor_C *preprocessor)
+ *     include/preprocessor_c.h: preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
  */
 extern int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* filepath);
 
 /**
  * Runs the preprocessing process for the given Preprocessor_C.
- * 
- * TODO
+ *
+ * DESCRIPTION
+ *     This function iterates over all source files listed in 
+ *     Preprocessor_C->source_files and processes each file by calling 
+ *     preprocessor_c_parse for parsing. The preprocessing steps are 
+ *     executed in the order the source files are provided.
  *
  * RETURN VALUE
- *	Return 0 on success. On error, -1 is returned, and Preprocessor_C->error is set to indicate the error.
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
+ *
+ * SEE ALSO
+ *     include/preprocessor_c.h: preprocessor_c_parse(Preprocessor_C *preprocessor, const char* filepath)
  */
 extern int preprocessor_c_run(Preprocessor_C *preprocessor);
 

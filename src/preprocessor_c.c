@@ -110,8 +110,6 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, TokenList_C *toke
     return preprocessor_c_parse(preprocessor, include_file);
 }
 
-// wenn identifier vorkommt in Preprocessor_C->defines
-// dann füge anstatt des akutllen tokens alle tokens dieses define indexes hinzu
 int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
 {
     const Token_C *identifier = (**ptoken);
@@ -302,10 +300,6 @@ int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *token
     return 0;
 }
 
-// überspringe ersteinmal alle whitespaces, so dass ptoken kein whitespace mehr ist
-// überprüfe ob das zu letzt hinzugefügte element ein zeilenumbruch ist, wenn ja dann breche ab asonsten
-// gehe dann solange zurück (wieder von der aktuellen datei), bis entweder kein whitespace mehr kommt oder der anfang der liste wieder erreicht ist
-// wenn dabei ein zeilenumbruch gefunden wird, breche ab und füge einen zeilenumbruch hinzu, ansonsten füge ein leerzeichen hinzu
 int preprocessor_c_parse_whitespace(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
 {
     while (token_type_c_is_in_expected_token_types((**ptoken)->type, TOKEN_TYPE_C_ALL_WHITESPACES)) {
