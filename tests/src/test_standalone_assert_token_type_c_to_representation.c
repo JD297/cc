@@ -145,7 +145,6 @@ int main()
     assert(strcmp(token_type_c_to_representation(T_MACRO___HAS_EMBED), "__has_embed") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO___HAS_C_ATTRIBUTE), "__has_c_attribute") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_ASM), "__asm__") == 0);
-    assert(strcmp(token_type_c_to_representation(T_MACRO_FORTRAN), "__fortran__") == 0);
 
     /* WHITESPACE */
     assert(strcmp(token_type_c_to_representation(T_WHITESPACE_TAB), "\t") == 0);

@@ -156,7 +156,6 @@ typedef enum TokenType_C {
     T_MACRO___HAS_EMBED,
     T_MACRO___HAS_C_ATTRIBUTE,
     T_MACRO_ASM,
-    T_MACRO_FORTRAN,
 
     /* WHITESPACE */
     T_WHITESPACE_TAB,

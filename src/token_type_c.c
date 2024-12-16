@@ -131,7 +131,6 @@ const char *token_type_c_to_representation(TokenType_C type)
         case T_MACRO___HAS_EMBED: return "__has_embed";
         case T_MACRO___HAS_C_ATTRIBUTE: return "__has_c_attribute";
         case T_MACRO_ASM: return "__asm__";
-        case T_MACRO_FORTRAN: return "__fortran__";
         case T_WHITESPACE_TAB: return "\t";
         case T_WHITESPACE_LINE_FEED: return "\n";
         case T_WHITESPACE_LINE_TABULATION: return "\v";
