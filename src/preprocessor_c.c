@@ -372,8 +372,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_DEFINDED:
         case T_MACRO___HAS_INCLUDE:
         case T_MACRO___HAS_EMBED:
-        case T_MACRO___HAS_C_ATTRIBUTE:
-        case T_MACRO_ASM: {
+        case T_MACRO___HAS_C_ATTRIBUTE: {
             assert(0 && "TokenType_C (ptoken->type) not implemented!");
         }
         /* WHITESPACES */
