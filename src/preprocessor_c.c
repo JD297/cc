@@ -455,6 +455,12 @@ int preprocessor_c_run(Preprocessor_C *preprocessor)
             return -1;
         }
     }
+    
+    if (token_list_c_push_back(preprocessor->output, token_c_create(T_EOF, "\0")) == -1) {
+        preprocessor->error = strerror(errno);
+
+        return -1;
+    }
 
     return 0;
 }

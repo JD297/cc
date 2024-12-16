@@ -1,3 +1,5 @@
+#define ASSET_TEST_TOKEN_LIST_SOURCE_HELLO_WORLD_FILEPATH "tests/assets/asset_test_hello_world.c"
+
 #define list asset_test_token_list_hello_world
 
 TokenList_C *list = token_list_c_create();
