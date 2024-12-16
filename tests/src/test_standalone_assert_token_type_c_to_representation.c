@@ -137,6 +137,7 @@ int main()
     assert(strcmp(token_type_c_to_representation(T_MACRO_INCLUDE), "#include") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_EMBED), "#embed") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_LINE), "__LINE__") == 0);
+    assert(strcmp(token_type_c_to_representation(T_MACRO_FILE), "__FILE__") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_ERROR), "#error") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_PRAGMA), "#pragma") == 0);
     assert(strcmp(token_type_c_to_representation(T_MACRO_DEFINDED), "#defined") == 0);

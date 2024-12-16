@@ -366,6 +366,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_UNDEF:
         case T_MACRO_EMBED:
         case T_MACRO_LINE:
+        case T_MACRO_FILE:
         case T_MACRO_ERROR:
         case T_MACRO_PRAGMA:
         case T_MACRO_DEFINDED:
