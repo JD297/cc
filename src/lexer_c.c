@@ -327,6 +327,16 @@ void *lexer_c_next_with_representation(Lexer_C *lexer, TokenType_C type)
 
     char *found = strstr(lexer->pbuf, token_type_representation);
 
+    if (found != NULL) {
+        const char *found_after = found + strlen(token_type_representation);
+
+        if (token_type_c_is_in_expected_token_types(type, TOKEN_TYPE_C_ALNUM_REPRESENTATION)) {
+            if (isalnum(*found_after) != 0 || *found_after == '_') {
+                return LEXER_NEXT_SKIPPED;
+            }
+        }
+    }
+
     if (found == lexer->pbuf && (type != T_EOF) == (*lexer->pbuf != '\0')) {
         lexer->pbuf += strlen(token_type_representation);
 

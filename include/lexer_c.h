@@ -239,22 +239,20 @@ extern void *lexer_c_next_number(Lexer_C *lexer);
  *     attempts to identify and create a corresponding Token_C. It 
  *     handles various token types that can be easily represented, 
  *     such as T_PLUS, which corresponds to the "+" symbol. 
- *     However, a number cannot be represented in the same way, 
- *     as it has a variable value.
+ *     If the token is one of TOKEN_TYPE_C_ALNUM_REPRESENTATION, 
+ *     and the found character is followed by an alphanumeric character 
+ *     or an underscore ('_'), the function returns LEXER_NEXT_SKIPPED, 
+ *     indicating that the pattern was not matched, and pbuf will remain unchanged.
  *
  * RETURN VALUE
  *     On success, a pointer to the created Token_C is returned, or the 
  *     value LEXER_NEXT_SKIPPED (i.e., (void *) 0), which indicates that 
  *     the pattern was not matched (pbuf will stay the same).
  *
- * NOTES
- *     If Token_C->type is T_EOF, it indicates that the input file has been 
- *     lexed successfully. In this case, when this function is called by 
- *     lexer_c_run, the method should return 0.
- *
  * SEE ALSO
- *     include/lexer_c.h: lexer_c_run(Lexer_C *lexer)
- *     include/lexer_c.h: lexer_c_next(Lexer_C *lexer)
+ *     include/lexer_c.h: lexer_c_run
+ *     include/lexer_c.h: lexer_c_next
+ *     include/token_type_c_is_in_expected_token_types
  */
 extern void *lexer_c_next_with_representation(Lexer_C *lexer, TokenType_C type);
 
