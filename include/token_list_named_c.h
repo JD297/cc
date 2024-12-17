@@ -66,5 +66,20 @@ extern void *token_list_named_c_create();
  */
 extern int token_list_named_c_push_back(TokenListNamed_C *list, TokenList_C *element, char *name);
 
+/**
+ * Retrieves an element from a TokenListNamed_C by its associated name.
+ *
+ * DESCRIPTION
+ *     This function searches for a token in the TokenListNamed_C structure 
+ *     that matches the specified name. If a matching token is found, a pointer 
+ *     to the corresponding TokenList_C is returned. If no matching token is 
+ *     found, NULL is returned.
+ *
+ * RETURN VALUE
+ *     On success, returns a pointer to the TokenList_C associated with the 
+ *     specified name. If the name is not found, returns NULL.
+ */
+extern TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *name);
+
 #endif
 

@@ -4,6 +4,7 @@
 #include "token_list_c.h"
 
 #include <stddef.h>
+#include <string.h>
 #include <sys/mman.h>
 
 void *token_list_named_c_create()
@@ -47,5 +48,19 @@ int token_list_named_c_push_back(TokenListNamed_C *list, TokenList_C *element, c
     list->num++;
 
     return 0;
+}
+
+TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *name)
+{
+    for (size_t i = 0; i < list->num; i++) {
+        if (list->elements_names[i] == NULL) {
+            continue;
+        }
+
+        if (strcmp(list->elements_names[i], name) == 0) {
+            return list->elements[i];
+        }
+    }
+    return NULL;
 }
 

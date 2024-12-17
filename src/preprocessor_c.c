@@ -114,22 +114,7 @@ int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, TokenList_C *t
 {
     const Token_C *identifier = (**ptoken);
 
-    const char *identifier_name = identifier->value;
-
-    TokenList_C *define_tokens = NULL;
-
-    // TODO use get method of list named 
-    for (size_t i = 0; i < preprocessor->defines->num; i++) {
-        if (preprocessor->defines->elements_names[i] == NULL) {
-            continue;
-        }
-
-        if (strcmp(preprocessor->defines->elements_names[i], identifier_name) == 0) {
-            define_tokens = preprocessor->defines->elements[i];
-            
-            break;
-        }
-    }
+    TokenList_C *define_tokens = token_list_named_c_get(preprocessor->defines, identifier->value);
 
     (*ptoken)++;
 
@@ -283,18 +268,11 @@ int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *token
         
         return -1;
     }
-    
-    // TODO use this as get(const char *name) method in list_named
-    for (size_t i = 0; i < preprocessor->defines->num; i++) {
-        if (preprocessor->defines->elements_names[i] == NULL) {
-            continue;
-        }
 
-        if (strcmp(preprocessor->defines->elements_names[i], identifier) == 0) {
-            (*ptoken) = endif + 1;
-        
-            return 0;
-        }
+    TokenList_C *define_tokens = token_list_named_c_get(preprocessor->defines, identifier);
+
+    if (define_tokens != NULL) {
+        (*ptoken) = endif + 1;
     }
 
     return 0;
