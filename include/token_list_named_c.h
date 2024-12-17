@@ -81,5 +81,20 @@ extern int token_list_named_c_push_back(TokenListNamed_C *list, TokenList_C *ele
  */
 extern TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *name);
 
+/**
+ * Adds a named token list to a TokenListNamed_C.
+ *
+ * DESCRIPTION
+ *     This function adds the specified token list (element) to the TokenListNamed_C. 
+ *     The token list can be added either at the end of the list or in an empty (NULL) 
+ *     slot between the beginning and the end of the list. If a key (name) already 
+ *     exists, the existing entry will be overwritten with the new token list.
+ *
+ * RETURN VALUE
+ *     On success, returns 0. On error, returns -1 and sets errno to indicate 
+ *     the specific error encountered.
+ */
+extern int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, const char *name);
+
 #endif
 

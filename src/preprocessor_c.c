@@ -197,22 +197,8 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C *token
             return -1;
         }
     }
-    
-    // TODO use this as add(const char *name) method in list_named
-    // this tries to get the element with get method if its null that it pushes back else it overrides
-    for (size_t i = 0; i < preprocessor->defines->num; i++) {
-        if (preprocessor->defines->elements_names[i] == NULL) {
-            continue;
-        }
 
-        if (strcmp(preprocessor->defines->elements_names[i], identifier) == 0) {
-            preprocessor->defines->elements[i] = define_tokens;
-            
-            return 0;
-        }
-    }
-    
-    if (token_list_named_c_push_back(preprocessor->defines, define_tokens, identifier) == -1) {
+    if (token_list_named_c_add(preprocessor->defines, define_tokens, identifier) == -1) {
         preprocessor->error = strerror(errno);
 
         return -1;

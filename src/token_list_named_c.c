@@ -64,3 +64,30 @@ TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *name)
     return NULL;
 }
 
+int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, const char *name)
+{
+    size_t null_element_index = list->num;
+
+    for (size_t i = 0; i < list->num; i++) {
+        if (list->elements_names[i] == NULL) {
+            null_element_index = i;
+        
+            break;
+        }
+
+        if (strcmp(list->elements_names[i], name) == 0) {
+            list->elements[i] = element;
+            
+            return 0;
+        }
+    }
+    
+    if (null_element_index == list->num) {
+        return token_list_named_c_push_back(list, element, name);
+    }
+    
+    list->elements[null_element_index] = element;
+    
+    return 0;
+}
+
