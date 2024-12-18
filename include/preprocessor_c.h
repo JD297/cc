@@ -181,6 +181,23 @@ extern int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, TokenLi
 extern int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
+ * Parses the T_MACRO_UNDEF token
+ *
+ *     This function processes a token of type T_MACRO_UNDEF by first 
+ *     skipping all whitespace tokens that follow it. If the following 
+ *     token is not of type T_IDENTIFIER, -1 is returned, and 
+ *     Preprocessor_C->error is set to "macro names must be identifiers". 
+ *     The element in preprocessor->defines will be removed if
+ *     a matching name was found.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
+ */
+extern int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
+
+/**
  * Parses the T_MACRO_IFNDEF token and processes conditional compilation.
  *
  * DESCRIPTION

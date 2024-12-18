@@ -207,6 +207,29 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C *token
     return 0;
 }
 
+int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
+{
+    (*ptoken)++;
+
+    while (token_type_c_is_in_expected_token_types((**ptoken)->type, 2, T_WHITESPACE_SPACE, T_WHITESPACE_TAB)) {
+        (*ptoken)++;
+    }
+
+    if ((**ptoken)->type != T_IDENTIFIER) {
+        preprocessor->error = "macro names must be identifiers";
+
+        return -1;
+    }
+
+    const char *identifier = (**ptoken)->value;
+
+    token_list_named_c_remove(preprocessor->defines, identifier);
+
+    (*ptoken)++;
+
+    return 0;
+}
+
 int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
 {
     (*ptoken)++;
@@ -317,6 +340,9 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_DEFINE: {
             return preprocessor_c_parse_define(preprocessor, tokens, ptoken);
         }
+        case T_MACRO_UNDEF: {
+            return preprocessor_c_parse_undef(preprocessor, tokens, ptoken);
+        }
         case T_MACRO_IFNDEF: {
             return preprocessor_c_parse_ifndef(preprocessor, tokens, ptoken);
         }
@@ -327,7 +353,6 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_ELIF:
         case T_MACRO_ELSE:
         case T_MACRO_IFDEF:
-        case T_MACRO_UNDEF:
         case T_MACRO_EMBED:
         case T_MACRO_LINE:
         case T_MACRO_FILE:
