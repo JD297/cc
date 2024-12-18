@@ -96,5 +96,13 @@ extern TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *n
  */
 extern int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, const char *name);
 
+/**
+ * Removed an element from a TokenListNamed_C.
+ *
+ * DESCRIPTION
+ *     This function removes an element by name from the TokenListNamed_C.
+ */
+extern void token_list_named_c_remove(TokenListNamed_C *list, const char *name);
+
 #endif
 

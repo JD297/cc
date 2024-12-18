@@ -91,3 +91,17 @@ int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, const c
     return 0;
 }
 
+void token_list_named_c_remove(TokenListNamed_C *list, const char *name)
+{
+    for (size_t i = 0; i < list->num; i++) {
+        if (list->elements_names[i] == NULL) {
+            continue;
+        }
+
+        if (strcmp(list->elements_names[i], name) == 0) {
+            list->elements[i] = NULL;
+            list->elements_names[i] = NULL;
+        }
+    }
+}
+
