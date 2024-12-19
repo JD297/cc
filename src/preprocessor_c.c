@@ -343,13 +343,13 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_UNDEF: {
             return preprocessor_c_parse_undef(preprocessor, tokens, ptoken);
         }
+        case T_MACRO_ELIFNDEF:
         case T_MACRO_IFNDEF: {
             return preprocessor_c_parse_ifndef(preprocessor, tokens, ptoken);
         }
         /* NOT IMPLEMENTED */
         case T_MACRO_IF:
         case T_MACRO_ELIFDEF:
-        case T_MACRO_ELIFNDEF:
         case T_MACRO_ELIF:
         case T_MACRO_ELSE:
         case T_MACRO_IFDEF:
