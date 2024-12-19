@@ -351,7 +351,6 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_IF:
         case T_MACRO_ELIFDEF:
         case T_MACRO_ELIF:
-        case T_MACRO_ELSE:
         case T_MACRO_IFDEF:
         case T_MACRO_EMBED:
         case T_MACRO_LINE:
@@ -374,7 +373,8 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_WHITESPACE_NEXT_LINE: {
             return preprocessor_c_parse_whitespace(preprocessor, tokens, ptoken);
         }
-        /* SKIP T_MACRO_ENDIF */
+        /* SKIP T_MACRO_ENDIF and T_MACRO_ELSE */
+        case T_MACRO_ELSE:
         case T_MACRO_ENDIF:
         /* SKIP COMMENTS */
         case T_COMMENT_LINE:
