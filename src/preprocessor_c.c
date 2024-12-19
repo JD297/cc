@@ -230,7 +230,7 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, TokenList_C *tokens
     return 0;
 }
 
-int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
+int preprocessor_c_parse_if_defined(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken, const int is_inverted)
 {
     (*ptoken)++;
 
@@ -251,9 +251,10 @@ int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *token
     size_t depth = 0;
 
     Token_C **endif = NULL;
+    Token_C **condition_else = NULL;
     
     for (Token_C **token = (*ptoken); (*token)->type != T_EOF; token++) {
-        if (token_type_c_is_in_expected_token_types((*token)->type, 3, T_MACRO_IFDEF, T_MACRO_IFNDEF, T_MACRO_IF)) {
+        if (token_type_c_is_in_expected_token_types((*token)->type, TOKEN_TYPE_C_MACRO_IF_CONDITIONS)) {
             depth++;
 
             continue;
@@ -270,6 +271,12 @@ int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *token
 
             continue;
         }
+
+        if (token_type_c_is_in_expected_token_types((*token)->type, TOKEN_TYPE_C_MACRO_ELSE_CONDITIONS) == 1 && depth == 0 && condition_else == NULL) {
+            condition_else = token;
+        
+            continue;
+        }
     }
 
     if (endif == NULL) {
@@ -280,11 +287,36 @@ int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *token
 
     TokenList_C *define_tokens = token_list_named_c_get(preprocessor->defines, identifier);
 
-    if (define_tokens != NULL) {
-        (*ptoken) = endif + 1;
+    if ((define_tokens == NULL) ^ (is_inverted == 1)) {
+        if (condition_else != NULL) {
+            (*ptoken) = condition_else;
+        } else {
+            (*ptoken) = endif + 1;
+        }
+        
+        return 0;
     }
 
+    while (!token_type_c_is_in_expected_token_types((**ptoken)->type, TOKEN_TYPE_C_MACRO_ELSE_CONDITIONS) 
+           && (**ptoken)->type != T_MACRO_ENDIF) {
+        if (preprocessor_c_parse_next(preprocessor, tokens, ptoken) == -1) {
+            return -1;
+        }
+    }
+    
+    (*ptoken) = endif + 1;
+
     return 0;
+}
+
+int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
+{
+    return preprocessor_c_parse_if_defined(preprocessor, tokens, ptoken, 1);
+}
+
+int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
+{
+    return preprocessor_c_parse_if_defined(preprocessor, tokens, ptoken, 0);
 }
 
 int preprocessor_c_parse_whitespace(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
@@ -347,11 +379,13 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_IFNDEF: {
             return preprocessor_c_parse_ifndef(preprocessor, tokens, ptoken);
         }
+        case T_MACRO_ELIFDEF:
+        case T_MACRO_IFDEF: {
+            return preprocessor_c_parse_ifdef(preprocessor, tokens, ptoken);
+        }
         /* NOT IMPLEMENTED */
         case T_MACRO_IF:
-        case T_MACRO_ELIFDEF:
         case T_MACRO_ELIF:
-        case T_MACRO_IFDEF:
         case T_MACRO_EMBED:
         case T_MACRO_LINE:
         case T_MACRO_FILE:

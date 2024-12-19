@@ -198,7 +198,7 @@ extern int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C
 extern int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
- * Parses the T_MACRO_IFNDEF token and processes conditional compilation.
+ * Parses conditional defines (T_MACRO_IFNDEF, T_MACRO_ELIFNDEF, T_MACRO_IFDEF, and T_MACRO_ELIFDEF).
  *
  * DESCRIPTION
  *     This function skips all T_WHITESPACE_SPACE and T_WHITESPACE_TAB tokens 
@@ -207,11 +207,29 @@ extern int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, TokenList_C 
  *     Preprocessor_C->error to "macro names must be identifiers" and returns -1. 
  *     The value of the found T_IDENTIFIER token is stored for later use. 
  *     The function then searches for the next T_MACRO_ENDIF token. If the 
- *     depth is 0, it checks if the identifier's value exists in 
- *     Preprocessor_C->defines. If other T_MACRO tokens that also use 
- *     T_MACRO_IFNDEF are encountered, the depth is incremented. 
+ *     depth is 0, it checks for other T_MACRO tokens that also use 
+ *     conditional statements (T_MACRO_IFDEF, T_MACRO_IFNDEF, T_MACRO_IF), 
+ *     incrementing the depth as necessary. 
  *     If the depth is greater than 0 and no T_MACRO_ENDIF is found, 
  *     Preprocessor_C->error is set to "unterminated #ifndef" and -1 is returned.
+ *
+ *     In the loop where the T_MACRO_ENDIF token is searched for, the next 
+ *     T_MACRO_ELSE, T_MACRO_ELIF, T_MACRO_ELIFNDEF, or T_MACRO_ELIFDEF token 
+ *     is also determined if the depth is 0.
+ *
+ *     If the condition is true, the function parses the next tokens until a 
+ *     T_MACRO_ELSE, T_MACRO_ELIF, T_MACRO_ELIFNDEF, T_MACRO_ELIFDEF, or 
+ *     T_MACRO_ENDIF token occurs, and then jumps to the identified 
+ *     T_MACRO_ENDIF.
+ *
+ *     If the condition is not true, it jumps to the next else condition or 
+ *     to endif, if no else condition exists.
+ *
+ * NOTE
+ *     The condition is true when the stored identifier value exists in 
+ *     Preprocessor_C->defines and is_inverted is 0. The condition could also 
+ *     be true if the identifier does not exist in Preprocessor_C->defines and 
+ *     is_inverted is 1.
  *
  * RETURN VALUE
  *     Returns 0 on success. On error, -1 is returned, and 
@@ -221,8 +239,37 @@ extern int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, TokenList_C 
  * SEE ALSO
  *     include/preprocessor_c.h: preprocessor_c_parse_define
  */
+extern int preprocessor_c_parse_if_defined(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken, const int is_inverted);
+
+/**
+ * Parses the T_MACRO_IFNDEF and T_MACRO_ELIFNDEF token
+ *
+ * The function preprocessor_c_parse_if_defined is called with is_inverted = 1.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
+ *
+ * SEE ALSO
+ *     include/preprocessor_c.h: preprocessor_c_parse_if_defined
+ */
 extern int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
+/**
+ * Parses the T_MACRO_IFDEF and T_MACRO_ELIFDEF token
+ *
+ * The function preprocessor_c_parse_if_defined is called with is_inverted = 0.
+ *
+ * RETURN VALUE
+ *     Returns 0 on success. On error, -1 is returned, and 
+ *     Preprocessor_C->error is set to indicate the specific error 
+ *     encountered.
+ *
+ * SEE ALSO
+ *     include/preprocessor_c.h: preprocessor_c_parse_if_defined
+ */
+extern int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
  * Skips all whitespace tokens and processes line breaks.
