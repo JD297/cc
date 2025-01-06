@@ -9,6 +9,8 @@
 
 #define FREE(X) munmap(X, sizeof(X))
 
+#define test_token_c_create(T, S) token_c_create((T), (S), strlen((S)))
+
 int main()
 {
     LexerList_C *list;
@@ -24,7 +26,7 @@ int main()
         assert(list->elements[list->num-1]->tokens->len == LIST_INIT_LEN);
         
         if (j == 0 && i == 0) {
-            Token_C *token = token_c_create(T_IDENTIFIER, "test_token");
+            Token_C *token = test_token_c_create(T_IDENTIFIER, "test_token");
             token_list_c_push_back(list->elements[list->num-1]->tokens, token);
         }
     } }

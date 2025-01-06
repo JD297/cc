@@ -33,7 +33,7 @@ int main()
 
     for (size_t i = 0; i < token_list_expected_preprocessed->num; i++) {
         assert(token_list_expected_preprocessed->elements[i]->type == preprocessor->output->elements[i]->type);
-        assert(strcmp(token_list_expected_preprocessed->elements[i]->value, preprocessor->output->elements[i]->value) == 0);
+        assert(strncmp(token_list_expected_preprocessed->elements[i]->value, preprocessor->output->elements[i]->value, token_list_expected_preprocessed->elements[i]->len) == 0);
     }
 
     FREE(preprocessor);

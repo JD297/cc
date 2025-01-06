@@ -9,6 +9,8 @@
 
 #define FREE(X) munmap(X, sizeof(X))
 
+#define test_token_c_create(T, S) token_c_create((T), (S), strlen((S)))
+
 int main()
 {
     #include "asset_test_preprocessor_c_create_arguments.h"
@@ -20,10 +22,10 @@ int main()
     TokenList_C *list;
     
     assert((list = token_list_c_create()) != LIST_CREATION_FAILED);
-    assert(token_list_c_push_back(list, token_c_create(T_MACRO_UNDEF, "#undef")) == 0);
-    assert(token_list_c_push_back(list, token_c_create(T_WHITESPACE_SPACE, " ")) == 0);
-    assert(token_list_c_push_back(list, token_c_create(T_IDENTIFIER, "TARGET")) == 0);
-    assert(token_list_c_push_back(list, token_c_create(T_EOF, "\0")) == 0);
+    assert(token_list_c_push_back(list, test_token_c_create(T_MACRO_UNDEF, "#undef")) == 0);
+    assert(token_list_c_push_back(list, test_token_c_create(T_WHITESPACE_SPACE, " ")) == 0);
+    assert(token_list_c_push_back(list, test_token_c_create(T_IDENTIFIER, "TARGET")) == 0);
+    assert(token_list_c_push_back(list, test_token_c_create(T_EOF, "\0")) == 0);
 
     Token_C **ptoken = list->elements;
     

@@ -79,7 +79,7 @@ extern int token_list_named_c_push_back(TokenListNamed_C *list, TokenList_C *ele
  *     On success, returns a pointer to the TokenList_C associated with the 
  *     specified name. If the name is not found, returns NULL.
  */
-extern TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *name);
+extern TokenList_C *token_list_named_c_get(TokenListNamed_C *list, char *name);
 
 /**
  * Adds a named token list to a TokenListNamed_C.
@@ -94,7 +94,7 @@ extern TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *n
  *     On success, returns 0. On error, returns -1 and sets errno to indicate 
  *     the specific error encountered.
  */
-extern int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, const char *name);
+extern int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, char *name);
 
 /**
  * Removed an element from a TokenListNamed_C.
@@ -102,7 +102,7 @@ extern int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, 
  * DESCRIPTION
  *     This function removes an element by name from the TokenListNamed_C.
  */
-extern void token_list_named_c_remove(TokenListNamed_C *list, const char *name);
+extern void token_list_named_c_remove(TokenListNamed_C *list, char *name);
 
 #endif
 

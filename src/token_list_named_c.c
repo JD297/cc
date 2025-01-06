@@ -50,7 +50,7 @@ int token_list_named_c_push_back(TokenListNamed_C *list, TokenList_C *element, c
     return 0;
 }
 
-TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *name)
+TokenList_C *token_list_named_c_get(TokenListNamed_C *list, char *name)
 {
     for (size_t i = 0; i < list->num; i++) {
         if (list->elements_names[i] == NULL) {
@@ -61,10 +61,11 @@ TokenList_C *token_list_named_c_get(TokenListNamed_C *list, const char *name)
             return list->elements[i];
         }
     }
+
     return NULL;
 }
 
-int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, const char *name)
+int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, char *name)
 {
     size_t null_element_index = list->num;
 
@@ -91,7 +92,7 @@ int token_list_named_c_add(TokenListNamed_C *list, TokenList_C *element, const c
     return 0;
 }
 
-void token_list_named_c_remove(TokenListNamed_C *list, const char *name)
+void token_list_named_c_remove(TokenListNamed_C *list, char *name)
 {
     for (size_t i = 0; i < list->num; i++) {
         if (list->elements_names[i] == NULL) {
@@ -99,8 +100,12 @@ void token_list_named_c_remove(TokenListNamed_C *list, const char *name)
         }
 
         if (strcmp(list->elements_names[i], name) == 0) {
+            munmap(list->elements_names[i], sizeof(char) * (strlen(name) + 1));
+        
             list->elements[i] = NULL;
             list->elements_names[i] = NULL;
+            
+            return;
         }
     }
 }

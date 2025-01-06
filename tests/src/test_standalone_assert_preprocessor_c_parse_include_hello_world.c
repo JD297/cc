@@ -31,7 +31,7 @@ int main()
 
     for (size_t i = 0; i < asset_test_token_list_source_preprocessed_usr_include_stdio->num; i++) {
         assert(asset_test_token_list_source_preprocessed_usr_include_stdio->elements[i]->type == preprocessor->output->elements[i]->type);
-        assert(strcmp(asset_test_token_list_source_preprocessed_usr_include_stdio->elements[i]->value, preprocessor->output->elements[i]->value) == 0);
+        assert(strncmp(asset_test_token_list_source_preprocessed_usr_include_stdio->elements[i]->value, preprocessor->output->elements[i]->value, asset_test_token_list_source_preprocessed_usr_include_stdio->elements[i]->len) == 0);
     }
 
     FREE(preprocessor);

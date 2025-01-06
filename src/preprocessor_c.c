@@ -41,7 +41,7 @@ void *preprocessor_c_create(StrList *include_dirs, StrList *source_files, TokenL
 
 char *preprocessor_c_find_include_file(Preprocessor_C *preprocessor, const char *pathname, int mode)
 {
-    char *include_file = (char *)mmap(NULL, sizeof(char) * PATH_MAX * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    char *include_file = (char *)mmap(NULL, sizeof(char) * PATH_MAX, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
     for (int i = 0 - mode; i < (int)preprocessor->include_dirs->num; i++) {
         const char *include_dir;
@@ -99,7 +99,15 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, TokenList_C *toke
 
     int include_mode = (**ptoken)->type == T_STRING ? PREPROCESSOR_INCLUDE_MODE_STRING : PREPROCESSOR_INCLUDE_MODE_LIBRARARY;
     
-    const char *include_file = preprocessor_c_find_include_file(preprocessor, (**ptoken)->value, include_mode);
+    char *pathname = (char *)mmap(NULL, sizeof(char) * PATH_MAX, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    /**
+     *  <include.h> or "include.h"
+     *   ^-------^      ^-------^
+     */
+    strncpy(pathname, (**ptoken)->value + 1, (**ptoken)->len - 2);
+    
+    const char *include_file = preprocessor_c_find_include_file(preprocessor, pathname, include_mode);
     
     if (include_file == NULL) {
         return -1;
@@ -112,9 +120,19 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, TokenList_C *toke
 
 int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
 {
-    const Token_C *identifier = (**ptoken);
+    Token_C *identifier = (**ptoken);
+    
+    char *identifier_name = (char *)mmap(NULL, sizeof(char) * (identifier->len + 1), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-    TokenList_C *define_tokens = token_list_named_c_get(preprocessor->defines, identifier->value);
+    if (identifier_name == MAP_FAILED) {
+        return -1;
+    }
+    
+    strncpy(identifier_name, identifier->value, identifier->len);
+
+    TokenList_C *define_tokens = token_list_named_c_get(preprocessor->defines, identifier_name);
+
+    munmap(identifier_name, sizeof(char) * (identifier->len + 1));
 
     (*ptoken)++;
 
@@ -153,7 +171,7 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C *token
         return -1;
     }
 
-    const char *identifier = (**ptoken)->value;
+    Token_C *identifier = (**ptoken);
 
     (*ptoken)++;
 
@@ -184,7 +202,7 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C *token
         }
         
         if (define_tokens->num > 0 && whitespaces_skipped > 0) {
-            if (token_list_c_push_back(define_tokens, token_c_create(T_WHITESPACE_SPACE, " ")) == -1) {
+            if (token_list_c_push_back(define_tokens, token_c_create(T_WHITESPACE_SPACE, " ", 1)) == -1) {
                 preprocessor->error = strerror(errno);
 
                 return -1;
@@ -198,7 +216,15 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, TokenList_C *token
         }
     }
 
-    if (token_list_named_c_add(preprocessor->defines, define_tokens, identifier) == -1) {
+    char *define_name = (char *)mmap(NULL, sizeof(char) * (identifier->len + 1), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (define_name == MAP_FAILED) {
+        return -1;
+    }
+    
+    strncpy(define_name, identifier->value, identifier->len);
+
+    if (token_list_named_c_add(preprocessor->defines, define_tokens, define_name) == -1) {
         preprocessor->error = strerror(errno);
 
         return -1;
@@ -221,9 +247,19 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, TokenList_C *tokens
         return -1;
     }
 
-    const char *identifier = (**ptoken)->value;
+    Token_C *identifier = (**ptoken);
 
-    token_list_named_c_remove(preprocessor->defines, identifier);
+    char *define_name = (char *)mmap(NULL, sizeof(char) * (identifier->len + 1), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (define_name == MAP_FAILED) {
+        return -1;
+    }
+    
+    strncpy(define_name, identifier->value, identifier->len);
+
+    token_list_named_c_remove(preprocessor->defines, define_name);
+    
+    munmap(define_name, sizeof(char) * (identifier->len + 1));
 
     (*ptoken)++;
 
@@ -244,7 +280,7 @@ int preprocessor_c_parse_if_defined(Preprocessor_C *preprocessor, TokenList_C *t
         return -1;
     }
 
-    const char *identifier = (**ptoken)->value;
+    Token_C *identifier = (**ptoken);
 
     (*ptoken)++;
 
@@ -285,7 +321,17 @@ int preprocessor_c_parse_if_defined(Preprocessor_C *preprocessor, TokenList_C *t
         return -1;
     }
 
-    TokenList_C *define_tokens = token_list_named_c_get(preprocessor->defines, identifier);
+    char *define_name = (char *)mmap(NULL, sizeof(char) * (identifier->len + 1), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (define_name == MAP_FAILED) {
+        return -1;
+    }
+
+    strncpy(define_name, identifier->value, identifier->len);
+
+    TokenList_C *define_tokens = token_list_named_c_get(preprocessor->defines, define_name);
+    
+    munmap(define_name, sizeof(char) * (identifier->len + 1));
 
     if ((define_tokens == NULL) ^ (is_inverted == 1)) {
         if (condition_else != NULL) {
@@ -351,7 +397,7 @@ int preprocessor_c_parse_whitespace(Preprocessor_C *preprocessor, TokenList_C *t
         }
     }
     
-    if (token_list_c_push_back(preprocessor->output, token_c_create(T_WHITESPACE_SPACE, " ")) == -1) {
+    if (token_list_c_push_back(preprocessor->output, token_c_create(T_WHITESPACE_SPACE, " ", 1)) == -1) {
         preprocessor->error = strerror(errno);
 
         return -1;
@@ -481,7 +527,7 @@ int preprocessor_c_run(Preprocessor_C *preprocessor)
         }
     }
     
-    if (token_list_c_push_back(preprocessor->output, token_c_create(T_EOF, "\0")) == -1) {
+    if (token_list_c_push_back(preprocessor->output, token_c_create(T_EOF, "\0", 0)) == -1) {
         preprocessor->error = strerror(errno);
 
         return -1;

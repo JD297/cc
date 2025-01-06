@@ -1,5 +1,7 @@
 #include "token_type_c.h"
 
+#include <stddef.h>
+
 #ifndef JD297_CC_TOKEN_C_H
 #define JD297_CC_TOKEN_C_H
 
@@ -20,17 +22,11 @@
 typedef struct Token_C {
     TokenType_C type;
     const char *value;
+    size_t len;
 } Token_C;
 
 
 #define TOKEN_CREATION_FAILED (void *) -1
-
-#define T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN 4096
-#define T_IDENTIFIER_MAX_LEN 512
-#define T_COMMENT_LINE_MAX_LEN 256
-#define T_COMMENT_MULTILINE_MAX_LEN 4096 * 2
-#define T_STRING_MAX_LEN 4096
-#define T_NUMBER_MAX_LEN 20
 
 /**
  * Creates a Token_C structure from the specified type and value.
@@ -45,7 +41,7 @@ typedef struct Token_C {
  *     the value TOKEN_CREATION_FAILED (i.e., (void *) -1) is returned, and 
  *     errno is set to indicate the specific error.
  */
-extern void *token_c_create(TokenType_C type, const char *value);
+extern void *token_c_create(TokenType_C type, const char *value, size_t len);
 
 #endif
 

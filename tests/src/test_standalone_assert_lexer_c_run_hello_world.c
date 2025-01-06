@@ -8,7 +8,7 @@
 
 int main()
 {
-    #include "asset_test_hello_world.h"
+    #include "asset_test_token_list_source_hello_world.h"
 
     Lexer_C *lexer;
 
@@ -18,12 +18,15 @@ int main()
 
     assert(*lexer->pbuf == '\0');
     assert(lexer->tokens->len == LIST_INIT_LEN);
-    assert(lexer->tokens->num == ASSET_TEST_C_TOKEN_NUM);
+    assert(lexer->tokens->num == asset_test_token_list_hello_world->num);
     assert(lexer->error == NULL);
-
-    for (size_t i = 0; i < ASSET_TEST_C_TOKEN_NUM; i++) {
-        assert(lexer->tokens->elements[i]->type == asset_test_tokens[i].type);
-        assert(strcmp(lexer->tokens->elements[i]->value, asset_test_tokens[i].value) == 0);
+    
+    Token_C *token;
+    
+    for (size_t i = 0; i < asset_test_token_list_hello_world->num; i++) {
+        assert(lexer->tokens->elements[i]->type == asset_test_token_list_hello_world->elements[i]->type);
+        assert(lexer->tokens->elements[i]->len == asset_test_token_list_hello_world->elements[i]->len);
+        assert(strncmp(lexer->tokens->elements[i]->value, asset_test_token_list_hello_world->elements[i]->value, asset_test_token_list_hello_world->elements[i]->len) == 0);
     }
 
     FREE(lexer);

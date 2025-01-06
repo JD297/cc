@@ -71,7 +71,7 @@ void *lexer_c_next_macro_include_library_path(Lexer_C *lexer)
             return LEXER_NEXT_SKIPPED;
         }
 
-        char *start = lexer->pbuf + 1;
+        char *start = lexer->pbuf;
         char *end = strstr(start, ">");
 
         if (end == NULL) {
@@ -80,25 +80,13 @@ void *lexer_c_next_macro_include_library_path(Lexer_C *lexer)
             return LEXER_NEXT_FAILED;
         }
 
-        if (end == start) {
-            return LEXER_NEXT_SKIPPED;
-        }
+        end++;
 
-        size_t length = end - start;
+        const size_t length = end - start;
 
-        if (length >= T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN) {
-            lexer->error = "filename too long";
+        lexer->pbuf = end;
 
-            return LEXER_NEXT_FAILED;
-        }
-
-        char *value = (char *)mmap(NULL, T_MACRO_INCLUDE_LIBRARY_PATH_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-        strncpy(value, start, length);
-
-        lexer->pbuf = end + 1;
-
-        return token_c_create(T_MACRO_INCLUDE_LIBRARY_PATH, value);
+        return token_c_create(T_MACRO_INCLUDE_LIBRARY_PATH, start, length);
 	}
 
     return LEXER_NEXT_SKIPPED;
@@ -106,10 +94,11 @@ void *lexer_c_next_macro_include_library_path(Lexer_C *lexer)
 
 void *lexer_c_next_identifier(Lexer_C *lexer)
 {
+    char *start = lexer->pbuf;
     char *end;
 
-    for (end = lexer->pbuf; *end != '\0'; end++) {
-        if (end == lexer->pbuf) {
+    for (end = start; *end != '\0'; end++) {
+        if (end == start) {
             if (*end == '_' || isalpha(*end) != 0) {
                 continue;
             } else {
@@ -128,69 +117,47 @@ void *lexer_c_next_identifier(Lexer_C *lexer)
         return LEXER_NEXT_SKIPPED;
     }
 
-    size_t length = end - lexer->pbuf;
-
-    if (length >= T_IDENTIFIER_MAX_LEN) {
-        lexer->error = "identifier too long";
-
-        return LEXER_NEXT_FAILED;
-    }
-
-    char *value = (char *)mmap(NULL, T_IDENTIFIER_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-    strncpy(value, lexer->pbuf, length);
+    const size_t length = end - start;
 
     lexer->pbuf = end;
 
-    return token_c_create(T_IDENTIFIER, value);
+    return token_c_create(T_IDENTIFIER, start, length);
 }
 
 void *lexer_c_next_comment_line(Lexer_C *lexer)
 {
-    if (strlen(lexer->pbuf) < 2) {
-        return LEXER_NEXT_SKIPPED;
-    }
-
-    if (strncmp(lexer->pbuf, "//" , 2) != 0) {
-        return LEXER_NEXT_SKIPPED;
-    }
-
+    char *start = lexer->pbuf;
     char *end = NULL;
 
-    for (end = lexer->pbuf; *end != '\0' && *end != '\n'; end++);
-
-    if (end == NULL) {
-        return token_c_create(T_COMMENT_LINE, "//");
+    if (strlen(start) < 2) {
+        return LEXER_NEXT_SKIPPED;
     }
 
-    size_t length = end - lexer->pbuf;
-
-    if (length >= T_COMMENT_LINE_MAX_LEN) {
-        lexer->error = "comment too long";
-
-        return LEXER_NEXT_FAILED;
+    if (strncmp(start, "//" , 2) != 0) {
+        return LEXER_NEXT_SKIPPED;
     }
 
-    char *value = (char *)mmap(NULL, T_COMMENT_LINE_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    for (end = start; *end != '\0' && *end != '\n'; end++);
 
-    strncpy(value, lexer->pbuf, length);
+    const size_t length = end - start;
 
     lexer->pbuf = end;
 
-    return token_c_create(T_COMMENT_LINE, value);
+    return token_c_create(T_COMMENT_LINE, start, length);
 }
 
 void *lexer_c_next_comment_multiline(Lexer_C *lexer)
 {
-    if (strlen(lexer->pbuf) < 2) {
+    char *start = lexer->pbuf;
+
+    if (strlen(start) < 2) {
         return LEXER_NEXT_SKIPPED;
     }
 
-    if (strncmp(lexer->pbuf, "/*" , 2) != 0) {
+    if (strncmp(start, "/*" , 2) != 0) {
         return LEXER_NEXT_SKIPPED;
     }
 
-    const char *start = lexer->pbuf + 2;
     char *end = strstr(start, "*/");
 
     if (end == NULL) {
@@ -199,27 +166,13 @@ void *lexer_c_next_comment_multiline(Lexer_C *lexer)
         return LEXER_NEXT_FAILED;
     }
 
-    if (end == start) {
-        return token_c_create(T_COMMENT_MULTILINE, "/**/");
-    }
+    end += 2;
 
-    end++;
+    const size_t length = end - start;
 
-    size_t length = end + 1 - lexer->pbuf;
+    lexer->pbuf = end;
 
-    if (length >= T_COMMENT_MULTILINE_MAX_LEN) {
-        lexer->error = "multiline comment too long";
-
-        return LEXER_NEXT_FAILED;
-    }
-
-    char *value = (char *)mmap(NULL, T_COMMENT_MULTILINE_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-    strncpy(value, lexer->pbuf, length);
-
-    lexer->pbuf = end + 1;
-
-    return token_c_create(T_COMMENT_MULTILINE, value);
+    return token_c_create(T_COMMENT_MULTILINE, start, length);
 }
 
 void *lexer_c_next_string(Lexer_C *lexer)
@@ -228,14 +181,10 @@ void *lexer_c_next_string(Lexer_C *lexer)
         return LEXER_NEXT_SKIPPED;
     }
 
-    char *start = lexer->pbuf + 1;
+    char *start = lexer->pbuf;
     char *end;
 
-    for (end = start; *end != '\0'; end++) {
-        if (start == end && *start == '"') {
-            return token_c_create(T_STRING, "");
-        }
-
+    for (end = start + 1; *end != '\0'; end++) {
         if (*end == '"' && *end - 1 == '\\') {
             continue;
         }
@@ -251,21 +200,13 @@ void *lexer_c_next_string(Lexer_C *lexer)
         }
     }
 
-    size_t length = end - start;
+    end++;
 
-    if (length >= T_STRING_MAX_LEN) {
-        lexer->error = "string too long";
+    const size_t length = end - start;
 
-        return LEXER_NEXT_FAILED;
-    }
+    lexer->pbuf = end;
 
-    char *value = (char *)mmap(NULL, T_STRING_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-    strncpy(value, start, length);
-
-    lexer->pbuf = end + 1;
-
-    return token_c_create(T_STRING, value);
+    return token_c_create(T_STRING, start, length);
 }
 
 void *lexer_c_next_type_cast(Lexer_C *lexer)
@@ -302,23 +243,11 @@ void *lexer_c_next_number(Lexer_C *lexer)
         }
     }
 
-    size_t length = end - start;
-
-    assert(length == 1);
-
-    if (length >= T_NUMBER_MAX_LEN) {
-        lexer->error = "number too long";
-
-        return LEXER_NEXT_FAILED;
-    }
-
-    char *value = (char *)mmap(NULL, T_NUMBER_MAX_LEN, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-    strncpy(value, start, length);
+    const size_t length = end - start;
 
     lexer->pbuf = end;
 
-    return token_c_create(T_NUMBER, value);
+    return token_c_create(T_NUMBER, start, length);
 }
 
 void *lexer_c_next_with_representation(Lexer_C *lexer, TokenType_C type)
@@ -338,9 +267,11 @@ void *lexer_c_next_with_representation(Lexer_C *lexer, TokenType_C type)
     }
 
     if (found == lexer->pbuf && (type != T_EOF) == (*lexer->pbuf != '\0')) {
-        lexer->pbuf += strlen(token_type_representation);
+        const size_t length = strlen(token_type_representation);
+    
+        lexer->pbuf += length;
 
-        return token_c_create(type, token_type_representation);
+        return token_c_create(type, found, length);
     }
 
     return LEXER_NEXT_SKIPPED;

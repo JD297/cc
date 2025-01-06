@@ -9,6 +9,8 @@
 
 #define FREE(X) munmap(X, sizeof(X))
 
+#define test_token_c_create(T, S) token_c_create((T), (S), strlen((S)))
+
 int main()
 {
     #include "asset_test_token_list_source_hello_world.h"
@@ -21,7 +23,7 @@ int main()
         token_list_c_push_back(token_list_expected_preprocessed, asset_test_token_list_preprocessed_hello_world->elements[i]);
     }
     
-    token_list_c_push_back(token_list_expected_preprocessed, token_c_create(T_EOF, "\0"));
+    token_list_c_push_back(token_list_expected_preprocessed, test_token_c_create(T_EOF, "\0"));
 
     #include "asset_test_preprocessor_c_create_arguments.h"
 
@@ -35,7 +37,7 @@ int main()
 
     for (size_t i = 0; i < token_list_expected_preprocessed->num; i++) {
         assert(token_list_expected_preprocessed->elements[i]->type == preprocessor->output->elements[i]->type);
-        assert(strcmp(token_list_expected_preprocessed->elements[i]->value, preprocessor->output->elements[i]->value) == 0);
+        assert(strncmp(token_list_expected_preprocessed->elements[i]->value, preprocessor->output->elements[i]->value, token_list_expected_preprocessed->elements[i]->len) == 0);
     }
 
     FREE(preprocessor);

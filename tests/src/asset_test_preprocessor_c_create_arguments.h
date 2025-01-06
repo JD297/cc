@@ -1,3 +1,5 @@
+#define test_token_c_create(T, S) token_c_create((T), (S), strlen((S)))
+
 StrList *include_dirs;
 
 char* include_assets_prefix = "tests/assets";
@@ -22,15 +24,15 @@ assert((defines = token_list_named_c_create()) != LIST_CREATION_FAILED);
 
 TokenList_C *target;
 assert((target = token_list_c_create()) != LIST_CREATION_FAILED);
-assert(token_list_c_push_back(target, token_c_create(T_STRING, "hello")) != -1);
+assert(token_list_c_push_back(target, test_token_c_create(T_STRING, "hello")) != -1);
 assert(token_list_named_c_push_back(defines, target, "TARGET") != -1);
 
 TokenList_C *expr;
 assert((expr = token_list_c_create()) != LIST_CREATION_FAILED);
-assert(token_list_c_push_back(expr, token_c_create(T_OPEN_PARENT, "(")) != -1);
-assert(token_list_c_push_back(expr, token_c_create(T_INT, "29")) != -1);
-assert(token_list_c_push_back(expr, token_c_create(T_PLUS, "+")) != -1);
-assert(token_list_c_push_back(expr, token_c_create(T_INT, "7")) != -1);
-assert(token_list_c_push_back(expr, token_c_create(T_CLOSING_PARENT, ")")) != -1);
+assert(token_list_c_push_back(expr, test_token_c_create(T_OPEN_PARENT, "(")) != -1);
+assert(token_list_c_push_back(expr, test_token_c_create(T_INT, "29")) != -1);
+assert(token_list_c_push_back(expr, test_token_c_create(T_PLUS, "+")) != -1);
+assert(token_list_c_push_back(expr, test_token_c_create(T_INT, "7")) != -1);
+assert(token_list_c_push_back(expr, test_token_c_create(T_CLOSING_PARENT, ")")) != -1);
 assert(token_list_named_c_push_back(defines, expr, "EXPR") != -1);
 

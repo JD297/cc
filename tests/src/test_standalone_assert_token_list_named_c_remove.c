@@ -9,6 +9,8 @@
 
 #define FREE(X) munmap(X, sizeof(X))
 
+#define test_token_c_create(T, S) token_c_create((T), (S), strlen((S)))
+
 int main()
 {
     TokenListNamed_C *named_list;
@@ -23,7 +25,7 @@ int main()
         assert((list = token_list_c_create()) != LIST_CREATION_FAILED);
 
         Token_C *token;
-        assert((token = token_c_create(T_STRING, value[i])) != TOKEN_CREATION_FAILED);
+        assert((token = test_token_c_create(T_STRING, value[i])) != TOKEN_CREATION_FAILED);
         assert(token_list_c_push_back(list, token) == 0);
         
         assert(token_list_named_c_push_back(named_list, list, value[i]) == 0);
