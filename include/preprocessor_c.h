@@ -274,6 +274,8 @@ extern int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, TokenList_C 
 
 extern int preprocessor_c_parse_file(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
+extern int preprocessor_c_parse_line(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
+
 extern int preprocessor_c_parse_error(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**

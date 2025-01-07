@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -396,6 +397,31 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, TokenList_C *tokens,
     return 0;
 }
 
+int preprocessor_c_parse_line(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
+{
+    int line = 1;
+    
+    for (size_t i = 0; (**ptoken) != tokens->elements[i]; i++) {
+        if (tokens->elements[i]->type == T_WHITESPACE_LINE_FEED) {
+            line++;
+        }
+    }
+
+    char *line_str = (char *)mmap(NULL, sizeof(char) * 21, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    sprintf(line_str, "%d", line);
+    
+    if (token_list_c_push_back(preprocessor->output, token_c_create(T_INT, line_str, strlen(line_str))) == -1) {
+        preprocessor->error = strerror(errno);
+
+        return -1;
+    }
+
+    (*ptoken)++;
+
+    return 0;
+}
+
 int preprocessor_c_parse_error(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
 {
     return -1;
@@ -468,6 +494,9 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_FILE: {
             return preprocessor_c_parse_file(preprocessor, tokens, ptoken);
         }
+        case T_MACRO_LINE: {
+            return preprocessor_c_parse_line(preprocessor, tokens, ptoken);
+        }
         case T_MACRO_ERROR: {
             return preprocessor_c_parse_error(preprocessor, tokens, ptoken);
         }
@@ -475,7 +504,6 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_IF:
         case T_MACRO_ELIF:
         case T_MACRO_EMBED:
-        case T_MACRO_LINE:
         case T_MACRO_PRAGMA:
         case T_MACRO_DEFINDED:
         case T_MACRO___HAS_INCLUDE:
