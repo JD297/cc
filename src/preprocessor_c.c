@@ -396,6 +396,11 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, TokenList_C *tokens,
     return 0;
 }
 
+int preprocessor_c_parse_error(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
+{
+    return -1;
+}
+
 int preprocessor_c_parse_whitespace(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
 {
     while (token_type_c_is_in_expected_token_types((**ptoken)->type, TOKEN_TYPE_C_ALL_WHITESPACES)) {
@@ -463,12 +468,14 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_FILE: {
             return preprocessor_c_parse_file(preprocessor, tokens, ptoken);
         }
+        case T_MACRO_ERROR: {
+            return preprocessor_c_parse_error(preprocessor, tokens, ptoken);
+        }
         /* NOT IMPLEMENTED */
         case T_MACRO_IF:
         case T_MACRO_ELIF:
         case T_MACRO_EMBED:
         case T_MACRO_LINE:
-        case T_MACRO_ERROR:
         case T_MACRO_PRAGMA:
         case T_MACRO_DEFINDED:
         case T_MACRO___HAS_INCLUDE:
