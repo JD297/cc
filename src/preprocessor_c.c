@@ -34,6 +34,8 @@ void *preprocessor_c_create(StrList *include_dirs, StrList *source_files, TokenL
         return PREPROCESSOR_CREATION_FAILED;
     }
     
+    preprocessor->current_lexer = NULL;
+    
     preprocessor->error = NULL;
 
     return preprocessor;
@@ -115,7 +117,13 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, TokenList_C *toke
     
     (*ptoken)++;
 
-    return preprocessor_c_parse(preprocessor, include_file);
+    Lexer_C *current_lexer_saved = preprocessor->current_lexer;
+
+    int parse_return = preprocessor_c_parse(preprocessor, include_file);
+    
+    preprocessor->current_lexer = current_lexer_saved;
+    
+    return parse_return;
 }
 
 int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
@@ -365,6 +373,29 @@ int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, TokenList_C *tokens
     return preprocessor_c_parse_if_defined(preprocessor, tokens, ptoken, 0);
 }
 
+int preprocessor_c_parse_file(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
+{
+    char *filename = (char *)mmap(NULL, sizeof(char) * (strlen(preprocessor->current_lexer->pathname) + 3), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    
+    if (filename == MAP_FAILED) {
+        return -1;
+    }
+    
+    strcat(filename, "\"");
+    strcat(filename, preprocessor->current_lexer->pathname);
+    strcat(filename, "\"");
+
+    if (token_list_c_push_back(preprocessor->output, token_c_create(T_STRING, filename, strlen(filename))) == -1) {
+        preprocessor->error = strerror(errno);
+
+        return -1;
+    }
+
+    (*ptoken)++;
+
+    return 0;
+}
+
 int preprocessor_c_parse_whitespace(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken)
 {
     while (token_type_c_is_in_expected_token_types((**ptoken)->type, TOKEN_TYPE_C_ALL_WHITESPACES)) {
@@ -429,12 +460,14 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, TokenList_C *tokens,
         case T_MACRO_IFDEF: {
             return preprocessor_c_parse_ifdef(preprocessor, tokens, ptoken);
         }
+        case T_MACRO_FILE: {
+            return preprocessor_c_parse_file(preprocessor, tokens, ptoken);
+        }
         /* NOT IMPLEMENTED */
         case T_MACRO_IF:
         case T_MACRO_ELIF:
         case T_MACRO_EMBED:
         case T_MACRO_LINE:
-        case T_MACRO_FILE:
         case T_MACRO_ERROR:
         case T_MACRO_PRAGMA:
         case T_MACRO_DEFINDED:
@@ -507,6 +540,8 @@ int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* filepath)
     if (lexer->tokens->num == 0) {
         return 0;
     }
+
+    preprocessor->current_lexer = lexer;
 
     Token_C **ptoken = lexer->tokens->elements;
 

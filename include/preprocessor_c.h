@@ -41,6 +41,7 @@ typedef struct Preprocessor_C {
     StrList *source_files;
 
     LexerList_C *lexers;
+    Lexer_C *current_lexer;
 
 	TokenListNamed_C *defines;
 	TokenList_C *output;
@@ -270,6 +271,8 @@ extern int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, TokenList_C
  *     include/preprocessor_c.h: preprocessor_c_parse_if_defined
  */
 extern int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
+
+extern int preprocessor_c_parse_file(Preprocessor_C *preprocessor, TokenList_C *tokens, Token_C ***ptoken);
 
 /**
  * Skips all whitespace tokens and processes line breaks.
