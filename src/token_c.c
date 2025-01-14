@@ -1,13 +1,13 @@
 #include "token_c.h"
 
-#include <sys/mman.h>
+#include <stdlib.h>
 
 void *token_c_create(TokenType_C type, const char* value, size_t len)
 {
-    Token_C *token = (Token_C *)mmap(NULL, sizeof(Token_C), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    Token_C *token = (Token_C *)malloc(sizeof(Token_C));
 
-    if (token == MAP_FAILED) {
-        return TOKEN_CREATION_FAILED;
+    if (token == NULL) {
+        return NULL;
     }
 
     token->type = type;
@@ -17,3 +17,7 @@ void *token_c_create(TokenType_C type, const char* value, size_t len)
     return token;
 }
 
+void token_c_destroy(Token_C *token)
+{
+    free(token);
+}

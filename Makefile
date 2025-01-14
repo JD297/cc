@@ -1,25 +1,25 @@
-PREFIX		= /usr/local
-BINDIR		= $(PREFIX)/bin
-MANDIR		= $(PREFIX)/share/man
+PREFIX        = /usr/local
+BINDIR        = $(PREFIX)/bin
+MANDIR        = $(PREFIX)/share/man
 
-TARGET		= cc
-TARGETDIR	= bin
-BUILDDIR	= build
-SRCDIR		= src
-SRCINCLUDEDIR	= include
-TESTDIR		= tests
+TARGET        = cc
+TARGETDIR     = bin
+BUILDDIR      = build
+SRCDIR        = src
+SRCINCLUDEDIR = include
+TESTDIR       = tests
 
-SRCFILEEXT	= c
-SRCFILES	= $(wildcard $(SRCDIR)/*.$(SRCFILEEXT))
-OBJFILEEXT	= o
-OBJFILES	= $(patsubst $(SRCDIR)/%.$(SRCFILEEXT),$(BUILDDIR)/%.$(OBJFILEEXT),$(SRCFILES))
+SRCFILEEXT    = c
+SRCFILES      = $(wildcard $(SRCDIR)/*.$(SRCFILEEXT))
+OBJFILEEXT    = o
+OBJFILES      = $(patsubst $(SRCDIR)/%.$(SRCFILEEXT),$(BUILDDIR)/%.$(OBJFILEEXT),$(SRCFILES))
 
 
-CC		= gcc
-CCLIBS		= -static
-CCFLAGS		= -Wall -Wextra -Wpedantic -g
-CCINCLUDE	= -I $(SRCINCLUDEDIR)
-CCFLAGSPROG	= -DTARGET=\"$(TARGET)\"
+CC            = cc
+CCLIBS        = -static
+CCFLAGS       = -Wall -Wextra -Wpedantic -g
+CCINCLUDE     = -I $(SRCINCLUDEDIR)
+CCFLAGSPROG   = -DTARGET=\"$(TARGET)\"
 
 $(TARGETDIR)/$(TARGET): $(OBJFILES)
 	$(CC) $(CCFLAGS) $(CCINCLUDE) $(OBJFILES) -o $(TARGETDIR)/$(TARGET) $(CCLIBS)
