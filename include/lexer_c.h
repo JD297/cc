@@ -14,4 +14,8 @@ extern void lexer_c_destroy(Lexer_C *lexer);
 
 extern Token_C *lexer_c_next(Lexer_C *lexer);
 
+extern Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer);
+
+extern int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type);
+
 #endif

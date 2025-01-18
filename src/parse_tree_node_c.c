@@ -63,6 +63,10 @@ int parse_tree_node_c_add(ParseTreeNode_C *root, ParseTreeNode_C *child)
 
 void parse_tree_node_c_destroy(ParseTreeNode_C *node)
 {
+    if (node == NULL) {
+        return;
+    }
+
     if (node->elements != NULL) {
         for (size_t i = 0; i < node->num; i++) {
             parse_tree_node_c_destroy(node->elements[i]);

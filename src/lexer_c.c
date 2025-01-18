@@ -49,3 +49,29 @@ Token_C *lexer_c_next(Lexer_C *lexer)
 
 	return NULL;
 }
+
+Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer)
+{
+    Token_C *token;
+
+    for (token = lexer_c_next(lexer); token != NULL && token->type == T_WHITESPACE; token = lexer_c_next(lexer)) {
+        token_c_destroy(token);
+    }
+
+    return token;
+}
+
+int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type)
+{
+    Token_C *token = lexer_c_next_skip_whitespace(lexer);
+
+    if (token == NULL) {
+        return 0;
+    }
+
+    int result = token->type == type;
+
+    token_c_destroy(token);
+
+    return result;
+}
