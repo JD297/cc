@@ -3,6 +3,8 @@
 #include "parse_tree_node_c.h"
 #include "parse_tree_type_c.h"
 
+#include <assert.h>
+
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -36,198 +38,101 @@ void parser_c_destroy(Parser_C *parser)
     free(parser);
 }
 
-ParseTreeNode_C *parser_c_parse_constant(Parser_C *parser)
+ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser)
 {
-    const char *pbuf_backup = parser->lexer->pbuf;
-    
-    Token_C *current_token = lexer_c_next_skip_whitespace(parser->lexer);
-    
-    if (current_token == NULL) {
-        goto error;
-    }
+    // TODO
+    (void)parser;
 
-    if (current_token->type == T_NUMBER) {
-        return parse_tree_node_c_create(PTTC_PRIMARY_EXPRESSION, current_token);
-    }
+    assert(0 && "Not implemented parser_c_parse_translation_unit");
 
-    // TODO ...
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TRANSLATION_UNIT, NULL);
+
+    goto error;
+
+    return this_node;
 
     error: {
-        parser->lexer->pbuf = pbuf_backup;
-
-        token_c_destroy(current_token);
+        parse_tree_node_c_destroy(this_node);
 
         return NULL;
     }
 }
 
-ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C *parser)
+ParseTreeNode_C *parser_c_parse_external_declaration(Parser_C *parser)
 {
-    const char *pbuf_backup = parser->lexer->pbuf;
+    // TODO
+    (void)parser;
 
-    ParseTreeNode_C *primary_expression;
+    assert(0 && "Not implemented parser_c_parse_external_declaration");
 
-    if ((primary_expression = parser_c_parse_constant(parser)) != NULL) {
-        return primary_expression;
-    }
-    
-    // TODO ...
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXTERNAL_DECLARATION, NULL);
 
-    parser->lexer->pbuf = pbuf_backup;
+    goto error;
 
-    return NULL;
-}
-
-ParseTreeNode_C *parser_c_parse_expression(Parser_C *parser)
-{
-    const char *pbuf_backup = parser->lexer->pbuf;
-
-    ParseTreeNode_C *expression;
-
-    // TODO this is not the correct definition but it is easier to implement right now
-    //      it can be correct when we can generate this kind of function patterns form the bnf grammer file.
-    if ((expression = parser_c_parse_primary_expression(parser)) != NULL) {
-        return expression;
-    }
-
-    parser->lexer->pbuf = pbuf_backup;
-
-    return NULL;
-}
-
-ParseTreeNode_C *parser_c_parse_jump_statement(Parser_C *parser)
-{
-    const char *pbuf_backup = parser->lexer->pbuf;
-
-    ParseTreeNode_C *jump_statement = parse_tree_node_c_create(PTTC_JUMP_STATEMENT, NULL);
-    
-    Token_C *current_token = lexer_c_next_skip_whitespace(parser->lexer);
-
-    if (current_token == NULL) {
-        goto error;
-    }
-
-    if (current_token->type == T_RETURN) {
-        jump_statement->token = current_token;
-
-        {
-            ParseTreeNode_C *expression;
-
-            if ((expression = parser_c_parse_expression(parser)) == NULL) {
-                goto error;
-            }
-
-            parse_tree_node_c_add(jump_statement, expression);
-        }
-
-        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
-            goto error;
-        }
-
-        return jump_statement;
-    }
-
-    // TODO ...
+    return this_node;
 
     error: {
-        parse_tree_node_c_destroy(jump_statement);
-
-        token_c_destroy(current_token);
-        
-        parser->lexer->pbuf = pbuf_backup;
+        parse_tree_node_c_destroy(this_node);
 
         return NULL;
     }
 }
 
-ParseTreeNode_C *parser_c_parse_statement(Parser_C *parser)
+ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
 {
-    const char *pbuf_backup = parser->lexer->pbuf;
+    // TODO
+    (void)parser;
 
-    ParseTreeNode_C *statement;
+    assert(0 && "Not implemented parser_c_parse_function_definition");
 
-    if ((statement = parser_c_parse_jump_statement(parser)) != NULL) {
-        return statement;
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_FUNCTION_DEFINITION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
     }
-    
-    // TODO ...
-
-    parser->lexer->pbuf = pbuf_backup;
-
-    return NULL;
 }
 
-ParseTreeNode_C *parser_c_parse_statement_list(Parser_C *parser)
+ParseTreeNode_C *parser_c_parse_declaration(Parser_C *parser)
 {
-    ParseTreeNode_C *statement_list = parse_tree_node_c_create(PTTC_STATEMENT, NULL);
+    // TODO
+    (void)parser;
 
-    ParseTreeNode_C *statement;
+    assert(0 && "Not implemented parser_c_parse_declaration");
 
-    while ((statement = parser_c_parse_statement(parser)) != NULL) {
-        parse_tree_node_c_add(statement_list, statement);
-    }
-    
-    if (statement_list->num == 0) {
-        goto error;
-    }
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATION, NULL);
 
-    return statement_list;
-    
+    goto error;
+
+    return this_node;
+
     error: {
-        parse_tree_node_c_destroy(statement_list);
-        
+        parse_tree_node_c_destroy(this_node);
+
         return NULL;
     }
 }
 
 ParseTreeNode_C *parser_c_parse_declaration_specifier(Parser_C *parser)
 {
+    // TODO
     (void)parser;
 
-    return NULL; // TODO
-}
+    assert(0 && "Not implemented parser_c_parse_declaration_specifier");
 
-ParseTreeNode_C *parser_c_parse_pointer(Parser_C *parser)
-{
-    (void)parser;
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATION_SPECIFIER, NULL);
 
-    return NULL; // TODO
-}
+    goto error;
 
-ParseTreeNode_C *parser_c_direct_declarator(Parser_C *parser)
-{
-    ParseTreeNode_C *direct_declarator;
+    return this_node;
 
-    const char *pbuf_backup = parser->lexer->pbuf;
-    
-    Token_C *current_token;
-
-    {
-        if ((current_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || current_token->type != T_IDENTIFIER) {
-            goto error;
-        }
-        
-        direct_declarator = parse_tree_node_c_create(PTTC_DIRECT_DECLARATOR, current_token);
-        
-        {
-            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT)) {
-                // TODO ...
-                
-                if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
-                    goto error;
-                }
-            }
-        }
-    }
-
-    return direct_declarator;
-    
     error: {
-        parse_tree_node_c_destroy(direct_declarator);
-
-        token_c_destroy(current_token);
-
-        parser->lexer->pbuf = pbuf_backup;
+        parse_tree_node_c_destroy(this_node);
 
         return NULL;
     }
@@ -235,135 +140,1239 @@ ParseTreeNode_C *parser_c_direct_declarator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_declarator(Parser_C *parser)
 {
-    const char *pbuf_backup = parser->lexer->pbuf;
+    // TODO
+    (void)parser;
 
-    ParseTreeNode_C *declarator = parse_tree_node_c_create(PTTC_DECLARATOR, NULL);
+    assert(0 && "Not implemented parser_c_parse_declarator");
 
-    {
-        ParseTreeNode_C *pointer;
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATOR, NULL);
 
-        if ((pointer = parser_c_parse_pointer(parser)) != NULL) { // opt
-            parse_tree_node_c_add(declarator, pointer);
-        }
-    }
+    goto error;
 
-    {
-        ParseTreeNode_C *direct_declarator;
-
-        if ((direct_declarator = parser_c_direct_declarator(parser)) == NULL) {
-            goto error;
-        }
-
-        parse_tree_node_c_add(declarator, direct_declarator);
-    }
-
-    return declarator;
+    return this_node;
 
     error: {
-        parse_tree_node_c_destroy(declarator);
-
-        parser->lexer->pbuf = pbuf_backup;
+        parse_tree_node_c_destroy(this_node);
 
         return NULL;
     }
-}
-
-ParseTreeNode_C *parser_c_parse_declaration_list(Parser_C *parser)
-{
-    (void)parser;
-
-    return NULL; // TODO
 }
 
 ParseTreeNode_C *parser_c_parse_compound_statement(Parser_C *parser)
 {
-    const char *pbuf_backup = parser->lexer->pbuf;
+    // TODO
+    (void)parser;
 
-    ParseTreeNode_C *compound_statement = parse_tree_node_c_create(PTTC_COMPOUND_STATEMENT, NULL);
+    assert(0 && "Not implemented parser_c_parse_compound_statement");
 
-    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
-        goto error;
-    }
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_COMPOUND_STATEMENT, NULL);
 
-    {
-        ParseTreeNode_C *declaration_list;
+    goto error;
 
-        if ((declaration_list = parser_c_parse_declaration_list(parser)) != NULL) { // opt
-            parse_tree_node_c_add(compound_statement, declaration_list);
-        }
-    }
-    
-    {
-        ParseTreeNode_C *statement_list;
-    
-        if ((statement_list = parser_c_parse_statement_list(parser)) != NULL) { // opt
-            parse_tree_node_c_add(compound_statement, statement_list);
-        }
-    }
+    return this_node;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACE) == 0) {
-        goto error;
-    }
-
-    return compound_statement;
-    
     error: {
-        parse_tree_node_c_destroy(compound_statement);
-    
-        parser->lexer->pbuf = pbuf_backup;
-    
+        parse_tree_node_c_destroy(this_node);
+
         return NULL;
     }
 }
 
-ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
+ParseTreeNode_C *parser_c_parse_storage_class_specifier(Parser_C *parser)
 {
-    const char *pbuf_backup = parser->lexer->pbuf;
+    // TODO
+    (void)parser;
 
-    ParseTreeNode_C *function_definition = parse_tree_node_c_create(PTTC_FUNCTION_DEFINITION, NULL);
+    assert(0 && "Not implemented parser_c_parse_storage_class_specifier");
 
-    {
-        ParseTreeNode_C *declaration_specifier;
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STORAGE_CLASS_SPECIFIER, NULL);
 
-        if ((declaration_specifier = parser_c_parse_declaration_specifier(parser)) != NULL) { // opt
-            parse_tree_node_c_add(function_definition, declaration_specifier);
-        }
-    }
-    
-    {
-        ParseTreeNode_C *declarator;
-        
-        if ((declarator = parser_c_parse_declarator(parser)) == NULL) {
-            goto error;
-        }
-        
-        parse_tree_node_c_add(function_definition, declarator);
-    }
-    
-    {
-        ParseTreeNode_C *declaration_list;
+    goto error;
 
-        if ((declaration_list = parser_c_parse_declaration_list(parser)) != NULL) { // opt
-            parse_tree_node_c_add(function_definition, declaration_list);
-        }
-    }
-    
-    {
-        ParseTreeNode_C *compound_statement;
+    return this_node;
 
-        if ((compound_statement = parser_c_parse_compound_statement(parser)) == NULL) {
-            goto error;
-        }
-        
-        parse_tree_node_c_add(function_definition, compound_statement);
-    }
-
-    return function_definition;
-    
     error: {
-        parse_tree_node_c_destroy(function_definition);
+        parse_tree_node_c_destroy(this_node);
 
-        parser->lexer->pbuf = pbuf_backup;
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_type_specifier");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE_SPECIFIER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_type_qualifier(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_type_qualifier");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE_QUALIFIER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_struct_or_union_specifier(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_struct_or_union_specifier");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_OR_UNION_SPECIFIER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_enum_specifier");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ENUM_SPECIFIER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_typedef_name(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_typedef_name");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPEDEF_NAME, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_struct_or_union(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_struct_or_union");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_OR_UNION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_identifier(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_identifier");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_IDENTIFIER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_struct_declaration(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_struct_declaration");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_specifier_qualifier(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_specifier_qualifier");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_SPECIFIER_QUALIFIER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_struct_declarator_list(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_struct_declarator_list");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATOR_LIST, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_struct_declarator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_struct_declarator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_constant_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_constant_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONSTANT_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_pointer(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_pointer");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_POINTER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_direct_declarator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DIRECT_DECLARATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_parameter_type_list(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_parameter_type_list");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PARAMETER_TYPE_LIST, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_conditional_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_conditional_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONDITIONAL_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_logical_or_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_logical_or_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_LOGICAL_OR_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_logical_and_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_logical_and_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_LOGICAL_AND_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_inclusive_or_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INCLUSIVE_OR_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_exclusive_or_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXCLUSIVE_OR_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_and_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_and_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_AND_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_equality_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_equality_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EQUALITY_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_relational_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_relational_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_RELATIONAL_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_shift_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_shift_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_SHIFT_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_additive_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_additive_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ADDITIVE_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_multiplicative_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_multiplicative_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_MULTIPLICATIVE_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_cast_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_cast_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CAST_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_unary_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_unary_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_UNARY_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_type_name(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_type_name");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE_NAME, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_postfix_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_POSTFIX_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_unary_operator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_unary_operator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_UNARY_OPERATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_primary_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PRIMARY_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_assignment_expression(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_assignment_expression");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ASSIGNMENT_EXPRESSION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_constant(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_constant");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONSTANT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_string(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_string");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRING, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_integer_constant(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_integer_constant");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INTEGER_CONSTANT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_character_constant(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_character_constant");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CHARACTER_CONSTANT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_floating_constant(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_floating_constant");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_FLOATING_CONSTANT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_enumeration_constant(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_enumeration_constant");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ENUMERATION_CONSTANT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_assignment_operator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ASSIGNMENT_OPERATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_abstract_declarator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_abstract_declarator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ABSTRACT_DECLARATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_parameter_list(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_parameter_list");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PARAMETER_LIST, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_parameter_declaration(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_parameter_declaration");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PARAMETER_DECLARATION, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_direct_abstract_declarator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DIRECT_ABSTRACT_DECLARATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_enumerator_list(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_enumerator_list");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ENUMERATOR_LIST, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_enumerator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_enumerator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ENUMERATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_init_declarator");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INIT_DECLARATOR, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_initializer(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_initializer");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INITIALIZER, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_initializer_list(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_initializer_list");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INITIALIZER_LIST, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_statement(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_statement");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STATEMENT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_labeled_statement");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_LABELED_STATEMENT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_expression_statement(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_expression_statement");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXPRESSION_STATEMENT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_selection_statement(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_selection_statement");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_SELECTION_STATEMENT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_iteration_statement");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ITERATION_STATEMENT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_jump_statement(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_jump_statement");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_JUMP_STATEMENT, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_control_line(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_control_line");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONTROL_LINE, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_macro_include(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_macro_include");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_MACRO_INCLUDE, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_macro_undef(Parser_C *parser)
+{
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_macro_undef");
+
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_MACRO_UNDEF, NULL);
+
+    goto error;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
 
         return NULL;
     }
@@ -373,13 +1382,11 @@ int parser_c_parse(Parser_C *parser)
 {
     ParseTreeNode_C *node;
 
-    if ((node = parser_c_parse_function_definition(parser)) != NULL) {
+    if ((node = parser_c_parse_translation_unit(parser)) != NULL) {
         parse_tree_node_c_add(parser->parse_tree, node);
-    
+        
         return 0;
     }
-    
-    parse_tree_node_c_destroy(node);
 
     return -1;
 }
