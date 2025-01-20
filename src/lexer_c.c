@@ -52,9 +52,15 @@ Token_C *lexer_c_next(Lexer_C *lexer)
 
 Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer)
 {
+    // TODO GENERATE CONST LOCKUPTABLE
+    int token_type_skipable[TOKEN_TYPE_C_LENGTH] = { 0 };
+    token_type_skipable[T_WHITESPACE] = 1;
+    token_type_skipable[T_COMMENT_LINE] = 1;
+    token_type_skipable[T_COMMENT_MULTILINE] = 1;
+
     Token_C *token;
 
-    for (token = lexer_c_next(lexer); token != NULL && token->type == T_WHITESPACE; token = lexer_c_next(lexer)) {
+    for (token = lexer_c_next(lexer); token != NULL && token_type_skipable[token->type]; token = lexer_c_next(lexer)) {
         token_c_destroy(token);
     }
 
