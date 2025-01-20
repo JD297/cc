@@ -60,22 +60,26 @@ ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_external_declaration(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_external_declaration");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXTERNAL_DECLARATION, NULL);
 
-    goto error;
+    ParseTreeNode_C *function_declaration;
+    ParseTreeNode_C *declaration;
 
-    return this_node;
+    if ((function_declaration = parser_c_parse_function_definition(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, function_declaration);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+        return this_node;
     }
+
+    if ((declaration = parser_c_parse_declaration(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, declaration);
+
+        return this_node;
+    }
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
