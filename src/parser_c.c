@@ -884,18 +884,52 @@ ParseTreeNode_C *parser_c_parse_unary_operator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_primary_expression");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PRIMARY_EXPRESSION, NULL);
 
-    goto error;
+    ParseTreeNode_C *identifier;
+    ParseTreeNode_C *constant;
+    ParseTreeNode_C *string;
+    ParseTreeNode_C *expression;
+
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    if ((identifier = parser_c_parse_identifier(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, identifier);
+
+        return this_node;
+    }
+
+    if ((constant = parser_c_parse_constant(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, constant);
+
+        return this_node;
+    }
+
+    if ((string = parser_c_parse_string(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, string);
+
+        return this_node;
+    }
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
+        goto error;
+    }
+
+    if ((expression = parser_c_parse_expression(parser)) == NULL) {
+        goto error;
+    }
+
+    parse_tree_node_c_add(this_node, expression);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+        goto error;
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
