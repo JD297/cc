@@ -110,14 +110,15 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_declaration(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_declaration");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATION, NULL);
 
-    goto error;
+    ParseTreeNode_C *declaration;
+
+    if ((declaration = parser_c_parse_declaration(parser)) == NULL) {
+        goto error;
+    }
+
+    parse_tree_node_c_add(this_node, declaration);
 
     return this_node;
 
