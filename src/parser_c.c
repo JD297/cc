@@ -856,22 +856,30 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_unary_operator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_unary_operator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_UNARY_OPERATOR, NULL);
 
-    goto error;
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    Token_C *token_unary_operator = lexer_c_next_skip_whitespace(parser->lexer);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (token_unary_operator->type == T_BITWISE_AND || 
+        token_unary_operator->type == T_MULTIPLY || 
+        token_unary_operator->type == T_MULTIPLY || 
+        token_unary_operator->type == T_MINUS || 
+        token_unary_operator->type == T_TILDE ||
+        token_unary_operator->type == T_BITWISE_OR) {
+        this_node->token = token_unary_operator;
+    
+        return this_node;
     }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(token_unary_operator);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C *parser)
