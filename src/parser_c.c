@@ -356,22 +356,25 @@ ParseTreeNode_C *parser_c_parse_struct_or_union(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_identifier(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_identifier");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_IDENTIFIER, NULL);
 
-    goto error;
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    Token_C *token_identifier = lexer_c_next_skip_whitespace(parser->lexer);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (token_identifier->type == T_IDENTIFIER) {
+        this_node->token = token_identifier;
+    
+        return this_node;
     }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(token_identifier);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_struct_declaration(Parser_C *parser)
