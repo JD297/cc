@@ -233,22 +233,55 @@ ParseTreeNode_C *parser_c_parse_storage_class_specifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_type_specifier");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE_SPECIFIER, NULL);
 
-    goto error;
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    Token_C *token_type_specifier = lexer_c_next_skip_whitespace(parser->lexer);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (token_type_specifier->type == T_VOID || 
+        token_type_specifier->type == T_CHAR || 
+        token_type_specifier->type == T_SHORT || 
+        token_type_specifier->type == T_INT || 
+        token_type_specifier->type == T_LONG ||
+        token_type_specifier->type == T_FLOAT ||
+        token_type_specifier->type == T_DOUBLE ||
+        token_type_specifier->type == T_SIGNED ||
+        token_type_specifier->type == T_UNSIGNED) {
+        this_node->token = token_type_specifier;
+    
+        return this_node;
     }
+
+    ParseTreeNode_C *struct_or_union_specifier;
+    ParseTreeNode_C *enum_specifier;
+    ParseTreeNode_C *typedef_name;
+
+    if ((struct_or_union_specifier = parser_c_parse_struct_or_union_specifier(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, struct_or_union_specifier);
+
+        return this_node;
+    }
+
+    if ((enum_specifier = parser_c_parse_enum_specifier(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, enum_specifier);
+
+        return this_node;
+    }
+
+    if ((typedef_name = parser_c_parse_typedef_name(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, typedef_name);
+
+        return this_node;
+    }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(token_type_specifier);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_type_qualifier(Parser_C *parser)
