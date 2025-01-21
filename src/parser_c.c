@@ -1219,22 +1219,54 @@ ParseTreeNode_C *parser_c_parse_initializer_list(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_statement(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_statement");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STATEMENT, NULL);
 
-    goto error;
+    ParseTreeNode_C *labeled_statement;
+    ParseTreeNode_C *expression_statement;
+    ParseTreeNode_C *compound_statement;
+    ParseTreeNode_C *selection_statement;
+    ParseTreeNode_C *iteration_statement;
+    ParseTreeNode_C *jump_statement;
 
-    return this_node;
+    if ((labeled_statement = parser_c_parse_labeled_statement(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, labeled_statement);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+        return this_node;
     }
+
+    if ((expression_statement = parser_c_parse_expression_statement(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, expression_statement);
+
+        return this_node;
+    }
+
+    if ((compound_statement = parser_c_parse_compound_statement(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, compound_statement);
+
+        return this_node;
+    }
+
+    if ((selection_statement = parser_c_parse_selection_statement(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, selection_statement);
+
+        return this_node;
+    }
+
+    if ((iteration_statement = parser_c_parse_iteration_statement(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, iteration_statement);
+
+        return this_node;
+    }
+
+    if ((jump_statement = parser_c_parse_jump_statement(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, jump_statement);
+
+        return this_node;
+    }
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C *parser)
