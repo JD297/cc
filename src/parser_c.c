@@ -421,22 +421,19 @@ ParseTreeNode_C *parser_c_parse_struct_declarator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_constant_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_constant_expression");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONSTANT_EXPRESSION, NULL);
 
-    goto error;
+    ParseTreeNode_C *conditional_expression;
 
-    return this_node;
+    if ((conditional_expression = parser_c_parse_conditional_expression(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, conditional_expression);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+        return this_node;
     }
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_pointer(Parser_C *parser)
