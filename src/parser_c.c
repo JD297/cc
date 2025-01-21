@@ -1054,22 +1054,35 @@ ParseTreeNode_C *parser_c_parse_enumeration_constant(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_assignment_operator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ASSIGNMENT_OPERATOR, NULL);
 
-    goto error;
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    Token_C *token_assignment_operator = lexer_c_next_skip_whitespace(parser->lexer);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (token_assignment_operator->type == T_ASSIGNMENT || 
+        token_assignment_operator->type == T_MULTIPLY_ASSIGN || 
+        token_assignment_operator->type == T_DIVIDE_ASSIGN || 
+        token_assignment_operator->type == T_MODULUS_ASSIGN || 
+        token_assignment_operator->type == T_PLUS_ASSIGN ||
+        token_assignment_operator->type == T_MINUS_ASSIGN ||
+        token_assignment_operator->type == T_BITWISE_LEFTSHIFT_ASSIGN ||
+        token_assignment_operator->type == T_BITWISE_RIGHTSHIFT_ASSIGN ||
+        token_assignment_operator->type == T_BITWISE_AND_ASSIGN ||
+        token_assignment_operator->type == T_BITWISE_XOR_ASSIGN ||
+        token_assignment_operator->type == T_BITWISE_OR_ASSIGN) {
+        this_node->token = token_assignment_operator;
+    
+        return this_node;
     }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(token_assignment_operator);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_abstract_declarator(Parser_C *parser)
