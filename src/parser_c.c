@@ -43,16 +43,13 @@ ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser)
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TRANSLATION_UNIT, NULL);
 
     ParseTreeNode_C *external_declaration;
-    ParseTreeNode_C *translation_unit;
 
-    if ((external_declaration = parser_c_parse_external_declaration(parser)) == NULL) {
-        goto error;
+    while ((external_declaration = parser_c_parse_external_declaration(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, external_declaration);
     }
-
-    parse_tree_node_c_add(this_node, external_declaration);
-
-    if ((translation_unit = parser_c_parse_translation_unit(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, translation_unit);
+    
+    if (this_node->num == 0) {
+        goto error;
     }
 
     return this_node;
