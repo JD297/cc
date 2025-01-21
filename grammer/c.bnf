@@ -230,3 +230,11 @@
 
 <control-line> ::= <macro-include>
                  | <macro-undef> <identifier>
+
+<integer-constant> ::= number
+
+<character-constant> ::= character
+
+<floating-constant> ::= float
+
+<enumeration-constant> ::= enum
