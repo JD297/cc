@@ -284,22 +284,19 @@ ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_typedef_name(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_typedef_name");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPEDEF_NAME, NULL);
 
-    goto error;
+    ParseTreeNode_C *identifier;
 
-    return this_node;
+    if ((identifier = parser_c_parse_identifier(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, identifier);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+        return this_node;
     }
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_struct_or_union(Parser_C *parser)
