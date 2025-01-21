@@ -210,21 +210,21 @@ ParseTreeNode_C *parser_c_parse_storage_class_specifier(Parser_C *parser)
 
     const char* lexer_saved = parser->lexer->pbuf;
 
-    Token_C *storage_class_specifier = lexer_c_next_skip_whitespace(parser->lexer);
+    Token_C *token_storage_class_specifier = lexer_c_next_skip_whitespace(parser->lexer);
 
-    if (storage_class_specifier->type == T_AUTO || 
-        storage_class_specifier->type == T_REGISTER || 
-        storage_class_specifier->type == T_STATIC || 
-        storage_class_specifier->type == T_EXTERN || 
-        storage_class_specifier->type == T_TYPEDEF) {
-        this_node->token = storage_class_specifier;
+    if (token_storage_class_specifier->type == T_AUTO || 
+        token_storage_class_specifier->type == T_REGISTER || 
+        token_storage_class_specifier->type == T_STATIC || 
+        token_storage_class_specifier->type == T_EXTERN || 
+        token_storage_class_specifier->type == T_TYPEDEF) {
+        this_node->token = token_storage_class_specifier;
     
         return this_node;
     }
 
     parser->lexer->pbuf = lexer_saved;
 
-    token_c_destroy(storage_class_specifier);
+    token_c_destroy(token_storage_class_specifier);
 
     parse_tree_node_c_destroy(this_node);
 
