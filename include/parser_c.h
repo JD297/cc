@@ -17,7 +17,7 @@ extern void *parser_c_create(const char *src);
 
 extern void parser_c_destroy(Parser_C *parser);
 
-extern int parser_c_parse(Parser_C *parser);
+extern ParseTreeNode_C *parser_c_parse(Parser_C *parser);
 
 extern ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser);
 extern ParseTreeNode_C *parser_c_parse_external_declaration(Parser_C *parser);

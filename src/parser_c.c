@@ -38,6 +38,11 @@ void parser_c_destroy(Parser_C *parser)
     free(parser);
 }
 
+ParseTreeNode_C *parser_c_parse(Parser_C *parser)
+{
+    return parser_c_parse_translation_unit(parser);
+}
+
 ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TRANSLATION_UNIT, NULL);
@@ -1573,17 +1578,4 @@ ParseTreeNode_C *parser_c_parse_macro_undef(Parser_C *parser)
 
         return NULL;
     }
-}
-
-int parser_c_parse(Parser_C *parser)
-{
-    ParseTreeNode_C *node;
-
-    if ((node = parser_c_parse_translation_unit(parser)) != NULL) {
-        parse_tree_node_c_add(parser->parse_tree, node);
-        
-        return 0;
-    }
-
-    return -1;
 }
