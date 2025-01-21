@@ -170,18 +170,34 @@ ParseTreeNode_C *parser_c_parse_declarator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_compound_statement(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_compound_statement");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_COMPOUND_STATEMENT, NULL);
 
-    goto error;
+    ParseTreeNode_C *declaration;
+    ParseTreeNode_C *statement;
+
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
+        goto error;
+    }
+
+    while ((declaration = parser_c_parse_declaration(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, declaration);
+    }
+
+    while ((statement = parser_c_parse_statement(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, statement);
+    }
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACE) == 0) {
+        goto error;
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
