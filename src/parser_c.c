@@ -130,14 +130,37 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_declaration_specifier(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_declaration_specifier");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATION_SPECIFIER, NULL);
 
-    goto error;
+    ParseTreeNode_C *storage_class_specifier;
+    ParseTreeNode_C *type_specifier;
+    ParseTreeNode_C *type_qualifier;
+
+    while (1) {
+        if ((storage_class_specifier = parser_c_parse_storage_class_specifier(parser)) != NULL) {
+            parse_tree_node_c_add(this_node, storage_class_specifier);
+
+            continue;
+        }
+
+        if ((type_specifier = parser_c_parse_type_specifier(parser)) != NULL) {
+            parse_tree_node_c_add(this_node, type_specifier);
+
+            continue;
+        }
+
+        if ((type_qualifier = parser_c_parse_type_qualifier(parser)) != NULL) {
+            parse_tree_node_c_add(this_node, type_qualifier);
+
+            continue;
+        }
+        
+        break;
+    }
+
+    if (this_node->num == 0) {
+        goto error;
+    }
 
     return this_node;
 
