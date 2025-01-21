@@ -206,22 +206,29 @@ ParseTreeNode_C *parser_c_parse_compound_statement(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_storage_class_specifier(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_storage_class_specifier");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STORAGE_CLASS_SPECIFIER, NULL);
 
-    goto error;
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    Token_C *storage_class_specifier = lexer_c_next_skip_whitespace(parser->lexer);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (storage_class_specifier->type == T_AUTO || 
+        storage_class_specifier->type == T_REGISTER || 
+        storage_class_specifier->type == T_STATIC || 
+        storage_class_specifier->type == T_EXTERN || 
+        storage_class_specifier->type == T_TYPEDEF) {
+        this_node->token = storage_class_specifier;
+    
+        return this_node;
     }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(storage_class_specifier);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C *parser)
