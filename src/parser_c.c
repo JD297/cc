@@ -962,22 +962,25 @@ ParseTreeNode_C *parser_c_parse_constant(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_string(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_string");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRING, NULL);
 
-    goto error;
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    Token_C *token_string = lexer_c_next_skip_whitespace(parser->lexer);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (token_string->type == T_STRING) {
+        this_node->token = token_string;
+    
+        return this_node;
     }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(token_string);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_integer_constant(Parser_C *parser)
