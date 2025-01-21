@@ -884,22 +884,40 @@ ParseTreeNode_C *parser_c_parse_assignment_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_constant(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_constant");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONSTANT, NULL);
 
-    goto error;
+    ParseTreeNode_C *integer_constant;
+    ParseTreeNode_C *character_constant;
+    ParseTreeNode_C *floating_constant;
+    ParseTreeNode_C *enumeration_constant;
 
-    return this_node;
+    if ((integer_constant = parser_c_parse_integer_constant(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, integer_constant);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+        return this_node;
     }
+
+    if ((character_constant = parser_c_parse_character_constant(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, character_constant);
+
+        return this_node;
+    }
+
+    if ((floating_constant = parser_c_parse_floating_constant(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, floating_constant);
+
+        return this_node;
+    }
+
+    if ((enumeration_constant = parser_c_parse_enumeration_constant(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, enumeration_constant);
+
+        return this_node;
+    }
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_string(Parser_C *parser)
@@ -927,7 +945,7 @@ ParseTreeNode_C *parser_c_parse_integer_constant(Parser_C *parser)
     // TODO
     (void)parser;
 
-    assert(0 && "Not implemented parser_c_parse_integer_constant");
+    //assert(0 && "Not implemented parser_c_parse_integer_constant");
 
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INTEGER_CONSTANT, NULL);
 
