@@ -266,22 +266,25 @@ ParseTreeNode_C *parser_c_parse_type_qualifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_struct_or_union_specifier(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_struct_or_union_specifier");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_OR_UNION_SPECIFIER, NULL);
 
-    goto error;
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    Token_C *token_struct_or_union = lexer_c_next_skip_whitespace(parser->lexer);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (token_struct_or_union->type == T_STRUCT || token_struct_or_union->type == T_UNION) {
+        this_node->token = token_struct_or_union;
+    
+        return this_node;
     }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(token_struct_or_union);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C *parser)
