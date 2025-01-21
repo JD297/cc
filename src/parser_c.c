@@ -40,14 +40,20 @@ void parser_c_destroy(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_translation_unit");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TRANSLATION_UNIT, NULL);
 
-    goto error;
+    ParseTreeNode_C *external_declaration;
+    ParseTreeNode_C *translation_unit;
+
+    if ((external_declaration = parser_c_parse_external_declaration(parser)) == NULL) {
+        goto error;
+    }
+
+    parse_tree_node_c_add(this_node, external_declaration);
+
+    if ((translation_unit = parser_c_parse_translation_unit(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, translation_unit);
+    }
 
     return this_node;
 
