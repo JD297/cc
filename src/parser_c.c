@@ -312,18 +312,47 @@ ParseTreeNode_C *parser_c_parse_type_qualifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_struct_or_union_specifier(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_struct_or_union_specifier");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_OR_UNION_SPECIFIER, NULL);
 
-    goto error;
+    ParseTreeNode_C *struct_or_union;
+    ParseTreeNode_C *identifier;
+    ParseTreeNode_C *struct_declaration;
 
-    return this_node;
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    parser_c_parse_required(parser, this_node, struct_or_union, error);
+
+    parser_c_parse_opt(parser, this_node, identifier, has_identifier);
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
+        goto error;
+    }
+
+    parser_c_parse_list_required(parser, this_node, struct_declaration, error);
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACE) == 0) {
+        goto error;
+    }
+
+    has_identifier: {
+        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
+            goto ret;
+        }
+        
+        parser_c_parse_list_required(parser, this_node, struct_declaration, error);
+    
+        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACE) == 0) {
+            goto error;
+        }
+    }
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
