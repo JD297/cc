@@ -425,16 +425,22 @@ ParseTreeNode_C *parser_c_parse_identifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_struct_declaration(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_struct_declaration");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATION, NULL);
 
-    goto error;
+    ParseTreeNode_C *specifier_qualifier;
+    ParseTreeNode_C *struct_declarator;
 
-    return this_node;
+    parser_c_parse_list_required(parser, this_node, specifier_qualifier, error);
+
+    parser_c_parse_list_required(parser, this_node, struct_declarator, error);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
+        goto error;
+    }
+
+    ret; {
+        return this_node;
+    }
 
     error: {
         parse_tree_node_c_destroy(this_node);
