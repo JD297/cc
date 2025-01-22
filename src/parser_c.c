@@ -52,30 +52,22 @@ ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser)
     parser_c_parse_list_opt(parser, this_node, external_declaration);
 
     return this_node;
-
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
-    }
 }
 
 ParseTreeNode_C *parser_c_parse_external_declaration(Parser_C *parser)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXTERNAL_DECLARATION, NULL);
 
-    ParseTreeNode_C *function_declaration;
+    ParseTreeNode_C *function_definition;
     ParseTreeNode_C *declaration;
 
-    parser_c_parse_opt(parser, this_node, function_declaration, ret);
+    parser_c_parse_opt(parser, this_node, function_definition, ret);
 
     parser_c_parse_opt(parser, this_node, declaration, ret);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
+    parse_tree_node_c_destroy(this_node);
 
-        return NULL;
-    }
+    return NULL;
 
     ret: {
         return this_node;
@@ -280,15 +272,13 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C *parser)
 
     parser_c_parse_opt(parser, this_node, typedef_name, ret);
 
-    error: {
-        parser->lexer->pbuf = lexer_saved;
+    parser->lexer->pbuf = lexer_saved;
 
-        token_c_destroy(token_type_specifier);
+    token_c_destroy(token_type_specifier);
 
-        parse_tree_node_c_destroy(this_node);
+    parse_tree_node_c_destroy(this_node);
 
-        return NULL;
-    }
+    return NULL;
 
     ret: {
         return this_node;
@@ -369,9 +359,7 @@ ParseTreeNode_C *parser_c_parse_typedef_name(Parser_C *parser)
 
     parser_c_parse_required(parser, this_node, identifier, error);
 
-    ret: {
-        return this_node;
-    }
+    return this_node;
 
     error: {
         parse_tree_node_c_destroy(this_node);
@@ -438,9 +426,7 @@ ParseTreeNode_C *parser_c_parse_struct_declaration(Parser_C *parser)
         goto error;
     }
 
-    ret; {
-        return this_node;
-    }
+    return this_node;
 
     error: {
         parse_tree_node_c_destroy(this_node);
@@ -460,11 +446,9 @@ ParseTreeNode_C *parser_c_parse_specifier_qualifier(Parser_C *parser)
 
     parser_c_parse_opt(parser, this_node, type_qualifier, ret);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
+    parse_tree_node_c_destroy(this_node);
 
-        return NULL;
-    }
+    return NULL;
 
     ret: {
         return this_node;
@@ -519,9 +503,7 @@ ParseTreeNode_C *parser_c_parse_constant_expression(Parser_C *parser)
 
     parser_c_parse_required(parser, this_node, conditional_expression, error);
 
-    ret: {
-        return this_node;
-    }
+    return this_node;
 
     error: {
         parse_tree_node_c_destroy(this_node);
@@ -959,7 +941,7 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C *parser)
         goto error;
     }
 
-    parser_c_parse_required(parse_tree, this_node, expression, error);
+    parser_c_parse_required(parser, this_node, expression, error);
 
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
         goto error;
@@ -1015,11 +997,9 @@ ParseTreeNode_C *parser_c_parse_constant(Parser_C *parser)
 
     parser_c_parse_opt(parser, this_node, enumeration_constant, ret);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
+    parse_tree_node_c_destroy(this_node);
 
-        return NULL;
-    }
+    return NULL;
 
     ret: {
         return this_node;
@@ -1371,11 +1351,9 @@ ParseTreeNode_C *parser_c_parse_statement(Parser_C *parser)
 
     parser_c_parse_opt(parser, this_node, jump_statement, ret);
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
+    parse_tree_node_c_destroy(this_node);
 
-        return NULL;
-    }
+    return NULL;
 
     ret: {
         return this_node;

@@ -29,16 +29,16 @@ extern ParseTreeNode_C *parser_c_parse(Parser_C *parser);
 #define parser_c_parse_opt(parser, root_node, name, next_label) \
         if ((name = parser_c_parse_##name(parser)) != NULL) { \
             parse_tree_node_c_add(this_node, name); \
-
-            goto next_label;
+        \
+            goto next_label; \
         }
 
 #define parser_c_parse_list_required(parser, root_node, name, empty_label) \
         size_t count_##name; \
-        for (count_##name = 0; (name = parser_c_parse_##name((parser)); count_##name++) != NULL) { \
+        for (count_##name = 0; (name = parser_c_parse_##name((parser))) != NULL; count_##name++) { \
             parse_tree_node_c_add((root_node), name); \
         }\
-        if (count##name == 0) { \
+        if (count_##name == 0) { \
             goto empty_label; \
         }
 
