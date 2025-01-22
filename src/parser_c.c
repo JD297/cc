@@ -524,18 +524,31 @@ ParseTreeNode_C *parser_c_parse_specifier_qualifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_struct_declarator_list(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_struct_declarator_list");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATOR_LIST, NULL);
 
-    goto error;
+    ParseTreeNode_C *struct_declarator;
+    
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    next_struct_declarator: {
+        parser_c_parse_required(parser, this_node, struct_declarator, check_error);
+        
+        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) != 0) {
+            goto next_struct_declarator;
+        }
+    }
+    
+    check_error: {
+        if (this_node->num == 0) {
+            goto error;
+        }
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+    
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
