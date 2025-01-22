@@ -1276,16 +1276,22 @@ ParseTreeNode_C *parser_c_parse_enumerator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_init_declarator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INIT_DECLARATOR, NULL);
 
-    goto error;
+    ParseTreeNode_C *declarator;
+    ParseTreeNode_C *initializer;
 
-    return this_node;
+    parser_c_parse_required(parser, this_node, declarator, error);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_ASSIGNMENT) == 0) {
+        goto ret;
+    }
+
+    parser_c_parse_required(parser, this_node, initializer, error);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
         parse_tree_node_c_destroy(this_node);
