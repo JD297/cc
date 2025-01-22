@@ -112,18 +112,36 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_declaration(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_function_definition");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATION, NULL);
 
-    goto error;
+    ParseTreeNode_C *declaration_specifier;
+    size_t declaration_specifier_count;
+
+    ParseTreeNode_C *init_declarator;
+
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    for (declaration_specifier_count = 0; (declaration_specifier = parser_c_parse_declaration_specifier(parser)) != NULL; declaration_specifier_count++) {
+        parse_tree_node_c_add(this_node, declaration_specifier);
+    }
+
+    if (declaration_specifier_count == 0) {
+        goto error;
+    }
+
+    while ((init_declarator = parser_c_parse_init_declarator(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, init_declarator);
+    }
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
+        goto error;
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
