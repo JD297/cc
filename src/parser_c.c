@@ -163,14 +163,16 @@ ParseTreeNode_C *parser_c_parse_declaration_specifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_declarator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_declarator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATOR, NULL);
 
-    goto error;
+    ParseTreeNode_C *pointer;
+    ParseTreeNode_C *direct_declarator;
+
+    parser_c_parse_opt(parser, this_node, pointer, next_direct_declarator);
+    
+    next_direct_declarator: {
+        parser_c_parse_required(parser, this_node, direct_declarator, error);
+    }
 
     return this_node;
 
