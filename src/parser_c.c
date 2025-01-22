@@ -49,13 +49,7 @@ ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser)
 
     ParseTreeNode_C *external_declaration;
 
-    while ((external_declaration = parser_c_parse_external_declaration(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, external_declaration);
-    }
-    
-    if (this_node->num == 0) {
-        goto error;
-    }
+    parser_c_parse_list_opt(parser, this_node, external_declaration);
 
     return this_node;
 
@@ -73,21 +67,19 @@ ParseTreeNode_C *parser_c_parse_external_declaration(Parser_C *parser)
     ParseTreeNode_C *function_declaration;
     ParseTreeNode_C *declaration;
 
-    if ((function_declaration = parser_c_parse_function_definition(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, function_declaration);
+    parser_c_parse_opt(parser, this_node, function_declaration, ret);
 
-        return this_node;
+    parser_c_parse_opt(parser, this_node, declaration, ret);
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
     }
 
-    if ((declaration = parser_c_parse_declaration(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, declaration);
-
+    ret: {
         return this_node;
     }
-
-    parse_tree_node_c_destroy(this_node);
-
-    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
@@ -103,11 +95,11 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
 
     parser_c_parse_list_opt(parser, this_node, declaration_specifier);
     
-    parser_c_parse_required(parser, this_node, declarator);
+    parser_c_parse_required(parser, this_node, declarator, error);
 
     parser_c_parse_list_opt(parser, this_node, declaration);
     
-    parser_c_parse_required(parser, this_node, compound_statement);
+    parser_c_parse_required(parser, this_node, compound_statement, error);
 
     return this_node;
 
@@ -125,23 +117,13 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C *parser)
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATION, NULL);
 
     ParseTreeNode_C *declaration_specifier;
-    size_t declaration_specifier_count;
-
     ParseTreeNode_C *init_declarator;
 
     const char* lexer_saved = parser->lexer->pbuf;
 
-    for (declaration_specifier_count = 0; (declaration_specifier = parser_c_parse_declaration_specifier(parser)) != NULL; declaration_specifier_count++) {
-        parse_tree_node_c_add(this_node, declaration_specifier);
-    }
+    parser_c_parse_list_required(parser, this_node, declaration_specifier, error);
 
-    if (declaration_specifier_count == 0) {
-        goto error;
-    }
-
-    while ((init_declarator = parser_c_parse_init_declarator(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, init_declarator);
-    }
+    parser_c_parse_list_opt(parser, this_node, init_declarator);
 
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
         goto error;
@@ -166,26 +148,12 @@ ParseTreeNode_C *parser_c_parse_declaration_specifier(Parser_C *parser)
     ParseTreeNode_C *type_specifier;
     ParseTreeNode_C *type_qualifier;
 
-    while (1) {
-        if ((storage_class_specifier = parser_c_parse_storage_class_specifier(parser)) != NULL) {
-            parse_tree_node_c_add(this_node, storage_class_specifier);
+    next: {
+        parser_c_parse_opt(parser, this_node, storage_class_specifier, next);
 
-            continue;
-        }
+        parser_c_parse_opt(parser, this_node, type_specifier, next);
 
-        if ((type_specifier = parser_c_parse_type_specifier(parser)) != NULL) {
-            parse_tree_node_c_add(this_node, type_specifier);
-
-            continue;
-        }
-
-        if ((type_qualifier = parser_c_parse_type_qualifier(parser)) != NULL) {
-            parse_tree_node_c_add(this_node, type_qualifier);
-
-            continue;
-        }
-        
-        break;
+        parser_c_parse_opt(parser, this_node, type_qualifier, next);
     }
 
     if (this_node->num == 0) {
@@ -234,13 +202,9 @@ ParseTreeNode_C *parser_c_parse_compound_statement(Parser_C *parser)
         goto error;
     }
 
-    while ((declaration = parser_c_parse_declaration(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, declaration);
-    }
+    parser_c_parse_list_opt(parser, this_node, declaration);
 
-    while ((statement = parser_c_parse_statement(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, statement);
-    }
+    parser_c_parse_list_opt(parser, this_node, statement);
 
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACE) == 0) {
         goto error;
@@ -310,31 +274,25 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C *parser)
     ParseTreeNode_C *enum_specifier;
     ParseTreeNode_C *typedef_name;
 
-    if ((struct_or_union_specifier = parser_c_parse_struct_or_union_specifier(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, struct_or_union_specifier);
+    parser_c_parse_opt(parser, this_node, struct_or_union_specifier, ret);
 
-        return this_node;
+    parser_c_parse_opt(parser, this_node, enum_specifier, ret);
+
+    parser_c_parse_opt(parser, this_node, typedef_name, ret);
+
+    error: {
+        parser->lexer->pbuf = lexer_saved;
+
+        token_c_destroy(token_type_specifier);
+
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
     }
 
-    if ((enum_specifier = parser_c_parse_enum_specifier(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, enum_specifier);
-
+    ret: {
         return this_node;
     }
-
-    if ((typedef_name = parser_c_parse_typedef_name(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, typedef_name);
-
-        return this_node;
-    }
-
-    parser->lexer->pbuf = lexer_saved;
-
-    token_c_destroy(token_type_specifier);
-
-    parse_tree_node_c_destroy(this_node);
-
-    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_type_qualifier(Parser_C *parser)
@@ -409,15 +367,17 @@ ParseTreeNode_C *parser_c_parse_typedef_name(Parser_C *parser)
 
     ParseTreeNode_C *identifier;
 
-    if ((identifier = parser_c_parse_identifier(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, identifier);
+    parser_c_parse_required(parser, this_node, identifier, error);
 
+    ret: {
         return this_node;
     }
 
-    parse_tree_node_c_destroy(this_node);
+    error: {
+        parse_tree_node_c_destroy(this_node);
 
-    return NULL;
+        return NULL;
+    }
 }
 
 ParseTreeNode_C *parser_c_parse_struct_or_union(Parser_C *parser)
@@ -549,15 +509,17 @@ ParseTreeNode_C *parser_c_parse_constant_expression(Parser_C *parser)
 
     ParseTreeNode_C *conditional_expression;
 
-    if ((conditional_expression = parser_c_parse_conditional_expression(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, conditional_expression);
+    parser_c_parse_required(parser, this_node, conditional_expression, error);
 
+    ret: {
         return this_node;
     }
 
-    parse_tree_node_c_destroy(this_node);
+    error: {
+        parse_tree_node_c_destroy(this_node);
 
-    return NULL;
+        return NULL;
+    }
 }
 
 ParseTreeNode_C *parser_c_parse_pointer(Parser_C *parser)
@@ -979,39 +941,21 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C *parser)
 
     const char* lexer_saved = parser->lexer->pbuf;
 
-    if ((identifier = parser_c_parse_identifier(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, identifier);
+    parser_c_parse_opt(parser, this_node, identifier, ret);
 
-        return this_node;
-    }
+    parser_c_parse_opt(parser, this_node, constant, ret);
 
-    if ((constant = parser_c_parse_constant(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, constant);
-
-        return this_node;
-    }
-
-    if ((string = parser_c_parse_string(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, string);
-
-        return this_node;
-    }
+    parser_c_parse_opt(parser, this_node, string, ret);
 
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
         goto error;
     }
 
-    if ((expression = parser_c_parse_expression(parser)) == NULL) {
-        goto error;
-    }
-
-    parse_tree_node_c_add(this_node, expression);
+    parser_c_parse_required(parse_tree, this_node, expression, error);
 
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
         goto error;
     }
-
-    return this_node;
 
     error: {
         parser->lexer->pbuf = lexer_saved;
@@ -1019,6 +963,10 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C *parser)
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
+    }
+
+    ret: {
+        return this_node;
     }
 }
 
@@ -1051,33 +999,23 @@ ParseTreeNode_C *parser_c_parse_constant(Parser_C *parser)
     ParseTreeNode_C *floating_constant;
     ParseTreeNode_C *enumeration_constant;
 
-    if ((integer_constant = parser_c_parse_integer_constant(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, integer_constant);
+    parser_c_parse_opt(parser, this_node, integer_constant, ret);
 
-        return this_node;
+    parser_c_parse_opt(parser, this_node, character_constant, ret);
+
+    parser_c_parse_opt(parser, this_node, floating_constant, ret);
+
+    parser_c_parse_opt(parser, this_node, enumeration_constant, ret);
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
     }
 
-    if ((character_constant = parser_c_parse_character_constant(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, character_constant);
-
+    ret: {
         return this_node;
     }
-
-    if ((floating_constant = parser_c_parse_floating_constant(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, floating_constant);
-
-        return this_node;
-    }
-
-    if ((enumeration_constant = parser_c_parse_enumeration_constant(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, enumeration_constant);
-
-        return this_node;
-    }
-
-    parse_tree_node_c_destroy(this_node);
-
-    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_string(Parser_C *parser)
@@ -1407,45 +1345,27 @@ ParseTreeNode_C *parser_c_parse_statement(Parser_C *parser)
     ParseTreeNode_C *iteration_statement;
     ParseTreeNode_C *jump_statement;
 
-    if ((labeled_statement = parser_c_parse_labeled_statement(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, labeled_statement);
+    parser_c_parse_opt(parser, this_node, labeled_statement, ret);
 
-        return this_node;
+    parser_c_parse_opt(parser, this_node, expression_statement, ret);
+
+    parser_c_parse_opt(parser, this_node, compound_statement, ret);
+
+    parser_c_parse_opt(parser, this_node, selection_statement, ret);
+
+    parser_c_parse_opt(parser, this_node, iteration_statement, ret);
+
+    parser_c_parse_opt(parser, this_node, jump_statement, ret);
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
     }
 
-    if ((expression_statement = parser_c_parse_expression_statement(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, expression_statement);
-
+    ret: {
         return this_node;
     }
-
-    if ((compound_statement = parser_c_parse_compound_statement(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, compound_statement);
-
-        return this_node;
-    }
-
-    if ((selection_statement = parser_c_parse_selection_statement(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, selection_statement);
-
-        return this_node;
-    }
-
-    if ((iteration_statement = parser_c_parse_iteration_statement(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, iteration_statement);
-
-        return this_node;
-    }
-
-    if ((jump_statement = parser_c_parse_jump_statement(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, jump_statement);
-
-        return this_node;
-    }
-
-    parse_tree_node_c_destroy(this_node);
-
-    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C *parser)

@@ -19,25 +19,27 @@ extern void parser_c_destroy(Parser_C *parser);
 
 extern ParseTreeNode_C *parser_c_parse(Parser_C *parser);
 
-#define parser_c_parse_required(parser, root_node, name) \
+#define parser_c_parse_required(parser, root_node, name, empty_label) \
         if ((name = parser_c_parse_##name(parser)) == NULL) { \
-            goto error; \
+            goto empty_label; \
         } \
         \
         parse_tree_node_c_add(this_node, name);
 
-#define parser_c_parse_opt(parser, root_node, name) \
-        if ((name = parser_c_parse_##name(parser)) == NULL) { \
+#define parser_c_parse_opt(parser, root_node, name, next_label) \
+        if ((name = parser_c_parse_##name(parser)) != NULL) { \
             parse_tree_node_c_add(this_node, name); \
+
+            goto next_label;
         }
 
-#define parser_c_parse_list_required(parser, root_node, name) \
+#define parser_c_parse_list_required(parser, root_node, name, empty_label) \
         size_t count_##name; \
         for (count_##name = 0; (name = parser_c_parse_##name((parser)); count_##name++) != NULL) { \
             parse_tree_node_c_add((root_node), name); \
         }\
         if (count##name == 0) { \
-            goto error; \
+            goto empty_label; \
         }
 
 #define parser_c_parse_list_opt(parser, root_node, name) \
