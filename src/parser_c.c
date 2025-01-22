@@ -614,18 +614,28 @@ ParseTreeNode_C *parser_c_parse_constant_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_pointer(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_pointer");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_POINTER, NULL);
 
-    goto error;
+    const char *lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    ParseTreeNode_C *type_qualifier;
+    ParseTreeNode_C *pointer;
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_MULTIPLY) == 0) {
+        goto error;
+    }
+    
+    parser_c_parse_list_opt(parser, this_node, type_qualifier);
+    
+    parser_c_parse_opt(parser, this_node, pointer, ret);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
