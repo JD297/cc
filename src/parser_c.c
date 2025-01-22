@@ -451,21 +451,23 @@ ParseTreeNode_C *parser_c_parse_struct_declaration(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_specifier_qualifier(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_specifier_qualifier");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_SPECIFIER_QUALIFIER, NULL);
 
-    goto error;
+    ParseTreeNode_C *type_specifier;
+    ParseTreeNode_C *type_qualifier;
 
-    return this_node;
+    parser_c_parse_opt(parser, this_node, type_specifier, ret);
+
+    parser_c_parse_opt(parser, this_node, type_qualifier, ret);
 
     error: {
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
+    }
+
+    ret: {
+        return this_node;
     }
 }
 
