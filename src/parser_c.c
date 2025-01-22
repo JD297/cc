@@ -92,18 +92,40 @@ ParseTreeNode_C *parser_c_parse_external_declaration(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_function_definition");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_FUNCTION_DEFINITION, NULL);
 
-    goto error;
+    ParseTreeNode_C *declaration_specifier;
+    ParseTreeNode_C *declarator;
+    ParseTreeNode_C *declaration;
+    ParseTreeNode_C *compound_statement;
+
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    while ((declaration_specifier = parser_c_parse_declaration_specifier(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, declaration_specifier);
+    }
+
+    if ((declarator = parser_c_parse_declarator(parser)) == NULL) {
+        goto error;
+    }
+    
+    parse_tree_node_c_add(this_node, declarator);
+
+    while ((declaration = parser_c_parse_declaration(parser)) != NULL) {
+        parse_tree_node_c_add(this_node, declaration);
+    }
+    
+    if ((compound_statement = parser_c_parse_compound_statement(parser)) == NULL) {
+        goto error;
+    }
+    
+    parse_tree_node_c_add(this_node, compound_statement);
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
