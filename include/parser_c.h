@@ -19,6 +19,32 @@ extern void parser_c_destroy(Parser_C *parser);
 
 extern ParseTreeNode_C *parser_c_parse(Parser_C *parser);
 
+#define parser_c_parse_required(parser, root_node, name) \
+        if ((name = parser_c_parse_##name(parser)) == NULL) { \
+            goto error; \
+        } \
+        \
+        parse_tree_node_c_add(this_node, name);
+
+#define parser_c_parse_opt(parser, root_node, name) \
+        if ((name = parser_c_parse_##name(parser)) == NULL) { \
+            parse_tree_node_c_add(this_node, name); \
+        }
+
+#define parser_c_parse_list_required(parser, root_node, name) \
+        size_t count_##name; \
+        for (count_##name = 0; (name = parser_c_parse_##name((parser)); count_##name++) != NULL) { \
+            parse_tree_node_c_add((root_node), name); \
+        }\
+        if (count##name == 0) { \
+            goto error; \
+        }
+
+#define parser_c_parse_list_opt(parser, root_node, name) \
+        while ((name = parser_c_parse_##name((parser))) != NULL) { \
+            parse_tree_node_c_add((root_node), name); \
+        }
+
 extern ParseTreeNode_C *parser_c_parse_translation_unit(Parser_C *parser);
 extern ParseTreeNode_C *parser_c_parse_external_declaration(Parser_C *parser);
 extern ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser);

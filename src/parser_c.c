@@ -101,25 +101,13 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
 
     const char* lexer_saved = parser->lexer->pbuf;
 
-    while ((declaration_specifier = parser_c_parse_declaration_specifier(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, declaration_specifier);
-    }
+    parser_c_parse_list_opt(parser, this_node, declaration_specifier);
+    
+    parser_c_parse_required(parser, this_node, declarator);
 
-    if ((declarator = parser_c_parse_declarator(parser)) == NULL) {
-        goto error;
-    }
+    parser_c_parse_list_opt(parser, this_node, declaration);
     
-    parse_tree_node_c_add(this_node, declarator);
-
-    while ((declaration = parser_c_parse_declaration(parser)) != NULL) {
-        parse_tree_node_c_add(this_node, declaration);
-    }
-    
-    if ((compound_statement = parser_c_parse_compound_statement(parser)) == NULL) {
-        goto error;
-    }
-    
-    parse_tree_node_c_add(this_node, compound_statement);
+    parser_c_parse_required(parser, this_node, compound_statement);
 
     return this_node;
 
