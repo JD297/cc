@@ -312,25 +312,22 @@ ParseTreeNode_C *parser_c_parse_type_qualifier(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_struct_or_union_specifier(Parser_C *parser)
 {
+    // TODO
+    (void)parser;
+
+    assert(0 && "Not implemented parser_c_parse_struct_or_union_specifier");
+
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_OR_UNION_SPECIFIER, NULL);
 
-    const char* lexer_saved = parser->lexer->pbuf;
+    goto error;
 
-    Token_C *token_struct_or_union = lexer_c_next_skip_whitespace(parser->lexer);
+    return this_node;
 
-    if (token_struct_or_union->type == T_STRUCT || token_struct_or_union->type == T_UNION) {
-        this_node->token = token_struct_or_union;
-    
-        return this_node;
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
     }
-
-    parser->lexer->pbuf = lexer_saved;
-
-    token_c_destroy(token_struct_or_union);
-
-    parse_tree_node_c_destroy(this_node);
-
-    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C *parser)
@@ -408,22 +405,25 @@ ParseTreeNode_C *parser_c_parse_typedef_name(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_struct_or_union(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_struct_or_union");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_OR_UNION, NULL);
+    
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    goto error;
+    Token_C *token_struct_or_union = lexer_c_next_skip_whitespace(parser->lexer);
 
-    return this_node;
-
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
+    if (token_struct_or_union->type == T_STRUCT || token_struct_or_union->type == T_UNION) {
+        this_node->token = token_struct_or_union;
+    
+        return this_node;
     }
+
+    parser->lexer->pbuf = lexer_saved;
+
+    token_c_destroy(token_struct_or_union);
+
+    parse_tree_node_c_destroy(this_node);
+
+    return NULL;
 }
 
 ParseTreeNode_C *parser_c_parse_identifier(Parser_C *parser)
