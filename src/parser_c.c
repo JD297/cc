@@ -644,18 +644,79 @@ ParseTreeNode_C *parser_c_parse_pointer(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_direct_declarator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DIRECT_DECLARATOR, NULL);
 
-    goto error;
+    const char *lexer_saved = parser->lexer->pbuf;
+
+    ParseTreeNode_C *identifier;
+    ParseTreeNode_C *declarator;
+    ParseTreeNode_C *constant_expression;
+    ParseTreeNode_C *parameter_type_list;
+
+    Token_C *token_after_direct_declarator;
+    
+    parser_c_parse_opt(parser, this_node, identifier, after_direct_declarator);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
+        goto error;
+    }
+    
+    parser_c_parse_required(parser, this_node, declarator, error);
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+        goto error;
+    }
+
+    after_direct_declarator: {
+        token_after_direct_declarator = lexer_c_next_skip_whitespace(parser->lexer);
+        
+        if (token_after_direct_declarator == NULL) {
+            goto error;
+        }
+        
+        switch(token_after_direct_declarator->type) {
+            case T_OPEN_PARENT: {
+                parser_c_parse_list_required(parser, this_node, identifier, next_after_direct_declarator_check_parameter_type);
+                
+                goto next_after_direct_declarator_parent;
+                
+                next_after_direct_declarator_check_parameter_type: {
+            
+                    parser_c_parse_required(parser, this_node, parameter_type_list, error);
+                    
+                    next_after_direct_declarator_parent: {
+                        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+                            goto error;
+                        }
+                    }
+                }
+                
+                break;
+            }
+            case T_OPEN_BRACKET: {
+                parser_c_parse_opt(parser, this_node, constant_expression, next_after_direct_declarator_bracket);
+                
+                next_after_direct_declarator_bracket:
+
+                if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACKET) == 0) {
+                    goto error;
+                }
+                
+                break;
+            }
+            default: {
+                goto error;
+            }
+        }
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
+        token_c_destroy(token_after_direct_declarator);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
