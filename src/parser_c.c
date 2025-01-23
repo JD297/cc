@@ -762,18 +762,35 @@ ParseTreeNode_C *parser_c_parse_parameter_type_list(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_conditional_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_conditional_expression");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONDITIONAL_EXPRESSION, NULL);
 
-    goto error;
+    ParseTreeNode_C *logical_or_expression;
+    ParseTreeNode_C *expression;
+    ParseTreeNode_C *conditional_expression;
+    
+    const char *lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    parser_c_parse_required(parser, this_node, logical_or_expression, error);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_TERNARY) == 0) {
+        goto ret;
+    }
+
+    parser_c_parse_required(parser, this_node, expression, error);
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_TERNARY) == 0) {
+        goto error;
+    }
+    
+    parser_c_parse_required(parser, this_node, conditional_expression, error);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+    
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
