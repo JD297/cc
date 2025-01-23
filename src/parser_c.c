@@ -1248,22 +1248,65 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_shift_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
+    #define PTT_C_TYPE PTT_C_SHIFT_EXPRESSION
+    #define TOKEN_TYPE_1 T_BITWISE_LEFTSHIFT
+    #define TOKEN_TYPE_2 T_BITWISE_RIGHTSHIFT
 
-    assert(0 && "Not implemented parser_c_parse_shift_expression");
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
 
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_SHIFT_EXPRESSION, NULL);
+    ParseTreeNode_C *additive_expression;
 
-    goto error;
+    const char *lexer_saved = parser->lexer->pbuf;
 
-    return this_node;
+    ParseTreeNode_C *left_node;
+    
+    Token_C *this_node_token;
+
+    parser_c_parse_required(parser, this_node, additive_expression, error);
+
+    if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
+                                                                                    this_node_token->type != TOKEN_TYPE_2)) {
+        goto error;
+    }
+
+    parser_c_parse_required(parser, this_node, additive_expression, error);
+
+    this_node->token = this_node_token;
+
+    while (1) {
+        if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
+                                                                                        this_node_token->type != TOKEN_TYPE_2)) {
+            goto ret;
+        }
+
+        this_node->token = this_node_token;
+
+        left_node = this_node;
+
+        this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+
+        parse_tree_node_c_add(this_node, left_node);
+
+        parser_c_parse_required(parser, this_node, additive_expression, error);
+    }
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+        
+        token_c_destroy(this_node_token);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
     }
+    
+    #undef PTT_C_TYPE
+    #undef TOKEN_TYPE_1
+    #undef TOKEN_TYPE_2
 }
 
 ParseTreeNode_C *parser_c_parse_additive_expression(Parser_C *parser)
