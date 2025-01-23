@@ -19,6 +19,7 @@ const char *token_type_c_pattern(const TokenType_C type)
         case T_CLOSING_PARENT: return "^[)]";
         case T_OPEN_BRACE: return "^[{]";
         case T_CLOSING_BRACE: return "^[}]";
+        case T_DOT_DOT_DOT: return "^[.][.][.]";
         case T_DOT: return "^[.]";
         case T_ARROW: return "^[-][>]";
         case T_COMMA: return "^,";

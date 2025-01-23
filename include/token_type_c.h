@@ -42,6 +42,7 @@ typedef enum TokenType_C {
     T_GREATER_THAN,
 
     /* SYMBOLS */
+    T_DOT_DOT_DOT,
     T_OPEN_BRACKET,
     T_CLOSING_BRACKET,
     T_OPEN_PARENT,

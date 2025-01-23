@@ -725,18 +725,35 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_parameter_type_list(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_parameter_type_list");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PARAMETER_TYPE_LIST, NULL);
 
-    goto error;
+    ParseTreeNode_C *parameter_list;
+    
+    Token_C *token_dot_dot_dot;
+    
+    const char *lexer_saved = parser->lexer->pbuf;
+    
+    parser_c_parse_required(parser, this_node, parameter_list, error);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) == 1) {
+        if ((token_dot_dot_dot = lexer_c_next_skip_whitespace(parser->lexer)) == NULL) {
+            goto error;
+        }
+        
+        if (token_dot_dot_dot->type != T_DOT_DOT_DOT) {
+            goto error;
+        }
+        
+        this_node->token = token_dot_dot_dot;
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+        
+        token_c_destroy(token_dot_dot_dot);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
