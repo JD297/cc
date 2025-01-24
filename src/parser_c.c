@@ -2217,18 +2217,97 @@ ParseTreeNode_C *parser_c_parse_selection_statement(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_iteration_statement");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ITERATION_STATEMENT, NULL);
 
-    goto error;
+    ParseTreeNode_C *expression;
+    ParseTreeNode_C *statement;
+
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    Token_C *iteration_statement_token = lexer_c_next_skip_whitespace(parser->lexer);
+
+    if (iteration_statement_token == NULL) {
+        goto error;
+    }
+
+    this_node->token = iteration_statement_token;
+
+    switch(iteration_statement_token->type) {
+        case T_WHILE: {
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
+                goto error;
+            }
+
+            parser_c_parse_required(parser, this_node, expression, error);
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+                goto error;
+            }
+
+            parser_c_parse_required(parser, this_node, statement, error);
+        } break;
+        case T_DO: {
+            parser_c_parse_required(parser, this_node, statement, error);
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_WHILE) == 0) {
+                goto error;
+            }
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
+                goto error;
+            }
+
+            parser_c_parse_required(parser, this_node, expression, error);
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+                goto error;
+            }
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
+                goto error;
+            }
+        } break;
+        case T_FOR: {
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
+                goto error;
+            }
+
+            parser_c_parse_opt(parser, this_node, expression, next_for_1);
+
+            next_for_1:
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
+                goto error;
+            }
+
+            parser_c_parse_opt(parser, this_node, expression, next_for_2);
+
+            next_for_2:
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
+                goto error;
+            }
+
+            parser_c_parse_opt(parser, this_node, expression, next_for_3);
+
+            next_for_3:
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+                goto error;
+            }
+
+            parser_c_parse_required(parser, this_node, statement, error);
+        } break;
+        default: goto error;
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+    
+        token_c_destroy(iteration_statement_token);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
