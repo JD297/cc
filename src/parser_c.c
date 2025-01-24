@@ -1481,16 +1481,24 @@ ParseTreeNode_C *parser_c_parse_unary_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_type_name(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_type_name");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE_NAME, NULL);
 
-    goto error;
+    ParseTreeNode_C *specifier_qualifier;
+    ParseTreeNode_C *abstract_declarator;
 
-    return this_node;
+    next_specifier_qualifier: {
+        parser_c_parse_opt(parser, this_node, specifier_qualifier, next_specifier_qualifier);
+    }
+
+    if (this_node->num == 0) {
+        goto error;
+    }
+
+    parser_c_parse_opt(parser, this_node, abstract_declarator, ret);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
         parse_tree_node_c_destroy(this_node);
