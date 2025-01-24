@@ -1955,13 +1955,13 @@ ParseTreeNode_C *parser_c_parse_initializer(Parser_C *parser)
 
     const char* lexer_saved = parser->lexer->pbuf;
 
-    parser_c_parser_opt(parser, this_node, assignment_expression, ret);
+    parser_c_parse_opt(parser, this_node, assignment_expression, ret);
 
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
         goto error;
     }
 
-    parser_c_parser_required(parser, this_node, initializer_list, error);
+    parser_c_parse_required(parser, this_node, initializer_list, error);
 
     const char* lexer_saved_comma = parser->lexer->pbuf;
 
