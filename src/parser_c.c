@@ -1811,16 +1811,21 @@ ParseTreeNode_C *parser_c_parse_parameter_list(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_parameter_declaration(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_parameter_declaration");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PARAMETER_DECLARATION, NULL);
 
-    goto error;
+    ParseTreeNode_C *declaration_specifier;
+    ParseTreeNode_C *declarator;
+    ParseTreeNode_C *abstract_declarator;
 
-    return this_node;
+    parser_c_parse_list_required(parser, this_node, declaration_specifier, error);
+    
+    parser_c_parse_opt(parser, this_node, declarator, ret);
+    
+    parser_c_parse_opt(parser, this_node, abstract_declarator, ret);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
         parse_tree_node_c_destroy(this_node);
