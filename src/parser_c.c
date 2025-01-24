@@ -2073,18 +2073,53 @@ ParseTreeNode_C *parser_c_parse_statement(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_labeled_statement");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_LABELED_STATEMENT, NULL);
 
+    ParseTreeNode_C *identifier;
+    ParseTreeNode_C *statement;
+    ParseTreeNode_C *constant_expression;
+
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    parser_c_parse_opt(parser, this_node, identifier, rest);
+
+    Token_C *token = lexer_c_next_skip_whitespace(parser->lexer);
+    
+    if (token == NULL) {
+        goto error;
+    }
+
+    if (token->type == T_DEFAULT) {
+        this_node->token = token;
+    
+        goto rest;
+    }
+    
+    if (token->type == T_CASE) {
+        this_node->token = token;
+        
+        parser_c_parse_required(parser, this_node, constant_expression, error);
+    
+        goto rest;
+    }
+    
     goto error;
+
+    rest: {
+        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COLON) == 0) {
+            goto error;
+        }
+
+        parser_c_parse_required(parser, this_node, statement, error);
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
+        token_c_destroy(token);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
