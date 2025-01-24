@@ -1884,18 +1884,32 @@ ParseTreeNode_C *parser_c_parse_enumerator_list(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_enumerator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_enumerator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ENUMERATOR, NULL);
 
-    goto error;
+    ParseTreeNode_C *identifier;
+    ParseTreeNode_C *constant_expression;
 
-    return this_node;
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    parser_c_parse_required(parser, this_node, identifier, error);
+
+    const char* lexer_saved_assignment = parser->lexer->pbuf;
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_ASSIGNMENT) == 0) {
+        parser->lexer->pbuf = lexer_saved_assignment;
+
+        goto ret;
+    }
+
+    parser_c_parse_required(parser, this_node, constant_expression, error);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
