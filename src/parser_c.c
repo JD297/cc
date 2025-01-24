@@ -1771,16 +1771,24 @@ ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_abstract_declarator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_abstract_declarator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ABSTRACT_DECLARATOR, NULL);
 
-    goto error;
+    ParseTreeNode_C *pointer;
+    ParseTreeNode_C *direct_abstract_declarator;
 
-    return this_node;
+    parser_c_parse_opt(parser, this_node, pointer, next_after_pointer);
+
+    parser_c_parse_required(parser, this_node, direct_abstract_declarator, error);
+
+    goto ret;
+
+    next_after_pointer:
+
+    parser_c_parse_opt(parser, this_node, direct_abstract_declarator, ret);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
         parse_tree_node_c_destroy(this_node);
