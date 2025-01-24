@@ -2155,18 +2155,60 @@ ParseTreeNode_C *parser_c_parse_expression_statement(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_selection_statement(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_selection_statement");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_SELECTION_STATEMENT, NULL);
 
-    goto error;
+    ParseTreeNode_C *expression;
+    ParseTreeNode_C *statement;
 
-    return this_node;
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    Token_C *token = lexer_c_next_skip_whitespace(parser->lexer);
+
+    if (token == NULL) {
+        goto error;
+    }
+    
+    if (token->type != T_IF && token->type != T_SWITCH) {
+        goto error;
+    }
+
+    this_node->token = token;
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
+        goto error;
+    }
+    
+    parser_c_parse_required(parser, this_node, expression, error);
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+        goto error;
+    }
+    
+    parser_c_parse_required(parser, this_node, statement, error);
+
+    if (token->type == T_SWITCH) {
+        goto ret;
+    }
+
+    const char* lexer_saved_else = parser->lexer->pbuf;
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_ELSE) == 0) {
+        parser->lexer->pbuf = lexer_saved_else;
+    
+        goto ret;
+    }
+
+    parser_c_parse_required(parser, this_node, statement, error);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
+        token_c_destroy(token);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
