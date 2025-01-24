@@ -66,9 +66,6 @@ typedef enum ParseTreeType_C {
     PTT_C_SELECTION_STATEMENT,
     PTT_C_ITERATION_STATEMENT,
     PTT_C_JUMP_STATEMENT,
-    PTT_C_CONTROL_LINE,
-    PTT_C_MACRO_INCLUDE,
-    PTT_C_MACRO_UNDEF,
 } ParseTreeType_C;
 
 #endif

@@ -228,9 +228,6 @@
                    | break ;
                    | return {<expression>}? ;
 
-<control-line> ::= <macro-include>
-                 | <macro-undef> <identifier>
-
 <integer-constant> ::= number
 
 <character-constant> ::= character
