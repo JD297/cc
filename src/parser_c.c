@@ -1930,18 +1930,38 @@ ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_initializer(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_initializer");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INITIALIZER, NULL);
 
-    goto error;
+    ParseTreeNode_C *assignment_expression;
+    ParseTreeNode_C *initializer_list;
 
-    return this_node;
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    parser_c_parser_opt(parser, this_node, assignment_expression, ret);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
+        goto error;
+    }
+
+    parser_c_parser_required(parser, this_node, initializer_list, error);
+
+    const char* lexer_saved_comma = parser->lexer->pbuf;
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) == 0) {
+        parser->lexer->pbuf = lexer_saved_comma;
+    }
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACE) == 0) {
+        goto error;
+    }
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
