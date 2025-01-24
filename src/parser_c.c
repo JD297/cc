@@ -2316,18 +2316,46 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_jump_statement(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_jump_statement");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_JUMP_STATEMENT, NULL);
+    
+    ParseTreeNode_C *identifier;
+    ParseTreeNode_C *expression;
+    
+    const char* lexer_saved = parser->lexer->pbuf;
+    
+    Token_C *jump_statement_token = lexer_c_next_skip_whitespace(parser->lexer);
 
-    goto error;
+    if (jump_statement_token == NULL) {
+        goto error;
+    }
+
+    switch(jump_statement_token->type) {
+        case T_GOTO: {
+            parser_c_parse_required(parser, this_node, identifier, next_token_semicolon);
+        } break;
+        case T_RETURN: {
+            parser_c_parse_opt(parser, this_node, expression, next_token_semicolon);
+        } break;
+        case T_CONTINUE:
+        case T_BREAK: break;
+        default: goto error;
+    }
+    
+    next_token_semicolon:
+    
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
+        goto error;
+    }
+    
+    this_node->token = jump_statement_token;
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
+        token_c_destroy(jump_statement_token);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
