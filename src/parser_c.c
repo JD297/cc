@@ -1909,6 +1909,8 @@ ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C *parser)
     ParseTreeNode_C *declarator;
     ParseTreeNode_C *initializer;
 
+    const char* lexer_saved = parser->lexer->pbuf;
+
     parser_c_parse_required(parser, this_node, declarator, error);
 
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_ASSIGNMENT) == 0) {
@@ -1922,6 +1924,8 @@ ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C *parser)
     }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
