@@ -2128,18 +2128,25 @@ ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_expression_statement(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_expression_statement");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXPRESSION_STATEMENT, NULL);
 
-    goto error;
+    ParseTreeNode_C *expression;
+    
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    parser_c_parse_opt(parser, this_node, expression, next);
+
+    next: {
+        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_SEMICOLON) == 0) {
+            goto error;
+        }
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;    
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
