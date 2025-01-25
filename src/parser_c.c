@@ -89,8 +89,6 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
     ParseTreeNode_C *declaration;
     ParseTreeNode_C *compound_statement;
 
-    const char* lexer_saved = parser->lexer->pbuf;
-
     parser_c_parse_list_opt(parser, this_node, declaration_specifier);
     
     parser_c_parse_required(parser, this_node, declarator, error);
@@ -102,8 +100,6 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C *parser)
     return this_node;
 
     error: {
-        parser->lexer->pbuf = lexer_saved;
-
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
@@ -270,6 +266,8 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C *parser)
         return this_node;
     }
 
+    parser->lexer->pbuf = lexer_saved;
+
     ParseTreeNode_C *struct_or_union_specifier;
     ParseTreeNode_C *enum_specifier;
     ParseTreeNode_C *typedef_name;
@@ -341,7 +339,11 @@ ParseTreeNode_C *parser_c_parse_struct_or_union_specifier(Parser_C *parser)
     }
 
     has_identifier: {
+        const char* lexer_saved_brace = parser->lexer->pbuf;
+
         if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
+            parser->lexer->pbuf = lexer_saved_brace;
+
             goto ret;
         }
         
@@ -397,7 +399,11 @@ ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C *parser)
     goto ret;
 
     has_identifier: {
+        const char* lexer_saved_brace = parser->lexer->pbuf;
+
         if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_BRACE) == 0) {
+            parser->lexer->pbuf = lexer_saved_brace;
+
             goto ret;
         }
         
@@ -539,9 +545,13 @@ ParseTreeNode_C *parser_c_parse_struct_declarator_list(Parser_C *parser)
     next_struct_declarator: {
         parser_c_parse_required(parser, this_node, struct_declarator, check_error);
         
-        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) != 0) {
+        const char* lexer_saved_comma = parser->lexer->pbuf;
+        
+        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) == 1) {
             goto next_struct_declarator;
         }
+        
+        parser->lexer->pbuf = lexer_saved_comma;
     }
     
     check_error: {
@@ -581,7 +591,11 @@ ParseTreeNode_C *parser_c_parse_struct_declarator(Parser_C *parser)
     goto ret;
 
     has_declarator: {
+        const char* lexer_saved_colon = parser->lexer->pbuf;
+
         if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COLON) == 0) {
+            parser->lexer->pbuf = lexer_saved_colon;
+
             goto ret;
         }
         
@@ -741,6 +755,8 @@ ParseTreeNode_C *parser_c_parse_parameter_type_list(Parser_C *parser)
     
     parser_c_parse_required(parser, this_node, parameter_list, error);
 
+    const char* lexer_saved_comma = parser->lexer->pbuf;
+    
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) == 1) {
         if ((token_dot_dot_dot = lexer_c_next_skip_whitespace(parser->lexer)) == NULL) {
             goto error;
@@ -751,6 +767,8 @@ ParseTreeNode_C *parser_c_parse_parameter_type_list(Parser_C *parser)
         }
         
         this_node->token = token_dot_dot_dot;
+    } else {
+        parser->lexer->pbuf = lexer_saved_comma;
     }
 
     return this_node;
@@ -778,7 +796,11 @@ ParseTreeNode_C *parser_c_parse_conditional_expression(Parser_C *parser)
 
     parser_c_parse_required(parser, this_node, logical_or_expression, error);
 
+    const char *lexer_saved_ternary = parser->lexer->pbuf;
+
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_TERNARY) == 0) {
+        parser->lexer->pbuf = lexer_saved_ternary;
+
         goto ret;
     }
 
@@ -829,7 +851,11 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || this_node_token->type != TOKEN_TYPE) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -873,9 +899,13 @@ ParseTreeNode_C *parser_c_parse_expression(Parser_C *parser)
     next_assignment_expression: {
         parser_c_parse_required(parser, this_node, assignment_expression, error);
 
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) == 1) {
             goto next_assignment_expression;
         }
+        
+        parser->lexer->pbuf = lexer_saved_token;
     }
 
     return this_node;
@@ -915,7 +945,11 @@ ParseTreeNode_C *parser_c_parse_logical_and_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || this_node_token->type != TOKEN_TYPE) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -974,7 +1008,11 @@ ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || this_node_token->type != TOKEN_TYPE) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1033,7 +1071,11 @@ ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || this_node_token->type != TOKEN_TYPE) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1092,7 +1134,11 @@ ParseTreeNode_C *parser_c_parse_and_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || this_node_token->type != TOKEN_TYPE) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1153,8 +1199,12 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
                                                                                         this_node_token->type != TOKEN_TYPE_2)) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1220,10 +1270,14 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
                                                                                         this_node_token->type != TOKEN_TYPE_2 &&
                                                                                         this_node_token->type != TOKEN_TYPE_3 &&
                                                                                         this_node_token->type != TOKEN_TYPE_4)) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1287,8 +1341,12 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
                                                                                         this_node_token->type != TOKEN_TYPE_2)) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1350,8 +1408,12 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
                                                                                         this_node_token->type != TOKEN_TYPE_2)) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1415,9 +1477,13 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Parser_C *parser)
     this_node->token = this_node_token;
 
     while (1) {
+        const char *lexer_saved_token = parser->lexer->pbuf;
+
         if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
                                                                                         this_node_token->type != TOKEN_TYPE_2 &&
                                                                                         this_node_token->type != TOKEN_TYPE_3)) {
+            parser->lexer->pbuf = lexer_saved_token;
+
             goto ret;
         }
 
@@ -1803,19 +1869,25 @@ ParseTreeNode_C *parser_c_parse_string(Parser_C *parser)
 
     Token_C *token_string = lexer_c_next_skip_whitespace(parser->lexer);
 
+    if (token_string == NULL) {
+        goto error;
+    }
+
     if (token_string->type == T_STRING) {
         this_node->token = token_string;
 
         return this_node;
     }
 
-    parser->lexer->pbuf = lexer_saved;
+    error: {
+        parser->lexer->pbuf = lexer_saved;
 
-    token_c_destroy(token_string);
+        token_c_destroy(token_string);
 
-    parse_tree_node_c_destroy(this_node);
+        parse_tree_node_c_destroy(this_node);
 
-    return NULL;
+        return NULL;
+    }
 }
 
 ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C *parser)
@@ -1825,6 +1897,10 @@ ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C *parser)
     const char* lexer_saved = parser->lexer->pbuf;
 
     Token_C *token_assignment_operator = lexer_c_next_skip_whitespace(parser->lexer);
+
+    if (token_assignment_operator == NULL) {
+        goto error;
+    }
 
     if (token_assignment_operator->type == T_ASSIGNMENT || 
         token_assignment_operator->type == T_MULTIPLY_ASSIGN || 
@@ -1842,13 +1918,15 @@ ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C *parser)
         return this_node;
     }
 
-    parser->lexer->pbuf = lexer_saved;
+    error: {
+        parser->lexer->pbuf = lexer_saved;
 
-    token_c_destroy(token_assignment_operator);
+        token_c_destroy(token_assignment_operator);
 
-    parse_tree_node_c_destroy(this_node);
+        parse_tree_node_c_destroy(this_node);
 
-    return NULL;
+        return NULL;
+    }
 }
 
 ParseTreeNode_C *parser_c_parse_abstract_declarator(Parser_C *parser)
@@ -2089,7 +2167,11 @@ ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C *parser)
 
     parser_c_parse_required(parser, this_node, declarator, error);
 
+    const char* lexer_saved_token = parser->lexer->pbuf;
+
     if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_ASSIGNMENT) == 0) {
+        parser->lexer->pbuf = lexer_saved_token;
+
         goto ret;
     }
 
