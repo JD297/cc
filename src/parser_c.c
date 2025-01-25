@@ -13,22 +13,28 @@ void *parser_c_create(const char *src)
     Parser_C *parser = (Parser_C *)malloc(sizeof(Parser_C)); 
     
     if (parser == NULL) {
-        return NULL;
+        goto error;
     }
     
     parser->lexer = lexer_c_create(src);
     
     if (parser->lexer == NULL) {
-        return NULL;
+        goto error;
     }
     
     parser->parse_tree = parse_tree_node_c_create(0, NULL);
 
     if (parser->parse_tree == NULL) {
-        return NULL;
+        goto error;
     }
     
     return parser;
+
+    error: {
+        parser_c_destroy(parser);
+
+        return NULL;
+    }
 }
 
 void parser_c_destroy(Parser_C *parser)
