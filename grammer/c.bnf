@@ -227,11 +227,3 @@
                    | continue ;
                    | break ;
                    | return {<expression>}? ;
-
-<integer-constant> ::= number
-
-<character-constant> ::= character
-
-<floating-constant> ::= float
-
-<enumeration-constant> ::= enum

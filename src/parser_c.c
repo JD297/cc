@@ -1760,26 +1760,32 @@ ParseTreeNode_C *parser_c_parse_assignment_expression(Parser_C *parser)
 ParseTreeNode_C *parser_c_parse_constant(Parser_C *parser)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CONSTANT, NULL);
+    
+    const char* lexer_saved = parser->lexer->pbuf;
 
-    ParseTreeNode_C *integer_constant;
-    ParseTreeNode_C *character_constant;
-    ParseTreeNode_C *floating_constant;
-    ParseTreeNode_C *enumeration_constant;
+    Token_C *token = lexer_c_next_skip_whitespace(parser->lexer);
 
-    parser_c_parse_opt(parser, this_node, integer_constant, ret);
+    if (token == NULL) {
+        goto error;
+    }
+    
+    switch(token->type) {
+        case T_CHARACTER:
+        case T_NUMBER:
+        case T_STRING: {
+            this_node->token = token;
+        } break;
+        default: goto error;
+    }    
+   
+    return this_node;
 
-    parser_c_parse_opt(parser, this_node, character_constant, ret);
+    error: {
+        parser->lexer->pbuf = lexer_saved;
 
-    parser_c_parse_opt(parser, this_node, floating_constant, ret);
+        parse_tree_node_c_destroy(this_node);
 
-    parser_c_parse_opt(parser, this_node, enumeration_constant, ret);
-
-    parse_tree_node_c_destroy(this_node);
-
-    return NULL;
-
-    ret: {
-        return this_node;
+        return NULL;
     }
 }
 
@@ -1793,7 +1799,7 @@ ParseTreeNode_C *parser_c_parse_string(Parser_C *parser)
 
     if (token_string->type == T_STRING) {
         this_node->token = token_string;
-    
+
         return this_node;
     }
 
@@ -1804,86 +1810,6 @@ ParseTreeNode_C *parser_c_parse_string(Parser_C *parser)
     parse_tree_node_c_destroy(this_node);
 
     return NULL;
-}
-
-ParseTreeNode_C *parser_c_parse_integer_constant(Parser_C *parser)
-{
-    // TODO
-    (void)parser;
-
-    //assert(0 && "Not implemented parser_c_parse_integer_constant");
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INTEGER_CONSTANT, NULL);
-
-    goto error;
-
-    return this_node;
-
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
-    }
-}
-
-ParseTreeNode_C *parser_c_parse_character_constant(Parser_C *parser)
-{
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_character_constant");
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CHARACTER_CONSTANT, NULL);
-
-    goto error;
-
-    return this_node;
-
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
-    }
-}
-
-ParseTreeNode_C *parser_c_parse_floating_constant(Parser_C *parser)
-{
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_floating_constant");
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_FLOATING_CONSTANT, NULL);
-
-    goto error;
-
-    return this_node;
-
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
-    }
-}
-
-ParseTreeNode_C *parser_c_parse_enumeration_constant(Parser_C *parser)
-{
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_enumeration_constant");
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ENUMERATION_CONSTANT, NULL);
-
-    goto error;
-
-    return this_node;
-
-    error: {
-        parse_tree_node_c_destroy(this_node);
-
-        return NULL;
-    }
 }
 
 ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C *parser)
