@@ -1569,18 +1569,92 @@ ParseTreeNode_C *parser_c_parse_type_name(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_postfix_expression");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_POSTFIX_EXPRESSION, NULL);
 
-    goto error;
+    ParseTreeNode_C *primary_expression;
+    ParseTreeNode_C *expression;
+    ParseTreeNode_C *assignment_expression;
+    ParseTreeNode_C *identifier;
 
-    return this_node;
+    const char* lexer_saved = parser->lexer->pbuf;
+
+    ParseTreeNode_C *left_node;
+    
+    Token_C *this_node_token;
+
+    parser_c_parse_required(parser, this_node, primary_expression, error);
+
+    while (1) {
+        const char* lexer_saved_token = parser->lexer->pbuf;
+
+        if ((this_node_token = lexer_c_next_skip_whitespace(parser->lexer)) == NULL) {
+            parser->lexer->pbuf = lexer_saved_token;
+
+            goto ret;
+        }
+
+        switch(this_node_token->type) {
+            case T_OPEN_BRACKET: {
+                left_node = this_node;
+                
+                this_node = parse_tree_node_c_create(PTT_C_POSTFIX_EXPRESSION, this_node_token);
+
+                parse_tree_node_c_add(this_node, left_node);
+                
+                parser_c_parse_required(parser, this_node, expression, error);
+                
+                if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACKET) == 0) {
+                    goto error;
+                }
+            } break;
+            case T_OPEN_PARENT: {
+                left_node = this_node;
+                
+                this_node = parse_tree_node_c_create(PTT_C_POSTFIX_EXPRESSION, this_node_token);
+
+                parse_tree_node_c_add(this_node, left_node);
+                
+                parser_c_parse_list_opt(parser, this_node, assignment_expression);
+                
+                if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+                    goto error;
+                }
+            } break;
+            case T_DOT:
+            case T_ARROW: {
+                left_node = this_node;
+                
+                this_node = parse_tree_node_c_create(PTT_C_POSTFIX_EXPRESSION, this_node_token);
+
+                parse_tree_node_c_add(this_node, left_node);
+                
+                parser_c_parse_required(parser, this_node, identifier, error);
+            } break;
+            case T_INCREMENT:
+            case T_DECREMENT: {
+                left_node = this_node;
+                
+                this_node = parse_tree_node_c_create(PTT_C_POSTFIX_EXPRESSION, this_node_token);
+
+                parse_tree_node_c_add(this_node, left_node);
+            } break;
+            default: {
+                parser->lexer->pbuf = lexer_saved_token;
+                
+                token_c_destroy(this_node_token);
+            }
+        }
+    }
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved; 
+
+        token_c_destroy(this_node_token);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
