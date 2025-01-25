@@ -1448,18 +1448,35 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_cast_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_cast_expression");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_CAST_EXPRESSION, NULL);
 
-    goto error;
+    ParseTreeNode_C *unary_expression;
+    ParseTreeNode_C *type_name;
+    ParseTreeNode_C *cast_expression;
 
-    return this_node;
+    const char *lexer_saved = parser->lexer->pbuf;
+
+    parser_c_parse_opt(parser, this_node, unary_expression, ret);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_OPEN_PARENT) == 0) {
+        goto error;
+    }
+
+    parser_c_parse_required(parser, this_node, type_name, error);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+        goto error;
+    }
+    
+    parser_c_parse_required(parser, this_node, cast_expression, error);
+
+    ret: {
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
