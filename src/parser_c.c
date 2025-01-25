@@ -1931,22 +1931,80 @@ ParseTreeNode_C *parser_c_parse_parameter_declaration(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_direct_abstract_declarator");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DIRECT_ABSTRACT_DECLARATOR, NULL);
+    ParseTreeNode_C *left_node = NULL;
 
-    goto error;
+    const char* lexer_saved;
 
-    return this_node;
+    ParseTreeNode_C *abstract_declarator;
+    ParseTreeNode_C *constant_expression;
+    ParseTreeNode_C *parameter_type_list;
 
-    error: {
-        parse_tree_node_c_destroy(this_node);
+    Token_C *this_node_token;
 
-        return NULL;
+    while (1) {
+        lexer_saved = parser->lexer->pbuf;
+    
+        this_node_token = lexer_c_next_skip_whitespace(parser->lexer);
+        
+        if (this_node_token == NULL) {
+            break;
+        }
+        
+        if (this_node_token->type == T_OPEN_PARENT) {
+            if (this_node->num == 0) {
+                parser_c_parse_opt(parser, this_node, abstract_declarator, while_end);
+            }
+            
+            parser_c_parse_opt(parser, this_node, parameter_type_list, next_token);
+            
+            next_token: ;
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_PARENT) == 0) {
+                break;
+            }
+            
+            this_node->token = this_node_token;
+            
+            goto while_end;
+        }
+        
+        if (this_node_token->type == T_OPEN_BRACKET) {
+            parser_c_parse_opt(parser, this_node, constant_expression, next);
+            
+            next: ;
+
+            if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_CLOSING_BRACKET) == 0) {
+                break;
+            }
+            
+            this_node->token = this_node_token;
+            
+            goto while_end;
+        } break;
+        
+        break;
+
+        while_end: {
+            left_node = this_node;
+            this_node = parse_tree_node_c_create(PTT_C_DIRECT_ABSTRACT_DECLARATOR, NULL);
+            parse_tree_node_c_add(this_node, left_node);
+
+            continue;
+        }
     }
+    
+    parser->lexer->pbuf = lexer_saved;
+    
+    token_c_destroy(this_node_token);
+    
+    if (this_node->num != 0) {
+        this_node->elements[0] = NULL;
+    }
+    
+    parse_tree_node_c_destroy(this_node);
+    
+    return left_node;
 }
 
 ParseTreeNode_C *parser_c_parse_enumerator_list(Parser_C *parser)
