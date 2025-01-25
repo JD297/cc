@@ -1485,18 +1485,54 @@ ParseTreeNode_C *parser_c_parse_cast_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_unary_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_unary_expression");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_UNARY_EXPRESSION, NULL);
 
-    goto error;
+    ParseTreeNode_C *postfix_expression;
+    ParseTreeNode_C *unary_expression;
+    ParseTreeNode_C *unary_operator;
+    ParseTreeNode_C *cast_expression;
+    ParseTreeNode_C *type_name;
 
-    return this_node;
+    const char *lexer_saved = parser->lexer->pbuf;
+
+    parser_c_parse_opt(parser, this_node, postfix_expression, ret);
+
+    parser_c_parse_required(parser, this_node, unary_operator, next_tokens);
+    
+    parser_c_parse_required(parser, this_node, cast_expression, error);
+    
+    next_tokens: ;
+    
+    Token_C *token = lexer_c_next_skip_whitespace(parser->lexer);
+
+    if (token == NULL) {
+        goto error;
+    }
+
+    switch(token->type) {
+        case T_INCREMENT:
+        case T_DECREMENT: {
+            parser_c_parse_required(parser, this_node, unary_expression, error);
+        } break;
+        case T_SIZEOF: {
+            parser_c_parse_opt(parser, this_node, unary_expression, ret);
+            
+            parser_c_parse_required(parser, this_node, type_name, error);
+        } break;
+        default: goto error;
+    }
+
+    ret: {
+        this_node->token = token;
+    
+        return this_node;
+    }
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
+        token_c_destroy(token);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
