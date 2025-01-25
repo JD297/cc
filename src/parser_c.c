@@ -858,18 +858,25 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Parser_C *parser)
 
 ParseTreeNode_C *parser_c_parse_expression(Parser_C *parser)
 {
-    // TODO
-    (void)parser;
-
-    assert(0 && "Not implemented parser_c_parse_expression");
-
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EXPRESSION, NULL);
 
-    goto error;
+    ParseTreeNode_C *assignment_expression;
+
+    const char *lexer_saved = parser->lexer->pbuf;
+
+    next_assignment_expression: {
+        parser_c_parse_required(parser, this_node, assignment_expression, error);
+
+        if (lexer_c_next_skip_whitespace_token_is_type(parser->lexer, T_COMMA) == 1) {
+            goto next_assignment_expression;
+        }
+    }
 
     return this_node;
 
     error: {
+        parser->lexer->pbuf = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
