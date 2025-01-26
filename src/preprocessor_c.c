@@ -5,7 +5,9 @@
 #include "token_type_c.h"
 #include "vector.h"
 
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,6 +115,8 @@ int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* pathname)
 
     while((parse_next_result = preprocessor_c_parse_next(preprocessor, lexer)) == 0);
 
+    lexer_c_destroy(lexer);
+
     return parse_next_result;
 }
 
@@ -127,7 +131,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 
     switch (token->type) {
         case T_MACRO_INCLUDE: {
-            return preprocessor_c_parse_include(preprocessor, lexer, token);
+            return preprocessor_c_parse_include(preprocessor, lexer, token) == 1 ? 0 : -1;
         }
         case T_IDENTIFIER: {
             return preprocessor_c_parse_identifier(preprocessor, lexer, token);
@@ -160,11 +164,12 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
             return preprocessor_c_parse_pragma(preprocessor, lexer, token);
         }
         case T_COMMENT_LINE:
-        case T_COMMENT_MULTILINE: break;
+        case T_COMMENT_MULTILINE: return 0;
 
         case T_CONSTEXPR:
         case T_RESTRICT:
             fprintf(stderr, "pathname:line:col: warning: ´constexpr´ unsupported optimization keyword\n");
+            return 0;
         break;
         case T_MACRO_ELIF: break;
         case T_EOF: {
@@ -193,14 +198,115 @@ int preprocessor_c_parse_default(Preprocessor_C *preprocessor, Lexer_C *lexer, T
     return 0;
 }
 
+char *preprocessor_c_find_include_file(Preprocessor_C *preprocessor, const char *pathname, int mode)
+{
+    char *include_file = (char *)malloc(sizeof(char) * PATH_MAX);
+
+    for (int i = 0 - mode; i < (int)vector_size(preprocessor->include_dirs); i++) {
+        const char *include_dir;
+        
+        if (i >= 0) {
+            include_dir = vector_at(preprocessor->include_dirs, i);
+        } else {
+            include_dir = ".";
+        }
+    
+        if ((strlen(include_dir) + strlen(pathname) + 1) >= PATH_MAX) {
+            continue;
+        }
+
+        memset(include_file, 0, PATH_MAX);
+        
+        strcpy(include_file, include_dir);
+        strcat(include_file, "/");
+        strcat(include_file, pathname);
+
+		if (access(include_file, R_OK) == -1) {
+		    if (errno == ENOENT && ((int)vector_size(preprocessor->include_dirs) - 1) != i) {
+    			continue;
+		    }
+
+	        return NULL;
+		}
+
+        return include_file;
+    }
+    
+    free(include_file);
+
+    return NULL;
+}
+
 int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
-    (void)preprocessor;
     (void)lexer;
 
-    token_c_destroy(token);
+    int parse_result = -1;
 
-    return 0;
+    regex_t regex;
+    regmatch_t matches[2];
+
+    regcomp(&regex, "^#\\s*include\\s*<([^>]+)>", REG_EXTENDED);
+
+    if (regexec(&regex, token->value, 2, matches, 0) == 0) {
+        size_t start = matches[1].rm_so;
+        size_t end = matches[1].rm_eo;
+
+        size_t length = end - start;
+
+        char* include_file = (char*)malloc(length + 1);
+
+        if (include_file == NULL) {
+            return -1;
+        }
+
+        strncpy(include_file, token->value + start, length);
+        include_file[length] = '\0';
+        
+        char *include_file_path = preprocessor_c_find_include_file(preprocessor, include_file, PREPROCESSOR_INCLUDE_MODE_LIBRARARY);
+        
+        free(include_file);
+        
+        parse_result = preprocessor_c_parse(preprocessor, include_file_path);
+        
+        free(include_file_path);
+        
+        goto ret;
+    }
+    
+    regcomp(&regex, "^#\\s*include\\s*\"([^\"]+)\"", REG_EXTENDED);
+
+    if (regexec(&regex, token->value, 2, matches, 0) == 0) {
+        size_t start = matches[1].rm_so;
+        size_t end = matches[1].rm_eo;
+
+        size_t length = end - start;
+
+        char* include_file = (char*)malloc(length + 1);
+
+        if (include_file == NULL) {
+            return -1;
+        }
+
+        strncpy(include_file, token->value + start, length);
+        include_file[length] = '\0';
+
+        char *include_file_path = preprocessor_c_find_include_file(preprocessor, include_file, PREPROCESSOR_INCLUDE_MODE_STRING);
+        
+        free(include_file);
+        
+        parse_result = preprocessor_c_parse(preprocessor, include_file_path);
+        
+        free(include_file_path);
+        
+        goto ret;
+    }
+
+    ret: {
+        token_c_destroy(token);
+
+        return parse_result;
+    }
 }
 
 int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)

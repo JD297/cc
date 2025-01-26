@@ -15,6 +15,9 @@ typedef struct Preprocessor_C {
     Map *defines;
 } Preprocessor_C;
 
+#define PREPROCESSOR_INCLUDE_MODE_LIBRARARY 0x0
+#define PREPROCESSOR_INCLUDE_MODE_STRING    0x1
+
 extern void *preprocessor_c_create(Vector *include_dirs, Vector *source_files, Map *defines);
 
 extern void preprocessor_c_destroy(Preprocessor_C *preprocessor);
