@@ -101,7 +101,7 @@ int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* pathname)
         return -1;
     }
 
-    Lexer_C *lexer = lexer_c_create(src);
+    Lexer_C *lexer = lexer_c_create(src, pathname);
 
     if (lexer == NULL) {
         return -1;
@@ -334,12 +334,35 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
 
 int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
-    (void)preprocessor;
-    (void)lexer;
+    lexer_c_backup(lexer);
 
     token_c_destroy(token);
 
+    (void)preprocessor;
+
+    Token_C *identifier = lexer_c_next_skip_whitespace(lexer); // TODO lexer_c_macro_next_skip_whitespace ??
+
+    if (identifier == NULL) {
+        goto error;
+    }
+    
+    if (identifier->type != T_IDENTIFIER) {
+        goto error;
+    }
+
+    // TODO...
+
     return 0;
+    
+    error: {
+        token_c_destroy(identifier);
+
+        lexer_c_restore(lexer);
+
+        lexer_c_log(lexer, "no macro name given in #undef directive");
+        
+        return -1;
+    }
 }
 
 int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)

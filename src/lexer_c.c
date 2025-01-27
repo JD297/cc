@@ -4,9 +4,10 @@
 
 #include <regex.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-void *lexer_c_create(const char* src)
+void *lexer_c_create(const char* src, const char* pathname)
 {
     Lexer_C *lexer = (Lexer_C *)malloc(sizeof(Lexer_C));
 
@@ -16,6 +17,13 @@ void *lexer_c_create(const char* src)
 
     lexer->buf = src;
     lexer->pbuf = lexer->buf;
+    
+    lexer->loc.pathname = pathname;
+    lexer->loc.row = 1;
+    lexer->loc.col = 1;
+    
+    lexer->saved.pbuf = lexer->pbuf;
+    lexer->saved.loc = lexer->loc;
 
     return lexer;
 }
@@ -23,6 +31,18 @@ void *lexer_c_create(const char* src)
 void lexer_c_destroy(Lexer_C *lexer)
 {
     free(lexer);
+}
+
+void lexer_c_backup(Lexer_C *lexer)
+{
+    lexer->saved.pbuf = lexer->pbuf;
+    lexer->saved.loc = lexer->loc;
+}
+
+void lexer_c_restore(Lexer_C *lexer)
+{
+    lexer->pbuf = lexer->saved.pbuf;
+    lexer->loc = lexer->saved.loc;
 }
 
 Token_C *lexer_c_next(Lexer_C *lexer)
@@ -42,7 +62,16 @@ Token_C *lexer_c_next(Lexer_C *lexer)
 
         lexer->pbuf += match.rm_eo;
 
-        return token_c_create(type, start, match.rm_eo);
+        Token_C* token = token_c_create(type, start, match.rm_eo);
+
+        if (type == T_WHITESPACE && *start == '\n') {
+            lexer->loc.row++;
+            lexer->loc.col = 1;
+        } else {
+            lexer->loc.col += match.rm_eo;
+        }
+
+        return token;
     }
 
     lexer->pbuf += 1;
@@ -80,4 +109,23 @@ int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type)
     token_c_destroy(token);
 
     return result;
+}
+
+void lexer_c_log(Lexer_C *lexer, const char *msg)
+{
+    fprintf(stderr, "%s:%zu:%zu: \033[31merror\033[0m: %s\n", lexer->loc.pathname, lexer->loc.row, lexer->loc.col, msg);
+    fprintf(stderr, "    %zu | ", lexer->loc.row);
+    
+    const char *begin = lexer->pbuf - (lexer->loc.col - 1);
+    const char *end = strstr(lexer->pbuf, "\n");
+
+    fprintf(stderr, "%.*s\n", (int)(end - begin), begin);
+    
+    fprintf(stderr, "      | ");
+
+    for (size_t i = 0; i < lexer->loc.col; i++) {
+        fprintf(stderr, " ");
+    }
+
+    fprintf(stderr, "\033[31m^\033[0m\n");
 }

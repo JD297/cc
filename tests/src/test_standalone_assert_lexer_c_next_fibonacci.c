@@ -120,7 +120,7 @@ int main()
     
     assert(token_type_c_regex_create() == 0);
     
-    lexer = lexer_c_create(src);
+    lexer = lexer_c_create(src, "fibonacci.c");
 
     assert(lexer != NULL);
     

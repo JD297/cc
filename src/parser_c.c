@@ -16,7 +16,7 @@ void *parser_c_create(const char *src)
         goto error;
     }
     
-    parser->lexer = lexer_c_create(src);
+    parser->lexer = lexer_c_create(src, "");
     
     if (parser->lexer == NULL) {
         goto error;
