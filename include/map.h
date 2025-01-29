@@ -22,6 +22,6 @@ extern void *map_get(Map *map, char *name);
 
 extern int map_add(Map *map, void *element, char *name);
 
-extern void token_list_named_c_remove(Map *map, char *name);
+extern void map_remove(Map *map, char *name);
 
 #endif

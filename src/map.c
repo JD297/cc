@@ -80,7 +80,7 @@ int map_add(Map *map, void *element, char *name)
     return map_push_back(map, element, name);
 }
 
-void token_list_named_c_remove(Map *map, char *name)
+void map_remove(Map *map, char *name)
 {
     for (size_t i = 0; i < vector_size(map->elements); i++) {
         if (map_cmp_at(map, name, i) == 0) {
