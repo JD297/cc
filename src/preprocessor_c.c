@@ -414,11 +414,12 @@ int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Toke
 int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
-    (void)lexer;
+
+    lexer_c_log(lexer, "#error directive encountered");
 
     token_c_destroy(token);
 
-    return 0;
+    return -1;
 }
 
 int preprocessor_c_parse_if(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
