@@ -350,7 +350,13 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
         goto error;
     }
 
-    // TODO...
+    char *define_name = (char *)malloc(sizeof(char) * (identifier->len + 1));
+    
+    strncpy(define_name, identifier->value, identifier->len);
+    
+    map_remove(preprocessor->defines, define_name);
+    
+    free(define_name);
 
     return 0;
     
