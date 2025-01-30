@@ -19,9 +19,7 @@ int main()
                         "#elifdef\n"
                         "#elifndef\n"
                         "#undef\n"
-                        "__LINE__\n"
-                        "__FILE__\n"
-                        "__TIME__\n"
+                        "#line\n"
                         "#error\n"
                         "#pragma\n"
                         "asm\n";
@@ -40,9 +38,7 @@ int main()
         { .type = T_MACRO_ELIFDEF    , .value = "#elifdef"             , .len = 8  },
         { .type = T_MACRO_ELIFNDEF   , .value = "#elifndef"            , .len = 9  },
         { .type = T_MACRO_UNDEF      , .value = "#undef"               , .len = 6  },
-        { .type = T_MACRO_LINE       , .value = "__LINE__"             , .len = 8  },
-        { .type = T_MACRO_FILE       , .value = "__FILE__"             , .len = 8  },
-        { .type = T_MACRO_TIME       , .value = "__TIME__"             , .len = 8  },
+        { .type = T_MACRO_LINE       , .value = "#line"                , .len = 5  },
         { .type = T_MACRO_ERROR      , .value = "#error"               , .len = 6  },
         { .type = T_MACRO_PRAGMA     , .value = "#pragma"              , .len = 7  },
         { .type = T_MACRO_ASM        , .value = "asm"                  , .len = 3  },

@@ -115,9 +115,7 @@ const char *token_type_c_pattern(const TokenType_C type)
         case T_MACRO_DEFINE: return "^#\\s*define\\b";
         case T_MACRO_UNDEF: return "^#\\s*undef\\b";
         case T_MACRO_INCLUDE: return "^#\\s*include\\s*<([^>]+)>|^#\\s*include\\s*\"([^\"]+)\"";
-        case T_MACRO_LINE: return "^__LINE__\\b";
-        case T_MACRO_FILE: return "^__FILE__\\b";
-        case T_MACRO_TIME: return "^__TIME__\\b";
+        case T_MACRO_LINE: return "^#\\s*line\\b";
         case T_MACRO_ERROR: return "^#\\s*error\\b";
         case T_MACRO_PRAGMA: return "^#\\s*pragma\\b";
         case T_MACRO_DEFINDED: return "^defined\\b";

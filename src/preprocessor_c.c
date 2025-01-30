@@ -107,9 +107,9 @@ int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* pathname)
         return -1;
     }
 
-    preprocessor->buf = strncatrealloc(preprocessor->buf, "# 0 ", 4);
+    preprocessor->buf = strncatrealloc(preprocessor->buf, "#line 0 \"", 9);
     preprocessor->buf = strncatrealloc(preprocessor->buf, pathname, strlen(pathname));
-    preprocessor->buf = strncatrealloc(preprocessor->buf, "\n", 1);
+    preprocessor->buf = strncatrealloc(preprocessor->buf, "\"\n", 2);
 
     int parse_next_result;
 
@@ -147,9 +147,6 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         }
         case T_MACRO_IFDEF: {
             return preprocessor_c_parse_ifdef(preprocessor, lexer, token);
-        }
-        case T_MACRO_FILE: {
-            return preprocessor_c_parse_file(preprocessor, lexer, token);
         }
         case T_MACRO_LINE: {
             return preprocessor_c_parse_line(preprocessor, lexer, token);
@@ -404,9 +401,38 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, Lexer_C *lexer, Toke
 int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
-    (void)lexer;
 
     token_c_destroy(token);
+
+    Token_C *number = lexer_c_next_skip_whitespace(lexer);
+ 
+    if (number == NULL || number->type != T_NUMBER) {
+        lexer_c_log(lexer, "after #line is not a positive integer");
+        
+        return -1;
+    }
+
+    lexer->loc.col = 1;
+
+    char *row_str = malloc(sizeof(char) * (number->len + 1));
+    strncpy(row_str, number->value, number->len);
+
+    lexer->loc.row = (size_t)atoi(row_str);
+
+    lexer_c_backup(lexer);
+
+    Token_C *filename = lexer_c_next_skip_whitespace(lexer);
+
+    if (filename == NULL || filename->type != T_STRING) {
+        lexer_c_restore(lexer);
+        
+        return 0;
+    }
+
+    char *filename_str = malloc(sizeof(char) * (filename->len + 1));
+    strncpy(filename_str, filename->value + 1, filename->len - 2);
+
+    lexer->loc.pathname = filename_str;
 
     return 0;
 }
