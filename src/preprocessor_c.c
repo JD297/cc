@@ -125,7 +125,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
     Token_C *token = lexer_c_next(lexer);
     
     if (token == NULL) {
-        fprintf(stderr, "pathname:line:col: error: unreconized token\n");
+        lexer_c_log(lexer, "unreconized token");
         return -1;
     }
 
@@ -165,7 +165,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 
         case T_CONSTEXPR:
         case T_RESTRICT:
-            fprintf(stderr, "pathname:line:col: warning: ´constexpr´ unsupported optimization keyword\n");
+            lexer_c_log(lexer, "warning: ´constexpr´ unsupported optimization keyword");
             return 0;
         break;
         case T_MACRO_ELIF: break;
