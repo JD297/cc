@@ -104,6 +104,7 @@ const char *token_type_c_pattern(const TokenType_C type)
         case T_VOID: return "^void\\b";
         case T_VOLATILE: return "^volatile\\b";
         case T_WHILE: return "^while\\b";
+        case T_MACRO_TOKEN_SEQUENZE: return "^[^\\\n]*[^\\]";
         case T_MACRO_IF: return "^#\\s*if\\b";
         case T_MACRO_ELIF: return "^#\\s*elif\\b";
         case T_MACRO_ELSE: return "^#\\s*else\\b";

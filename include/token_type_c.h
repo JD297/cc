@@ -146,6 +146,7 @@ typedef enum TokenType_C {
     T_IDENTIFIER,
 
     T_EOF,
+    T_MACRO_TOKEN_SEQUENZE,
 
     TOKEN_TYPE_C_LENGTH
 } TokenType_C;

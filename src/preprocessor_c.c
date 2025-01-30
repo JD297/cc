@@ -322,9 +322,52 @@ int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, Lexer_C *lexer
 int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
-    (void)lexer;
 
     token_c_destroy(token);
+
+    Token_C *identifier = lexer_c_next_skip_whitespace(lexer); // TODO lexer_c_macro_next_skip_whitespace ??
+
+    if (identifier == NULL || identifier->type != T_IDENTIFIER) {
+        lexer_c_log(lexer, "macro names must be identifiers");
+
+        return -1;
+    }
+    
+    Token_C *next_token = lexer_c_next(lexer);
+
+    if (next_token == NULL || next_token->type != T_WHITESPACE) {
+        token_c_destroy(next_token);
+
+        lexer_c_log(lexer, "missing whitespace after the macro name");
+        
+        return -1;
+    }
+
+    char *identifier_str = malloc(sizeof(char) * (identifier->len + 1));
+    strncpy(identifier_str, identifier->value, identifier->len);
+
+    if (strncmp(next_token->value, "\n", 1) == 0) {
+        map_add(preprocessor->defines, NULL, identifier_str);
+        
+        return 0;
+    }
+
+    token_c_destroy(next_token);
+
+    lexer_c_backup(lexer);
+
+    Token_C *macro_sequenze = lexer_c_next(lexer);
+    
+    if (macro_sequenze == NULL || macro_sequenze->type != T_MACRO_TOKEN_SEQUENZE) {
+        lexer_c_restore(lexer);
+
+        return 0;
+    }
+
+    char *macro_sequenze_str = malloc(sizeof(char) * (macro_sequenze->len + 1));
+    strncpy(macro_sequenze_str, macro_sequenze->value, macro_sequenze->len);
+
+    map_add(preprocessor->defines, macro_sequenze_str, identifier_str);
 
     return 0;
 }
