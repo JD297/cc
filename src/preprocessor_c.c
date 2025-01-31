@@ -405,16 +405,6 @@ int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     return 0;
 }
 
-int preprocessor_c_parse_file(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
-{
-    (void)preprocessor;
-    (void)lexer;
-
-    token_c_destroy(token);
-
-    return 0;
-}
-
 int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;

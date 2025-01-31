@@ -36,7 +36,6 @@ extern int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *le
 extern int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token);
 extern int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token);
 extern int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token);
-extern int preprocessor_c_parse_file(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token);
 extern int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token);
 extern int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token);
 extern int preprocessor_c_parse_if(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token);
