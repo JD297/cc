@@ -6,9 +6,10 @@
 #include "vector.h"
 
 #include <stddef.h>
+#include <stdio.h>
 
 typedef struct Preprocessor_C {
-    char *buf;
+    FILE *output;
 
     Vector *include_dirs;
     Vector *source_files;

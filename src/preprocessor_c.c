@@ -16,20 +16,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-char *strncatrealloc(char *dst, const char *src, size_t size)
-{
-    const size_t size_dst = strlen(dst);
-    const size_t size_src = size + 1;
-    
-    char *dst_new = (char *)realloc(dst, sizeof(char) * (size_dst + size_src));
-    
-    if (dst_new == NULL) {
-        return NULL;
-    }
-    
-    return strncat(dst_new, src, size);
-}
-
 const char *mmapfile(const char *pathname)
 {
     struct stat sb;
@@ -57,28 +43,18 @@ void *preprocessor_c_create(Vector *include_dirs, Vector *source_files, Map *def
     if (preprocessor == NULL) {
         return NULL;
     }
-
-    preprocessor->buf = (char *)calloc(0, sizeof(char));
     
     preprocessor->include_dirs = include_dirs;
     preprocessor->source_files = source_files;
     preprocessor->defines = defines;
 
-    if (preprocessor->buf == NULL) {
-        free(preprocessor);
+    preprocessor->output = tmpfile();
 
-        return NULL;
-    }
-    
     return preprocessor;
 }
 
 void preprocessor_c_destroy(Preprocessor_C *preprocessor)
 {
-    if (preprocessor != NULL) {
-        free(preprocessor->buf);
-    }
-
     free(preprocessor);
 }
 
@@ -107,9 +83,7 @@ int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* pathname)
         return -1;
     }
 
-    preprocessor->buf = strncatrealloc(preprocessor->buf, "#line 0 \"", 9);
-    preprocessor->buf = strncatrealloc(preprocessor->buf, pathname, strlen(pathname));
-    preprocessor->buf = strncatrealloc(preprocessor->buf, "\"\n", 2);
+    fprintf(preprocessor->output, "#line 0 \"%s\"\n", pathname);
 
     int parse_next_result;
 
@@ -188,7 +162,7 @@ int preprocessor_c_parse_default(Preprocessor_C *preprocessor, Lexer_C *lexer, T
 {
     (void)lexer;
 
-    preprocessor->buf = strncatrealloc(preprocessor->buf, token->value, token->len);
+    fprintf(preprocessor->output, "%.*s", (int)token->len, token->value);
 
     token_c_destroy(token);
 
@@ -310,7 +284,7 @@ int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, Lexer_C *lexer
 {
     (void)lexer;
 
-    preprocessor->buf = strncatrealloc(preprocessor->buf, token->value, token->len);
+    fprintf(preprocessor->output, "%.*s", (int)token->len, token->value);
 
     // TODO token->value in preprocessor->defines
 
