@@ -2719,12 +2719,26 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Lexer_C *lexer)
     while (1) {
         lexer_c_backup(lexer);
 
-        Token_C *token_text = lexer_c_next_skip_whitespace(lexer);
+        Token_C *token_text = lexer_c_next(lexer);
 
-        if (token_text == NULL || token_text->type != T_MACRO_TOKEN_SEQUENZE) {
+        if (token_text == NULL) {
             lexer_c_restore(lexer);
 
             break;
+        }
+
+        switch (token_text->type) {
+            case T_MACRO_IF:
+            case T_MACRO_IFDEF:
+            case T_MACRO_IFNDEF:
+            case T_MACRO_ELIF:
+            case T_MACRO_ELSE:
+            case T_MACRO_ENDIF:
+                lexer_c_restore(lexer);
+
+                goto while_end;
+            break;
+            default: break;
         }
 
         if (token_text_begin == NULL) {
@@ -2735,6 +2749,8 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Lexer_C *lexer)
 
         token_c_destroy(token_text);
     }
+    
+    while_end:
 
     if (token_text_begin == NULL) {
         goto error;
