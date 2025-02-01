@@ -2618,3 +2618,31 @@ ParseTreeNode_C *parser_c_parse_preprocessor_if_line(Lexer_C *lexer)
         return NULL;
     }
 }
+
+ParseTreeNode_C *parser_c_parse_preprocessor_elif_parts(Lexer_C *lexer)
+{
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_ELIF_PARTS, NULL);
+
+    ParseTreeNode_C *preprocessor_elif_line;
+    ParseTreeNode_C *preprocessor_text;
+
+    while (1) {
+        parser_c_parse_required(lexer, this_node, preprocessor_elif_line, while_end);
+
+        parser_c_parse_required(lexer, this_node, preprocessor_text, error);
+    }
+
+    while_end: {
+        if (this_node->num == 0) {
+            goto error;
+        }
+    }
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
