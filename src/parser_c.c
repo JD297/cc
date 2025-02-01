@@ -2646,3 +2646,28 @@ ParseTreeNode_C *parser_c_parse_preprocessor_elif_parts(Lexer_C *lexer)
         return NULL;
     }
 }
+
+ParseTreeNode_C *parser_c_parse_preprocessor_elif_line(Lexer_C *lexer)
+{
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_ELIF_LINE, NULL);
+
+    ParseTreeNode_C *constant_expression;
+
+    lexer_c_backup(lexer);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, T_MACRO_ELIF) == 0) {
+        goto error;
+    }
+
+    parser_c_parse_required(lexer, this_node, constant_expression, error);
+
+    return this_node;
+
+    error: {
+        lexer_c_restore(lexer);
+
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
