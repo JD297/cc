@@ -92,6 +92,11 @@ extern ParseTreeNode_C *parser_c_parse_expression_statement(Lexer_C *lexer);
 extern ParseTreeNode_C *parser_c_parse_selection_statement(Lexer_C *lexer);
 extern ParseTreeNode_C *parser_c_parse_iteration_statement(Lexer_C *lexer);
 extern ParseTreeNode_C *parser_c_parse_jump_statement(Lexer_C *lexer);
-extern ParseTreeNode_C *parser_c_parse_control_line(Lexer_C *lexer);
-extern ParseTreeNode_C *parser_c_parse_macro_include(Lexer_C *lexer);
-extern ParseTreeNode_C *parser_c_parse_macro_undef(Lexer_C *lexer);
+
+extern ParseTreeNode_C *parser_c_parse_preprocessor_conditional(Lexer_C *lexer);
+extern ParseTreeNode_C *parser_c_parse_preprocessor_if_line(Lexer_C *lexer);
+extern ParseTreeNode_C *parser_c_parse_preprocessor_text(Lexer_C *lexer);
+extern ParseTreeNode_C *parser_c_parse_preprocessor_elif_parts(Lexer_C *lexer);
+extern ParseTreeNode_C *parser_c_parse_preprocessor_else_part(Lexer_C *lexer);
+extern ParseTreeNode_C *parser_c_parse_preprocessor_elif_line(Lexer_C *lexer);
+extern ParseTreeNode_C *parser_c_parse_preprocessor_else_line(Lexer_C *lexer);
