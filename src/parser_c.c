@@ -2712,3 +2712,47 @@ ParseTreeNode_C *parser_c_parse_preprocessor_else_line(Lexer_C *lexer)
         return NULL;
     }
 }
+
+ParseTreeNode_C *parser_c_parse_preprocessor_text(Lexer_C *lexer)
+{
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_TEXT, NULL);
+
+    const char *token_text_begin = NULL;
+    size_t token_text_len = 0;
+
+    while (1) {
+        lexer_c_backup(lexer);
+
+        Token_C *token_text = lexer_c_next_skip_whitespace(lexer);
+
+        if (token_text == NULL || token_text->type != T_MACRO_TOKEN_SEQUENZE) {
+            lexer_c_restore(lexer);
+
+            break;
+        }
+
+        if (token_text_begin == NULL) {
+            token_text_begin = token_text->value;
+        }
+
+        token_text_len += token_text->len;
+
+        token_c_destroy(token_text);
+    }
+
+    if (token_text_begin == NULL) {
+        goto error;
+    }
+
+    Token_C *token_text_build = token_c_create(T_MACRO_TOKEN_SEQUENZE, token_text_begin, token_text_len);
+
+    this_node->token = token_text_build;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
