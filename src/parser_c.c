@@ -2691,3 +2691,24 @@ ParseTreeNode_C *parser_c_parse_preprocessor_else_part(Lexer_C *lexer)
         return NULL;
     }
 }
+
+ParseTreeNode_C *parser_c_parse_preprocessor_else_line(Lexer_C *lexer)
+{
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_ELSE_LINE, NULL);
+
+    lexer_c_backup(lexer);
+
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, T_MACRO_ELSE) == 0) {
+        goto error;
+    }
+
+    return this_node;
+
+    error: {
+        lexer_c_restore(lexer);
+
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
