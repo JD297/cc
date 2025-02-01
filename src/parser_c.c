@@ -2671,3 +2671,23 @@ ParseTreeNode_C *parser_c_parse_preprocessor_elif_line(Lexer_C *lexer)
         return NULL;
     }
 }
+
+ParseTreeNode_C *parser_c_parse_preprocessor_else_part(Lexer_C *lexer)
+{
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_ELSE_PART, NULL);
+
+    ParseTreeNode_C *preprocessor_else_line;
+    ParseTreeNode_C *preprocessor_text;
+
+    parser_c_parse_required(lexer, this_node, preprocessor_else_line, error);
+
+    parser_c_parse_required(lexer, this_node, preprocessor_text, error);
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
