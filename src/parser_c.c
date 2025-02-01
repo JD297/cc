@@ -2579,3 +2579,42 @@ ParseTreeNode_C *parser_c_parse_preprocessor_conditional(Lexer_C *lexer)
         return NULL;
     }
 }
+
+ParseTreeNode_C *parser_c_parse_preprocessor_if_line(Lexer_C *lexer)
+{
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_IF_LINE, NULL);
+
+    ParseTreeNode_C *constant_expression;
+    ParseTreeNode_C *identifier;
+
+    Token_C *token_if = lexer_c_next_skip_whitespace(lexer);
+
+    if (token_if == NULL) {
+        goto error;
+    }
+
+    switch (token_if->type) {
+        case T_MACRO_IF: {
+            parser_c_parse_required(lexer, this_node, constant_expression, error);
+        } break;
+        case T_MACRO_IFDEF: {
+            parser_c_parse_required(lexer, this_node, identifier, error);
+        } break;
+        case T_MACRO_IFNDEF: {
+            parser_c_parse_required(lexer, this_node, identifier, error);
+        } break;
+        default: {
+            goto error;
+        }
+    }
+
+    this_node->token = token_if;
+
+    return this_node;
+
+    error: {
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
