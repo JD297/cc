@@ -2627,18 +2627,14 @@ ParseTreeNode_C *parser_c_parse_preprocessor_elif_parts(Lexer_C *lexer)
     ParseTreeNode_C *preprocessor_text;
 
     while (1) {
-        parser_c_parse_required(lexer, this_node, preprocessor_elif_line, while_end);
+        parser_c_parse_required(lexer, this_node, preprocessor_elif_line, ret);
 
         parser_c_parse_required(lexer, this_node, preprocessor_text, error);
     }
 
-    while_end: {
-        if (this_node->num == 0) {
-            goto error;
-        }
+    ret : {
+        return this_node;
     }
-
-    return this_node;
 
     error: {
         parse_tree_node_c_destroy(this_node);
