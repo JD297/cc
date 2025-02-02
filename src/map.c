@@ -52,9 +52,9 @@ int map_cmp_at(Map *map, char *name, size_t index)
 
 void *map_get(Map *map, char *name)
 {
-    for (size_t i = 0; i < vector_size(map->elements); i++) {
+    for (size_t i = 0; i < vector_size(map->elements_names); i++) {
         if (map_cmp_at(map, name, i) == 0) {
-            return vector_at(map->elements, i);
+            return vector_at(map->elements_names, i);
         }
     }
 
@@ -63,15 +63,17 @@ void *map_get(Map *map, char *name)
 
 int map_add(Map *map, void *element, char *name)
 {
-    for (size_t i = 0; i < vector_size(map->elements); i++) {
-        if (vector_at(map->elements, i) == NULL) {
+    for (size_t i = 0; i < vector_size(map->elements_names); i++) {
+        if (vector_at(map->elements_names, i) == NULL) {
             vector_set(map->elements, i, element);
+            vector_set(map->elements_names, i, name);
             
             return 0;
         }
-        
+
         if (map_cmp_at(map, name, i) == 0) {
             vector_set(map->elements, i, element);
+            vector_set(map->elements_names, i, name);
             
             return 0;
         }
