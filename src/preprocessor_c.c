@@ -1,10 +1,13 @@
 #include "lexer_c.h"
 #include "map.h"
+#include "parse_tree_type_c.h"
+#include "parser_c.h"
 #include "preprocessor_c.h"
 #include "token_c.h"
 #include "token_type_c.h"
 #include "vector.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -61,7 +64,7 @@ void preprocessor_c_destroy(Preprocessor_C *preprocessor)
 int preprocessor_c_run(Preprocessor_C *preprocessor)
 {
     for (size_t i = 0; i < vector_size(preprocessor->source_files); i++) {
-        if (preprocessor_c_parse(preprocessor, vector_at(preprocessor->source_files, i)) == -1) {
+        if (preprocessor_c_parse_file(preprocessor, vector_at(preprocessor->source_files, i)) == -1) {
             return -1;
         }
     }
@@ -69,7 +72,7 @@ int preprocessor_c_run(Preprocessor_C *preprocessor)
     return 0;
 }
 
-int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* pathname)
+int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname)
 {
     const char *src = mmapfile(pathname);
 
@@ -87,15 +90,26 @@ int preprocessor_c_parse(Preprocessor_C *preprocessor, const char* pathname)
 
     int parse_next_result;
 
-    while((parse_next_result = preprocessor_c_parse_next(preprocessor, lexer)) == 0);
+    parse_next_result = preprocessor_c_parse_lexer(preprocessor, lexer, src + strlen(src));
 
     lexer_c_destroy(lexer);
 
     return parse_next_result;
 }
 
+int preprocessor_c_parse_lexer(Preprocessor_C *preprocessor, Lexer_C *lexer, const char* end)
+{
+    int parse_next_result;
+
+    while(lexer->pbuf != end && (parse_next_result = preprocessor_c_parse_next(preprocessor, lexer)) == 0);
+
+    return parse_next_result;
+}
+
 int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 {
+    lexer_c_backup(lexer);
+
     Token_C *token = lexer_c_next(lexer);
     
     if (token == NULL) {
@@ -105,7 +119,11 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 
     switch (token->type) {
         case T_MACRO_INCLUDE: {
-            return preprocessor_c_parse_include(preprocessor, lexer, token) == 1 ? 0 : -1;
+            if (preprocessor_c_parse_include(preprocessor, lexer, token) == -1) {
+                return -1;
+            }
+
+            return 0;
         }
         case T_IDENTIFIER: {
             return preprocessor_c_parse_identifier(preprocessor, lexer, token);
@@ -116,20 +134,18 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         case T_MACRO_UNDEF: {
             return preprocessor_c_parse_undef(preprocessor, lexer, token);
         }
+        case T_MACRO_IF:
+        case T_MACRO_IFDEF:
         case T_MACRO_IFNDEF: {
-            return preprocessor_c_parse_ifndef(preprocessor, lexer, token);
-        }
-        case T_MACRO_IFDEF: {
-            return preprocessor_c_parse_ifdef(preprocessor, lexer, token);
+            lexer_c_restore(lexer);
+
+            return preprocessor_c_parse_conditional(preprocessor, lexer, token);
         }
         case T_MACRO_LINE: {
             return preprocessor_c_parse_line(preprocessor, lexer, token);
         }
         case T_MACRO_ERROR: {
             return preprocessor_c_parse_error(preprocessor, lexer, token);
-        }
-        case T_MACRO_IF: {
-            return preprocessor_c_parse_if(preprocessor, lexer, token);
         }
         case T_MACRO_PRAGMA: {
             return preprocessor_c_parse_pragma(preprocessor, lexer, token);
@@ -238,7 +254,7 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, T
         
         free(include_file);
         
-        parse_result = preprocessor_c_parse(preprocessor, include_file_path);
+        parse_result = preprocessor_c_parse_file(preprocessor, include_file_path);
         
         free(include_file_path);
         
@@ -266,7 +282,7 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, T
         
         free(include_file);
         
-        parse_result = preprocessor_c_parse(preprocessor, include_file_path);
+        parse_result = preprocessor_c_parse_file(preprocessor, include_file_path);
         
         free(include_file_path);
         
@@ -385,24 +401,75 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     }
 }
 
-int preprocessor_c_parse_ifndef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
+int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
-    (void)preprocessor;
-    (void)lexer;
-
     token_c_destroy(token);
 
-    return 0;
-}
+    lexer_c_restore(lexer);
 
-int preprocessor_c_parse_ifdef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
-{
-    (void)preprocessor;
-    (void)lexer;
+    ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(lexer);
+    
+    TokenType_C if_line_type = conditional->elements[0]->token->type;
 
-    token_c_destroy(token);
+    int parse_result = 0;
 
-    return 0;
+    if (conditional == NULL) {
+        return -1;
+    }
+
+    // parse if_line
+    switch(if_line_type) {
+        case T_MACRO_IF: {
+            assert(0 && "Not implemented: preprocessor_c_parse_conditional with TokenType: T_MACRO_IF");
+        } break;
+        case T_MACRO_IFDEF:
+        case T_MACRO_IFNDEF: {
+            int negate = if_line_type == T_MACRO_IFNDEF;
+
+            Token_C *identifier = conditional->elements[0]->elements[0]->token;
+            
+            char *identifier_name = (char *)malloc(sizeof(char) * (identifier->len + 1));
+    
+            strncpy(identifier_name, identifier->value, identifier->len);
+
+            if ((map_get(preprocessor->defines, identifier_name) != NULL) ^ (negate == 1)) {
+                Token_C *text = conditional->elements[1]->token;
+
+                Lexer_C *lexer_text = lexer_c_create(text->value, lexer->loc.pathname);
+
+                parse_result = preprocessor_c_parse_lexer(preprocessor, lexer_text, text->value + text->len);
+
+                lexer_c_destroy(lexer_text);
+                
+                goto ret;
+            }
+        } break;
+        default: assert(0 && "Not implemented: preprocessor_c_parse_conditional: if_line_type: only the following are supported: T_MACRO_IF, T_MACRO_IFDEF and T_MACRO_IFNDEF");
+    }
+
+    // parse elif_parts
+    for (size_t i = 0; i < conditional->elements[1]->num; i++) {
+        assert(0 && "Not implemented: preprocessor_c_parse_conditional elif parts");
+    }
+
+    // parse else_part
+    if (conditional->num != 4) {
+        goto ret;
+    }
+
+    Token_C *text = conditional->elements[3]->elements[1]->token;
+
+    Lexer_C *lexer_text = lexer_c_create(text->value, lexer->loc.pathname);
+
+    parse_result = preprocessor_c_parse_lexer(preprocessor, lexer_text, text->value + text->len);
+
+    lexer_c_destroy(lexer_text);
+
+    ret: {
+        parse_tree_node_c_destroy(conditional);
+
+        return parse_result;
+    }
 }
 
 int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
@@ -453,16 +520,6 @@ int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     token_c_destroy(token);
 
     return -1;
-}
-
-int preprocessor_c_parse_if(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
-{
-    (void)preprocessor;
-    (void)lexer;
-
-    token_c_destroy(token);
-
-    return 0;
 }
 
 int preprocessor_c_parse_pragma(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
