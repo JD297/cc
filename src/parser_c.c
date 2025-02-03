@@ -802,7 +802,7 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, logical_and_expression, error);
 
@@ -896,7 +896,7 @@ ParseTreeNode_C *parser_c_parse_logical_and_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, inclusive_or_expression, error);
 
@@ -959,7 +959,7 @@ ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, exclusive_or_expression, error);
 
@@ -1022,7 +1022,7 @@ ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, and_expression, error);
 
@@ -1085,7 +1085,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, equality_expression, error);
 
@@ -1149,7 +1149,7 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, relational_expression, error);
 
@@ -1218,7 +1218,7 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, shift_expression, error);
 
@@ -1291,7 +1291,7 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, additive_expression, error);
 
@@ -1358,7 +1358,7 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, multiplicative_expression, error);
 
@@ -1426,7 +1426,7 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, cast_expression, error);
 
@@ -1616,7 +1616,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Lexer_C *lexer)
 
     ParseTreeNode_C *left_node;
     
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, primary_expression, error);
 
@@ -1988,7 +1988,7 @@ ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Lexer_C *lexer)
     ParseTreeNode_C *constant_expression;
     ParseTreeNode_C *parameter_type_list;
 
-    Token_C *this_node_token;
+    Token_C *this_node_token = NULL;
 
     while (1) {
         lexer_saved = lexer->pbuf;
