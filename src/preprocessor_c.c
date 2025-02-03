@@ -408,14 +408,16 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
     lexer_c_restore(lexer);
 
     ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(lexer);
-    
+
+    if (conditional == NULL) {
+        lexer_c_log(lexer, "conditional directive is not valid");
+
+        return -1;
+    }
+
     TokenType_C if_line_type = conditional->elements[0]->token->type;
 
     int parse_result = 0;
-
-    if (conditional == NULL) {
-        return -1;
-    }
 
     // parse if_line
     switch(if_line_type) {

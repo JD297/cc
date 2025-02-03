@@ -2587,6 +2587,8 @@ ParseTreeNode_C *parser_c_parse_preprocessor_if_line(Lexer_C *lexer)
     ParseTreeNode_C *constant_expression;
     ParseTreeNode_C *identifier;
 
+    lexer_c_backup(lexer);
+
     Token_C *token_if = lexer_c_next_skip_whitespace(lexer);
 
     if (token_if == NULL) {
@@ -2613,6 +2615,8 @@ ParseTreeNode_C *parser_c_parse_preprocessor_if_line(Lexer_C *lexer)
     return this_node;
 
     error: {
+        lexer_c_restore(lexer);
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
