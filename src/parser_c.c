@@ -1137,11 +1137,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Lexer_C *lexer)
 
 ParseTreeNode_C *parser_c_parse_equality_expression(Lexer_C *lexer)
 {
-    #define PTT_C_TYPE PTT_C_EQUALITY_EXPRESSION
-    #define TOKEN_TYPE_1 T_EQUAL_TO
-    #define TOKEN_TYPE_2 T_NOT_EQUAL_TO
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_EQUALITY_EXPRESSION, NULL);
 
     ParseTreeNode_C *relational_expression;
 
@@ -1152,35 +1148,47 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Lexer_C *lexer)
     Token_C *this_node_token = NULL;
 
     parser_c_parse_required(lexer, this_node, relational_expression, error);
-
-    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
-                                                                                    this_node_token->type != TOKEN_TYPE_2)) {
+    
+    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
         goto error;
     }
 
-    parser_c_parse_required(lexer, this_node, relational_expression, error);
+    switch (this_node_token->type) {
+        case T_EQUAL_TO:
+        case T_NOT_EQUAL_TO: {
+            parser_c_parse_required(lexer, this_node, relational_expression, error);
 
-    this_node->token = this_node_token;
+            this_node->token = this_node_token;
+        } break;
+        default: goto ret;
+    }
 
     while (1) {
         const char *lexer_saved_token = lexer->pbuf;
 
-        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
-                                                                                        this_node_token->type != TOKEN_TYPE_2)) {
-            lexer->pbuf = lexer_saved_token;
-
-            goto ret;
+        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
+            goto error;
         }
 
-        this_node->token = this_node_token;
+        switch (this_node_token->type) {
+            case T_EQUAL_TO:
+            case T_NOT_EQUAL_TO: {
+                this_node->token = this_node_token;
 
-        left_node = this_node;
+                left_node = this_node;
 
-        this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_EQUALITY_EXPRESSION, NULL);
 
-        parse_tree_node_c_add(this_node, left_node);
+                parse_tree_node_c_add(this_node, left_node);
 
-        parser_c_parse_required(lexer, this_node, relational_expression, error);
+                parser_c_parse_required(lexer, this_node, relational_expression, error);
+            } break;
+            default: {
+                lexer->pbuf = lexer_saved_token;
+
+                goto ret;
+            }
+        }
     }
 
     ret: {
@@ -1196,10 +1204,6 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Lexer_C *lexer)
 
         return NULL;
     }
-    
-    #undef PTT_C_TYPE
-    #undef TOKEN_TYPE_1
-    #undef TOKEN_TYPE_2
 }
 
 ParseTreeNode_C *parser_c_parse_relational_expression(Lexer_C *lexer)
