@@ -1413,12 +1413,7 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Lexer_C *lexer)
 
 ParseTreeNode_C *parser_c_parse_multiplicative_expression(Lexer_C *lexer)
 {
-    #define PTT_C_TYPE PTT_C_MULTIPLICATIVE_EXPRESSION
-    #define TOKEN_TYPE_1 T_MULTIPLY
-    #define TOKEN_TYPE_2 T_DIVIDE
-    #define TOKEN_TYPE_3 T_MODULUS
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_MULTIPLICATIVE_EXPRESSION, NULL);
 
     ParseTreeNode_C *cast_expression;
 
@@ -1430,36 +1425,48 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Lexer_C *lexer)
 
     parser_c_parse_required(lexer, this_node, cast_expression, error);
 
-    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
-                                                                                    this_node_token->type != TOKEN_TYPE_2 &&
-                                                                                    this_node_token->type != TOKEN_TYPE_3)) {
+    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
         goto error;
     }
+    
+    switch (this_node_token->type) {
+        case T_MULTIPLY:
+        case T_DIVIDE:
+        case T_MODULUS: {
+            parser_c_parse_required(lexer, this_node, cast_expression, error);
 
-    parser_c_parse_required(lexer, this_node, cast_expression, error);
-
-    this_node->token = this_node_token;
+            this_node->token = this_node_token;
+        } break;
+        default: goto ret;
+    }
 
     while (1) {
         const char *lexer_saved_token = lexer->pbuf;
 
-        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
-                                                                                        this_node_token->type != TOKEN_TYPE_2 &&
-                                                                                        this_node_token->type != TOKEN_TYPE_3)) {
-            lexer->pbuf = lexer_saved_token;
-
-            goto ret;
+        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
+            goto error;
         }
+    
+        switch (this_node_token->type) {
+            case T_MULTIPLY:
+            case T_DIVIDE:
+            case T_MODULUS: {
+                this_node->token = this_node_token;
 
-        this_node->token = this_node_token;
+                left_node = this_node;
 
-        left_node = this_node;
+                this_node = parse_tree_node_c_create(PTT_C_MULTIPLICATIVE_EXPRESSION, NULL);
 
-        this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+                parse_tree_node_c_add(this_node, left_node);
 
-        parse_tree_node_c_add(this_node, left_node);
+                parser_c_parse_required(lexer, this_node, cast_expression, error);
+            } break;
+            default: {
+                lexer->pbuf = lexer_saved_token;
 
-        parser_c_parse_required(lexer, this_node, cast_expression, error);
+                goto ret;
+            }
+        }
     }
 
     ret: {
@@ -1475,11 +1482,6 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Lexer_C *lexer)
 
         return NULL;
     }
-    
-    #undef PTT_C_TYPE
-    #undef TOKEN_TYPE_1
-    #undef TOKEN_TYPE_2
-    #undef TOKEN_TYPE_3
 }
 
 ParseTreeNode_C *parser_c_parse_cast_expression(Lexer_C *lexer)
