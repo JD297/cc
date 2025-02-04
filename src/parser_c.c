@@ -813,7 +813,7 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -913,7 +913,7 @@ ParseTreeNode_C *parser_c_parse_logical_and_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -982,7 +982,7 @@ ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -1051,7 +1051,7 @@ ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -1120,7 +1120,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
 
@@ -1191,7 +1191,7 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -1264,7 +1264,7 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -1337,7 +1337,7 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -1408,7 +1408,7 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
@@ -1482,7 +1482,7 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Lexer_C *lexer)
 
             this_node->token = this_node_token;
         } break;
-        default: goto ret;
+        default: goto ret; // TODO Fix: lexer restore
     }
 
     while (1) {
