@@ -1279,11 +1279,7 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Lexer_C *lexer)
 
 ParseTreeNode_C *parser_c_parse_shift_expression(Lexer_C *lexer)
 {
-    #define PTT_C_TYPE PTT_C_SHIFT_EXPRESSION
-    #define TOKEN_TYPE_1 T_BITWISE_LEFTSHIFT
-    #define TOKEN_TYPE_2 T_BITWISE_RIGHTSHIFT
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_SHIFT_EXPRESSION, NULL);
 
     ParseTreeNode_C *additive_expression;
 
@@ -1295,34 +1291,46 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Lexer_C *lexer)
 
     parser_c_parse_required(lexer, this_node, additive_expression, error);
 
-    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
-                                                                                    this_node_token->type != TOKEN_TYPE_2)) {
+    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
         goto error;
     }
 
-    parser_c_parse_required(lexer, this_node, additive_expression, error);
+    switch (this_node_token->type) {
+        case T_BITWISE_LEFTSHIFT:
+        case T_BITWISE_RIGHTSHIFT: {
+            parser_c_parse_required(lexer, this_node, additive_expression, error);
 
-    this_node->token = this_node_token;
+            this_node->token = this_node_token;
+        } break;
+        default: goto ret;
+    }
 
     while (1) {
         const char *lexer_saved_token = lexer->pbuf;
 
-        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || (this_node_token->type != TOKEN_TYPE_1 && 
-                                                                                        this_node_token->type != TOKEN_TYPE_2)) {
-            lexer->pbuf = lexer_saved_token;
-
-            goto ret;
+        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
+            goto error;    
         }
 
-        this_node->token = this_node_token;
+        switch (this_node_token->type) {
+            case T_BITWISE_LEFTSHIFT:
+            case T_BITWISE_RIGHTSHIFT: {
+                this_node->token = this_node_token;
 
-        left_node = this_node;
+                left_node = this_node;
 
-        this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_SHIFT_EXPRESSION, NULL);
 
-        parse_tree_node_c_add(this_node, left_node);
+                parse_tree_node_c_add(this_node, left_node);
 
-        parser_c_parse_required(lexer, this_node, additive_expression, error);
+                parser_c_parse_required(lexer, this_node, additive_expression, error);
+            } break;
+            default: {
+                lexer->pbuf = lexer_saved_token;
+
+                goto ret;
+            }
+        }
     }
 
     ret: {
@@ -1338,10 +1346,6 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Lexer_C *lexer)
 
         return NULL;
     }
-    
-    #undef PTT_C_TYPE
-    #undef TOKEN_TYPE_1
-    #undef TOKEN_TYPE_2
 }
 
 ParseTreeNode_C *parser_c_parse_additive_expression(Lexer_C *lexer)
