@@ -791,10 +791,7 @@ ParseTreeNode_C *parser_c_parse_conditional_expression(Lexer_C *lexer)
 
 ParseTreeNode_C *parser_c_parse_logical_or_expression(Lexer_C *lexer)
 {
-    #define PTT_C_TYPE PTT_C_LOGICAL_OR_EXPRESSION
-    #define TOKEN_TYPE T_LOGICAL_OR
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_LOGICAL_OR_EXPRESSION, NULL);
 
     ParseTreeNode_C *logical_and_expression;
 
@@ -806,32 +803,44 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Lexer_C *lexer)
 
     parser_c_parse_required(lexer, this_node, logical_and_expression, error);
 
-    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || this_node_token->type != TOKEN_TYPE) {
+    if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
         goto error;
     }
 
-    parser_c_parse_required(lexer, this_node, logical_and_expression, error);
+    switch (this_node_token->type) {
+        case T_LOGICAL_OR: {
+            parser_c_parse_required(lexer, this_node, logical_and_expression, error);
 
-    this_node->token = this_node_token;
+            this_node->token = this_node_token;
+        } break;
+        default: goto ret;
+    }
 
     while (1) {
         const char *lexer_saved_token = lexer->pbuf;
 
-        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL || this_node_token->type != TOKEN_TYPE) {
-            lexer->pbuf = lexer_saved_token;
-
-            goto ret;
+        if ((this_node_token = lexer_c_next_skip_whitespace(lexer)) == NULL) {
+            goto error;
         }
 
-        this_node->token = this_node_token;
+        switch (this_node_token->type) {
+            case T_LOGICAL_OR: {
+                this_node->token = this_node_token;
 
-        left_node = this_node;
+                left_node = this_node;
 
-        this_node = parse_tree_node_c_create(PTT_C_TYPE, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_LOGICAL_OR_EXPRESSION, NULL);
 
-        parse_tree_node_c_add(this_node, left_node);
+                parse_tree_node_c_add(this_node, left_node);
 
-        parser_c_parse_required(lexer, this_node, logical_and_expression, error);
+                parser_c_parse_required(lexer, this_node, logical_and_expression, error);
+            } break;
+            default: {
+                lexer->pbuf = lexer_saved_token;
+
+                goto ret;
+            }
+        }
     }
 
     ret: {
@@ -847,9 +856,6 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Lexer_C *lexer)
 
         return NULL;
     }
-    
-    #undef PTT_C_TYPE
-    #undef TOKEN_TYPE
 }
 
 ParseTreeNode_C *parser_c_parse_expression(Lexer_C *lexer)
