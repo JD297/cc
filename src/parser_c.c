@@ -1678,6 +1678,8 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Lexer_C *lexer)
                 lexer->pbuf = lexer_saved_token;
                 
                 token_c_destroy(this_node_token);
+                
+                goto ret;
             }
         }
     }
