@@ -187,16 +187,19 @@ ParseTreeNode_C *parser_c_parse_storage_class_specifier(Lexer_C *lexer)
 
     Token_C *token_storage_class_specifier = lexer_c_next_skip_whitespace(lexer);
 
-    if (token_storage_class_specifier->type == T_AUTO || 
-        token_storage_class_specifier->type == T_REGISTER || 
-        token_storage_class_specifier->type == T_STATIC || 
-        token_storage_class_specifier->type == T_EXTERN || 
-        token_storage_class_specifier->type == T_TYPEDEF) {
-        this_node->token = token_storage_class_specifier;
+    switch (token_storage_class_specifier->type) {
+        case T_AUTO:
+        case T_REGISTER:
+        case T_STATIC:
+        case T_EXTERN:
+        case T_TYPEDEF: {
+            this_node->token = token_storage_class_specifier;
     
-        return this_node;
+            return this_node;
+        }
+        default: break;
     }
-
+    
     *lexer = lexer_saved;
 
     token_c_destroy(token_storage_class_specifier);
@@ -214,18 +217,21 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Lexer_C *lexer)
 
     Token_C *token_type_specifier = lexer_c_next_skip_whitespace(lexer);
 
-    if (token_type_specifier->type == T_VOID || 
-        token_type_specifier->type == T_CHAR || 
-        token_type_specifier->type == T_SHORT || 
-        token_type_specifier->type == T_INT || 
-        token_type_specifier->type == T_LONG ||
-        token_type_specifier->type == T_FLOAT ||
-        token_type_specifier->type == T_DOUBLE ||
-        token_type_specifier->type == T_SIGNED ||
-        token_type_specifier->type == T_UNSIGNED) {
-        this_node->token = token_type_specifier;
+    switch (token_type_specifier->type) {
+        case T_VOID:
+        case T_CHAR:
+        case T_SHORT:
+        case T_INT:
+        case T_LONG:
+        case T_FLOAT:
+        case T_DOUBLE:
+        case T_SIGNED:
+        case T_UNSIGNED: {
+            this_node->token = token_type_specifier;
     
-        return this_node;
+            return this_node;
+        }
+        default: break;
     }
 
     *lexer = lexer_saved;
@@ -1811,15 +1817,18 @@ ParseTreeNode_C *parser_c_parse_unary_operator(Lexer_C *lexer)
 
     Token_C *token_unary_operator = lexer_c_next_skip_whitespace(lexer);
 
-    if (token_unary_operator->type == T_BITWISE_AND || 
-        token_unary_operator->type == T_MULTIPLY || 
-        token_unary_operator->type == T_MULTIPLY || 
-        token_unary_operator->type == T_MINUS || 
-        token_unary_operator->type == T_TILDE ||
-        token_unary_operator->type == T_BITWISE_OR) {
-        this_node->token = token_unary_operator;
+    switch (token_unary_operator->type) {
+        case T_BITWISE_AND:
+        case T_MULTIPLY:
+        case T_PLUS:
+        case T_MINUS:
+        case T_TILDE:
+        case T_BITWISE_OR: {
+            this_node->token = token_unary_operator;
     
-        return this_node;
+            return this_node;
+        }
+        default: break;
     }
 
     *lexer = lexer_saved;
@@ -1976,20 +1985,23 @@ ParseTreeNode_C *parser_c_parse_assignment_operator(Lexer_C *lexer)
         goto error;
     }
 
-    if (token_assignment_operator->type == T_ASSIGNMENT || 
-        token_assignment_operator->type == T_MULTIPLY_ASSIGN || 
-        token_assignment_operator->type == T_DIVIDE_ASSIGN || 
-        token_assignment_operator->type == T_MODULUS_ASSIGN || 
-        token_assignment_operator->type == T_PLUS_ASSIGN ||
-        token_assignment_operator->type == T_MINUS_ASSIGN ||
-        token_assignment_operator->type == T_BITWISE_LEFTSHIFT_ASSIGN ||
-        token_assignment_operator->type == T_BITWISE_RIGHTSHIFT_ASSIGN ||
-        token_assignment_operator->type == T_BITWISE_AND_ASSIGN ||
-        token_assignment_operator->type == T_BITWISE_XOR_ASSIGN ||
-        token_assignment_operator->type == T_BITWISE_OR_ASSIGN) {
-        this_node->token = token_assignment_operator;
+    switch(token_assignment_operator->type) {
+        case T_ASSIGNMENT:
+        case T_MULTIPLY_ASSIGN:
+        case T_DIVIDE_ASSIGN:
+        case T_MODULUS_ASSIGN:
+        case T_PLUS_ASSIGN:
+        case T_MINUS_ASSIGN:
+        case T_BITWISE_LEFTSHIFT_ASSIGN:
+        case T_BITWISE_RIGHTSHIFT_ASSIGN:
+        case T_BITWISE_AND_ASSIGN:
+        case T_BITWISE_XOR_ASSIGN:
+        case T_BITWISE_OR_ASSIGN: {
+            this_node->token = token_assignment_operator;
     
-        return this_node;
+            return this_node;
+        }
+        default: break;
     }
 
     error: {
