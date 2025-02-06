@@ -3,8 +3,6 @@
 #include "parse_tree_node_c.h"
 #include "parse_tree_type_c.h"
 
-#include <assert.h>
-
 #include <stddef.h>
 #include <stdlib.h>
 
