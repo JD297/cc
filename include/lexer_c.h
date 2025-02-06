@@ -11,27 +11,16 @@ typedef struct Lexer_Location_C {
     size_t col;
 } Lexer_Location_C;
 
-typedef struct Lexer_Saved_C {
-    const char *pbuf;
-    Lexer_Location_C loc;
-} Lexer_Saved_C;
-
 typedef struct Lexer_C {
     const char *buf;
     const char *pbuf;
     
     Lexer_Location_C loc;
-
-    Lexer_Saved_C saved;
 } Lexer_C;
 
 extern void *lexer_c_create(const char *src, const char* pathname);
 
 extern void lexer_c_destroy(Lexer_C *lexer);
-
-extern void lexer_c_backup(Lexer_C *lexer);
-
-extern void lexer_c_restore(Lexer_C *lexer);
 
 extern Token_C *lexer_c_next(Lexer_C *lexer);
 

@@ -22,9 +22,6 @@ void *lexer_c_create(const char* src, const char* pathname)
     lexer->loc.pathname = pathname;
     lexer->loc.row = 1;
     lexer->loc.col = 1;
-    
-    lexer->saved.pbuf = lexer->pbuf;
-    lexer->saved.loc = lexer->loc;
 
     return lexer;
 }
@@ -32,18 +29,6 @@ void *lexer_c_create(const char* src, const char* pathname)
 void lexer_c_destroy(Lexer_C *lexer)
 {
     free(lexer);
-}
-
-void lexer_c_backup(Lexer_C *lexer)
-{
-    lexer->saved.pbuf = lexer->pbuf;
-    lexer->saved.loc = lexer->loc;
-}
-
-void lexer_c_restore(Lexer_C *lexer)
-{
-    lexer->pbuf = lexer->saved.pbuf;
-    lexer->loc = lexer->saved.loc;
 }
 
 Token_C *lexer_c_next(Lexer_C *lexer)
