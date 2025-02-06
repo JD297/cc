@@ -108,7 +108,7 @@ int preprocessor_c_parse_lexer(Preprocessor_C *preprocessor, Lexer_C *lexer, con
 
 int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 {
-    lexer_c_backup(lexer);
+    Lexer_C lexer_saved_begin = *lexer;
 
     Token_C *token = lexer_c_next(lexer);
     
@@ -137,7 +137,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         case T_MACRO_IF:
         case T_MACRO_IFDEF:
         case T_MACRO_IFNDEF: {
-            lexer_c_restore(lexer);
+            *lexer = lexer_saved_begin;
 
             return preprocessor_c_parse_conditional(preprocessor, lexer, token);
         }
@@ -344,12 +344,12 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
 
     token_c_destroy(next_token);
 
-    lexer_c_backup(lexer);
+    Lexer_C lexer_saved = *lexer;
 
     Token_C *macro_sequenze = lexer_c_next(lexer);
     
     if (macro_sequenze == NULL || macro_sequenze->type != T_MACRO_TOKEN_SEQUENZE) {
-        lexer_c_restore(lexer);
+        *lexer = lexer_saved;
 
         return 0;
     }
@@ -364,7 +364,7 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
 
 int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
-    lexer_c_backup(lexer);
+    Lexer_C lexer_saved_begin = *lexer;
 
     token_c_destroy(token);
 
@@ -393,7 +393,7 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     error: {
         token_c_destroy(identifier);
 
-        lexer_c_restore(lexer);
+        *lexer = lexer_saved_begin;
 
         lexer_c_log(lexer, "no macro name given in #undef directive");
         
@@ -404,8 +404,6 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
 int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     token_c_destroy(token);
-
-    lexer_c_restore(lexer);
 
     ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(lexer);
 
@@ -495,12 +493,12 @@ int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Toke
 
     lexer->loc.row = (size_t)atoi(row_str);
 
-    lexer_c_backup(lexer);
+    Lexer_C lexer_saved = *lexer;
 
     Token_C *filename = lexer_c_next_skip_whitespace(lexer);
 
     if (filename == NULL || filename->type != T_STRING) {
-        lexer_c_restore(lexer);
+        *lexer = lexer_saved;
         
         return 0;
     }
