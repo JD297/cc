@@ -643,7 +643,7 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Lexer_C *lexer)
     ParseTreeNode_C *constant_expression;
     ParseTreeNode_C *parameter_type_list;
 
-    Token_C *token_after_direct_declarator;
+    Token_C *token_after_direct_declarator = NULL;
     
     parser_c_parse_opt(lexer, this_node, identifier, after_direct_declarator);
 
