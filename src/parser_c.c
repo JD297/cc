@@ -51,6 +51,8 @@ ParseTreeNode_C *parser_c_parse_function_definition(Lexer_C *lexer)
     ParseTreeNode_C *declaration;
     ParseTreeNode_C *compound_statement;
 
+    Lexer_C lexer_saved = *lexer;
+
     parser_c_parse_list_opt(lexer, this_node, declaration_specifier);
     
     parser_c_parse_required(lexer, this_node, declarator, error);
@@ -62,6 +64,8 @@ ParseTreeNode_C *parser_c_parse_function_definition(Lexer_C *lexer)
     return this_node;
 
     error: {
+        *lexer = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
