@@ -401,6 +401,8 @@ ParseTreeNode_C *parser_c_parse_typedef_name(Lexer_C *lexer)
 
     ParseTreeNode_C *identifier;
 
+    goto error; // TODO check if identifier is registered as a typedef
+
     parser_c_parse_required(lexer, this_node, identifier, error);
 
     return this_node;
