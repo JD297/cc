@@ -2051,17 +2051,30 @@ ParseTreeNode_C *parser_c_parse_parameter_list(Lexer_C *lexer)
 
     ParseTreeNode_C *parameter_declaration;
 
-    Lexer_C lexer_saved = *lexer;
+    Lexer_C lexer_saved;
+    Lexer_C lexer_saved_comma;
 
     next_parameter_declaration_list: {
-        parser_c_parse_required(lexer, this_node, parameter_declaration, error);
+        lexer_saved = *lexer;
 
-        Lexer_C lexer_saved_comma = *lexer;
+        parser_c_parse_required(lexer, this_node, parameter_declaration, next_parameter_declaration_list_after);
+
+        lexer_saved_comma = *lexer;
 
         if (lexer_c_next_skip_whitespace_token_is_type(lexer, T_COMMA) == 1) {
             goto next_parameter_declaration_list;
         }
         
+        lexer_saved = lexer_saved_comma;
+    }
+    
+    next_parameter_declaration_list_after: {
+        if (this_node->num == 0) {
+            *lexer = lexer_saved;
+
+            goto error;
+        }
+
         *lexer = lexer_saved_comma;
     }
 
