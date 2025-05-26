@@ -723,7 +723,7 @@ ParseTreeNode_C *parser_c_parse_parameter_type_list(Lexer_C *lexer)
 
     ParseTreeNode_C *parameter_list;
     
-    Token_C *token_dot_dot_dot;
+    Token_C *token_dot_dot_dot = NULL;
     
     Lexer_C lexer_saved = *lexer;
     
