@@ -662,6 +662,8 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Lexer_C *lexer)
     }
 
     after_direct_declarator: {
+        Lexer_C lexer_saved_after_direct_declarator = *lexer;
+
         token_after_direct_declarator = lexer_c_next_skip_whitespace(lexer);
         
         if (token_after_direct_declarator == NULL) {
@@ -698,6 +700,12 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Lexer_C *lexer)
                 break;
             }
             default: {
+                if (this_node->num == 1) {
+                    *lexer = lexer_saved_after_direct_declarator;
+
+                    break;
+                }
+
                 goto error;
             }
         }
