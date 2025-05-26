@@ -670,14 +670,13 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Lexer_C *lexer)
         
         switch(token_after_direct_declarator->type) {
             case T_OPEN_PARENT: {
-                parser_c_parse_list_required(lexer, this_node, identifier, next_after_direct_declarator_check_parameter_type);
+                parser_c_parse_required(lexer, this_node, parameter_type_list, next_after_direct_declarator_check_identifier_list);
                 
                 goto next_after_direct_declarator_parent;
                 
-                next_after_direct_declarator_check_parameter_type: {
-            
-                    parser_c_parse_required(lexer, this_node, parameter_type_list, error);
-                    
+                next_after_direct_declarator_check_identifier_list: {
+                    parser_c_parse_list_opt(lexer, this_node, identifier);
+
                     next_after_direct_declarator_parent: {
                         if (lexer_c_next_skip_whitespace_token_is_type(lexer, T_CLOSING_PARENT) == 0) {
                             goto error;
