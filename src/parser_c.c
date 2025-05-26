@@ -2407,9 +2407,11 @@ ParseTreeNode_C *parser_c_parse_labeled_statement(Lexer_C *lexer)
 
     Lexer_C lexer_saved = *lexer;
 
+    Token_C *token = NULL;
+
     parser_c_parse_opt(lexer, this_node, identifier, rest);
 
-    Token_C *token = lexer_c_next_skip_whitespace(lexer);
+    token = lexer_c_next_skip_whitespace(lexer);
     
     if (token == NULL) {
         goto error;
