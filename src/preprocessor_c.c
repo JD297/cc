@@ -1,13 +1,10 @@
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include <jd297/lmap.h>
@@ -19,26 +16,6 @@
 #include "preprocessor_c.h"
 #include "token_c.h"
 #include "token_type_c.h"
-
-const char *mmapfile(const char *pathname)
-{
-    struct stat sb;
-    int fd;
-    
-    if (stat(pathname, &sb) == -1) {
-		return NULL;
-	}
-
-	if ((sb.st_mode & S_IFMT) == S_IFDIR) {
-		return NULL;
-	}
-	
-	if ((fd = open(pathname, O_RDONLY)) == -1) {
-        return NULL;
-	}
-	
-	return (const char *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-}
 
 int preprocessor_c_run(Preprocessor_C *preprocessor)
 {
@@ -53,11 +30,21 @@ int preprocessor_c_run(Preprocessor_C *preprocessor)
 
 int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname)
 {
-    const char *src = mmapfile(pathname);
+    FILE *file;
+    char *src = NULL;
 
-    if (src == NULL) {
+    if ((file = fopen(pathname, "r")) == NULL) {
         return -1;
     }
+
+    const size_t block = 4096;
+    size_t nread_total = 0;
+
+    do {
+        src = (char *)realloc(src, nread_total + block);
+
+        nread_total += fread(src + nread_total, sizeof(char), block, file);
+    } while (feof(file) == 0);
 
     Lexer_C *lexer = lexer_c_create(src, pathname);
 
@@ -72,6 +59,8 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname
     parse_next_result = preprocessor_c_parse_lexer(preprocessor, lexer, src + strlen(src));
 
     lexer_c_destroy(lexer);
+
+    free(src);
 
     return parse_next_result;
 }
