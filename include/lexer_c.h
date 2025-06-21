@@ -28,6 +28,8 @@ extern Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer);
 
 extern int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type);
 
+extern int lexer_c_parse_line(Lexer_C *lexer);
+
 extern void lexer_c_log(Lexer_C *lexer, const char *msg);
 
 #endif

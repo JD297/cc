@@ -53,6 +53,10 @@ Token_C *lexer_c_next(Lexer_C *lexer)
         if (type == T_WHITESPACE && *start == '\n') {
             lexer->loc.row++;
             lexer->loc.col = 1;
+        } else if (type == T_MACRO_LINE) {
+            if (lexer_c_parse_line(lexer) == -1) {
+                return NULL;
+            }
         } else {
             lexer->loc.col += match.rm_eo;
         }
@@ -72,6 +76,7 @@ Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer)
     token_type_skipable[T_WHITESPACE] = 1;
     token_type_skipable[T_COMMENT_LINE] = 1;
     token_type_skipable[T_COMMENT_MULTILINE] = 1;
+    token_type_skipable[T_MACRO_LINE] = 1;
 
     Token_C *token;
 
@@ -95,6 +100,41 @@ int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type)
     token_c_destroy(token);
 
     return result;
+}
+
+int lexer_c_parse_line(Lexer_C *lexer)
+{
+    Token_C *number = lexer_c_next_skip_whitespace(lexer);
+ 
+    if (number == NULL || number->type != T_NUMBER) {
+        lexer_c_log(lexer, "after #line is not a positive integer");
+        
+        return -1;
+    }
+
+    lexer->loc.col = 1;
+
+    char *row_str = malloc(sizeof(char) * (number->len + 1));
+    strncpy(row_str, number->value, number->len);
+
+    lexer->loc.row = (size_t)atoi(row_str);
+
+    Lexer_C lexer_saved = *lexer;
+
+    Token_C *filename = lexer_c_next_skip_whitespace(lexer);
+
+    if (filename == NULL || filename->type != T_STRING) {
+        *lexer = lexer_saved;
+        
+        return 0;
+    }
+
+    char *filename_str = malloc(sizeof(char) * (filename->len + 1));
+    strncpy(filename_str, filename->value + 1, filename->len - 2);
+
+    lexer->loc.pathname = filename_str;
+
+    return 0;
 }
 
 void lexer_c_log(Lexer_C *lexer, const char *msg)
