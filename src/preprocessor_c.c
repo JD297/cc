@@ -405,11 +405,13 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
             if ((lmap_has(preprocessor->defines, identifier_name) == 1) ^ (negate == 1)) {
                 Token_C *text = conditional->elements[1]->token;
 
-                Lexer_C *lexer_text = lexer_c_create(text->value, lexer->loc.pathname);
+                Lexer_C lexer_text = {
+                    .buf = text->value,
+                    .pbuf = text->value,
+                    .loc = lexer->loc
+                };
 
-                parse_result = preprocessor_c_parse_lexer(preprocessor, lexer_text, text->value + text->len);
-
-                lexer_c_destroy(lexer_text);
+                parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text->value + text->len);
                 
                 goto ret;
             }
@@ -429,11 +431,13 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 
     Token_C *text = conditional->elements[3]->elements[1]->token;
 
-    Lexer_C *lexer_text = lexer_c_create(text->value, lexer->loc.pathname);
+    Lexer_C lexer_text = {
+        .buf = text->value,
+        .pbuf = text->value,
+        .loc = lexer->loc
+    };
 
-    parse_result = preprocessor_c_parse_lexer(preprocessor, lexer_text, text->value + text->len);
-
-    lexer_c_destroy(lexer_text);
+    parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text->value + text->len);
 
     ret: {
         parse_tree_node_c_destroy(conditional);
