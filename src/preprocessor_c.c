@@ -46,19 +46,21 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname
         nread_total += fread(src + nread_total, sizeof(char), block, file);
     } while (feof(file) == 0);
 
-    Lexer_C *lexer = lexer_c_create(src, pathname);
-
-    if (lexer == NULL) {
-        return -1;
-    }
+    Lexer_C lexer = {
+        .buf = src,
+        .pbuf = src,
+        .loc = {
+            .pathname = pathname,
+            .row = 1,
+            .col = 1
+        }
+    };
 
     fprintf(preprocessor->output, "#line 0 \"%s\"\n", pathname);
 
     int parse_next_result;
 
-    parse_next_result = preprocessor_c_parse_lexer(preprocessor, lexer, src + strlen(src));
-
-    lexer_c_destroy(lexer);
+    parse_next_result = preprocessor_c_parse_lexer(preprocessor, &lexer, src + strlen(src));
 
     free(src);
 
