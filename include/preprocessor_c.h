@@ -1,27 +1,23 @@
 #ifndef JD297_CC_PREPROCESSOR_C_H
 #define JD297_CC_PREPROCESSOR_C_H
 
-#include "lexer_c.h"
-#include "map.h"
-#include "vector.h"
-
 #include <stddef.h>
 #include <stdio.h>
 
-typedef struct Preprocessor_C {
-    FILE *output;
+#include <jd297/lmap.h>
+#include <jd297/vector.h>
 
-    Vector *include_dirs;
-    Vector *source_files;
-    Map *defines;
+#include "lexer_c.h"
+
+typedef struct {
+    vector_t *include_dirs;
+    vector_t *source_files;
+    lmap_t *defines;
+    FILE *output;
 } Preprocessor_C;
 
 #define PREPROCESSOR_INCLUDE_MODE_LIBRARARY 0x0
 #define PREPROCESSOR_INCLUDE_MODE_STRING    0x1
-
-extern void *preprocessor_c_create(Vector *include_dirs, Vector *source_files, Map *defines);
-
-extern void preprocessor_c_destroy(Preprocessor_C *preprocessor);
 
 extern int preprocessor_c_run(Preprocessor_C *preprocessor);
 

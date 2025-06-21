@@ -1,12 +1,3 @@
-#include "lexer_c.h"
-#include "map.h"
-#include "parse_tree_type_c.h"
-#include "parser_c.h"
-#include "preprocessor_c.h"
-#include "token_c.h"
-#include "token_type_c.h"
-#include "vector.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -18,6 +9,16 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <jd297/lmap.h>
+#include <jd297/vector.h>
+
+#include "lexer_c.h"
+#include "parse_tree_type_c.h"
+#include "parser_c.h"
+#include "preprocessor_c.h"
+#include "token_c.h"
+#include "token_type_c.h"
 
 const char *mmapfile(const char *pathname)
 {
@@ -39,32 +40,10 @@ const char *mmapfile(const char *pathname)
 	return (const char *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 }
 
-void *preprocessor_c_create(Vector *include_dirs, Vector *source_files, Map *defines)
-{
-    Preprocessor_C *preprocessor = (Preprocessor_C *)malloc(sizeof(Preprocessor_C));
-
-    if (preprocessor == NULL) {
-        return NULL;
-    }
-    
-    preprocessor->include_dirs = include_dirs;
-    preprocessor->source_files = source_files;
-    preprocessor->defines = defines;
-
-    preprocessor->output = tmpfile();
-
-    return preprocessor;
-}
-
-void preprocessor_c_destroy(Preprocessor_C *preprocessor)
-{
-    free(preprocessor);
-}
-
 int preprocessor_c_run(Preprocessor_C *preprocessor)
 {
-    for (size_t i = 0; i < vector_size(preprocessor->source_files); i++) {
-        if (preprocessor_c_parse_file(preprocessor, vector_at(preprocessor->source_files, i)) == -1) {
+    for (char **it = (char **)vec_begin(preprocessor->source_files); it < (char **)vec_end(preprocessor->source_files); ++it) {
+        if (preprocessor_c_parse_file(preprocessor, *it) == -1) {
             return -1;
         }
     }
@@ -189,11 +168,11 @@ char *preprocessor_c_find_include_file(Preprocessor_C *preprocessor, const char 
 {
     char *include_file = (char *)malloc(sizeof(char) * PATH_MAX);
 
-    for (int i = 0 - mode; i < (int)vector_size(preprocessor->include_dirs); i++) {
+    for (int i = 0 - mode; i < (int)vec_size(preprocessor->include_dirs); i++) {
         const char *include_dir;
         
         if (i >= 0) {
-            include_dir = vector_at(preprocessor->include_dirs, i);
+            include_dir = vec_at(preprocessor->include_dirs, i);
         } else {
             include_dir = ".";
         }
@@ -209,7 +188,7 @@ char *preprocessor_c_find_include_file(Preprocessor_C *preprocessor, const char 
         strcat(include_file, pathname);
 
 		if (access(include_file, R_OK) == -1) {
-		    if (errno == ENOENT && ((int)vector_size(preprocessor->include_dirs) - 1) != i) {
+		    if (errno == ENOENT && ((int)vec_size(preprocessor->include_dirs) - 1) != i) {
     			continue;
 		    }
 
@@ -336,8 +315,8 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     char *identifier_str = malloc(sizeof(char) * (identifier->len + 1));
     strncpy(identifier_str, identifier->value, identifier->len);
 
-    if (strncmp(next_token->value, "\n", 1) == 0) {
-        map_add(preprocessor->defines, NULL, identifier_str);
+    if (strncmp(next_token->value, "\n", 1) == 0) { // TODO ?? use Lexer
+        lmap_add(preprocessor->defines, identifier_str, NULL);
         
         return 0;
     }
@@ -357,7 +336,7 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     char *macro_sequenze_str = malloc(sizeof(char) * (macro_sequenze->len + 1));
     strncpy(macro_sequenze_str, macro_sequenze->value, macro_sequenze->len);
 
-    map_add(preprocessor->defines, macro_sequenze_str, identifier_str);
+    lmap_add(preprocessor->defines, identifier_str, macro_sequenze_str);
 
     return 0;
 }
@@ -384,7 +363,7 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     
     strncpy(define_name, identifier->value, identifier->len);
     
-    map_remove(preprocessor->defines, define_name);
+    lmap_remove(preprocessor->defines, define_name);
     
     free(define_name);
 
@@ -432,7 +411,7 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
     
             strncpy(identifier_name, identifier->value, identifier->len);
 
-            if ((map_get(preprocessor->defines, identifier_name) != NULL) ^ (negate == 1)) {
+            if ((lmap_has(preprocessor->defines, identifier_name) == 1) ^ (negate == 1)) {
                 Token_C *text = conditional->elements[1]->token;
 
                 Lexer_C *lexer_text = lexer_c_create(text->value, lexer->loc.pathname);
@@ -526,6 +505,8 @@ int preprocessor_c_parse_pragma(Preprocessor_C *preprocessor, Lexer_C *lexer, To
 {
     (void)preprocessor;
     (void)lexer;
+
+    lexer_c_log(lexer, "warning: prama will be ignored");
 
     token_c_destroy(token);
 
