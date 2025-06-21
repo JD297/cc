@@ -8,29 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *lexer_c_create(const char* src, const char* pathname)
-{
-    Lexer_C *lexer = (Lexer_C *)malloc(sizeof(Lexer_C));
-
-    if (lexer == NULL) {
-        return NULL;
-    }
-
-    lexer->buf = src;
-    lexer->pbuf = lexer->buf;
-    
-    lexer->loc.pathname = pathname;
-    lexer->loc.row = 1;
-    lexer->loc.col = 1;
-
-    return lexer;
-}
-
-void lexer_c_destroy(Lexer_C *lexer)
-{
-    free(lexer);
-}
-
 Token_C *lexer_c_next(Lexer_C *lexer)
 {
     for (TokenType_C type = 0; type < TOKEN_TYPE_C_LENGTH; type++) {

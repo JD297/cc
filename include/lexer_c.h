@@ -18,10 +18,6 @@ typedef struct Lexer_C {
     Lexer_Location_C loc;
 } Lexer_C;
 
-extern void *lexer_c_create(const char *src, const char* pathname);
-
-extern void lexer_c_destroy(Lexer_C *lexer);
-
 extern Token_C *lexer_c_next(Lexer_C *lexer);
 
 extern Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer);
