@@ -2875,15 +2875,17 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Lexer_C *lexer)
     while (1) {
         lexer_saved = *lexer;
 
-        Token_C *token_text = lexer_c_next(lexer);
+        Token_C token_text;
+        
+        int t = lexer_c_next(lexer, &token_text);
 
-        if (token_text == NULL) {
+        if (t == -1) {
             *lexer = lexer_saved;
 
             break;
         }
 
-        switch (token_text->type) {
+        switch (token_text.type) {
             case T_MACRO_IF:
             case T_MACRO_IFDEF:
             case T_MACRO_IFNDEF:
@@ -2898,12 +2900,10 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Lexer_C *lexer)
         }
 
         if (token_text_begin == NULL) {
-            token_text_begin = token_text->value;
+            token_text_begin = token_text.value;
         }
 
-        token_text_len += token_text->len;
-
-        token_c_destroy(token_text);
+        token_text_len += token_text.len;
     }
     
     while_end:

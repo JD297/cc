@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Token_C *lexer_c_next(Lexer_C *lexer)
+int lexer_c_next(Lexer_C *lexer, Token_C *token)
 {
     for (TokenType_C type = 0; type < TOKEN_TYPE_C_LENGTH; type++) {
         if (type == T_EOF && *(lexer->pbuf) != '\0') {
@@ -25,25 +25,27 @@ Token_C *lexer_c_next(Lexer_C *lexer)
 
         lexer->pbuf += match.rm_eo;
 
-        Token_C* token = token_c_create(type, start, match.rm_eo);
+        token->type = type;
+        token->value = start;
+        token->len = match.rm_eo;
 
         if (type == T_WHITESPACE && *start == '\n') {
             lexer->loc.row++;
             lexer->loc.col = 1;
         } else if (type == T_MACRO_LINE) {
             if (lexer_c_parse_line(lexer) == -1) {
-                return NULL;
+                return -1;
             }
         } else {
             lexer->loc.col += match.rm_eo;
         }
 
-        return token;
+        return 0;
     }
 
     lexer->pbuf += 1;
 
-	return NULL;
+	return -1;
 }
 
 Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer)
@@ -55,10 +57,18 @@ Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer)
     token_type_skipable[T_COMMENT_MULTILINE] = 1;
     token_type_skipable[T_MACRO_LINE] = 1;
 
-    Token_C *token;
+    Token_C *token = malloc(sizeof(Token_C));
 
-    for (token = lexer_c_next(lexer); token != NULL && token_type_skipable[token->type]; token = lexer_c_next(lexer)) {
-        token_c_destroy(token);
+    int t;
+
+    do {
+        t = lexer_c_next(lexer, token);
+    } while (t != -1 && token_type_skipable[token->type]);
+
+    if (t == -1) {
+        free(token);
+        
+        return NULL;
     }
 
     return token;

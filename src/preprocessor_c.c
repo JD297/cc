@@ -80,45 +80,47 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 {
     Lexer_C lexer_saved_begin = *lexer;
 
-    Token_C *token = lexer_c_next(lexer);
+    Token_C token;
     
-    if (token == NULL) {
+    int t = lexer_c_next(lexer, &token);
+    
+    if (t == -1) {
         lexer_c_log(lexer, "unreconized token");
         return -1;
     }
 
-    switch (token->type) {
+    switch (token.type) {
         case T_MACRO_INCLUDE: {
-            if (preprocessor_c_parse_include(preprocessor, lexer, token) == -1) {
+            if (preprocessor_c_parse_include(preprocessor, lexer, &token) == -1) {
                 return -1;
             }
 
             return 0;
         }
         case T_IDENTIFIER: {
-            return preprocessor_c_parse_identifier(preprocessor, lexer, token);
+            return preprocessor_c_parse_identifier(preprocessor, lexer, &token);
         }
         case T_MACRO_DEFINE: {
-            return preprocessor_c_parse_define(preprocessor, lexer, token);
+            return preprocessor_c_parse_define(preprocessor, lexer, &token);
         }
         case T_MACRO_UNDEF: {
-            return preprocessor_c_parse_undef(preprocessor, lexer, token);
+            return preprocessor_c_parse_undef(preprocessor, lexer, &token);
         }
         case T_MACRO_IF:
         case T_MACRO_IFDEF:
         case T_MACRO_IFNDEF: {
             *lexer = lexer_saved_begin;
 
-            return preprocessor_c_parse_conditional(preprocessor, lexer, token);
+            return preprocessor_c_parse_conditional(preprocessor, lexer, &token);
         }
         case T_MACRO_LINE: {
-            return preprocessor_c_parse_line(preprocessor, lexer, token);
+            return preprocessor_c_parse_line(preprocessor, lexer, &token);
         }
         case T_MACRO_ERROR: {
-            return preprocessor_c_parse_error(preprocessor, lexer, token);
+            return preprocessor_c_parse_error(preprocessor, lexer, &token);
         }
         case T_MACRO_PRAGMA: {
-            return preprocessor_c_parse_pragma(preprocessor, lexer, token);
+            return preprocessor_c_parse_pragma(preprocessor, lexer, &token);
         }
         case T_COMMENT_LINE:
         case T_COMMENT_MULTILINE: return 0;
@@ -130,16 +132,12 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         break;
         case T_MACRO_ELIF: break;
         case T_EOF: {
-            token_c_destroy(token);
-
             return 1;
         }
         default: {
-            return preprocessor_c_parse_default(preprocessor, lexer, token);
+            return preprocessor_c_parse_default(preprocessor, lexer, &token);
         }
     }
-    
-    token_c_destroy(token);
     
     return -1;
 }
@@ -149,8 +147,6 @@ int preprocessor_c_parse_default(Preprocessor_C *preprocessor, Lexer_C *lexer, T
     (void)lexer;
 
     fprintf(preprocessor->output, "%.*s", (int)token->len, token->value);
-
-    token_c_destroy(token);
 
     return 0;
 }
@@ -260,8 +256,6 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, T
     }
 
     ret: {
-        token_c_destroy(token);
-
         return parse_result;
     }
 }
@@ -274,30 +268,28 @@ int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, Lexer_C *lexer
 
     // TODO token->value in preprocessor->defines
 
-    token_c_destroy(token);
-
     return 0;
 }
 
 int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
+    (void)token;
 
-    token_c_destroy(token);
-
-    Token_C *identifier = lexer_c_next_skip_whitespace(lexer); // TODO lexer_c_macro_next_skip_whitespace ??
+    Token_C *identifier = lexer_c_next_skip_whitespace(lexer);
 
     if (identifier == NULL || identifier->type != T_IDENTIFIER) {
         lexer_c_log(lexer, "macro names must be identifiers");
 
         return -1;
     }
-    
-    Token_C *next_token = lexer_c_next(lexer);
 
-    if (next_token == NULL || next_token->type != T_WHITESPACE) {
-        token_c_destroy(next_token);
+    int t;
 
+    Token_C next_token;
+    t = lexer_c_next(lexer, &next_token);
+
+    if (t == -1 || next_token.type != T_WHITESPACE) {
         lexer_c_log(lexer, "missing whitespace after the macro name");
         
         return -1;
@@ -306,26 +298,25 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     char *identifier_str = malloc(sizeof(char) * (identifier->len + 1));
     strncpy(identifier_str, identifier->value, identifier->len);
 
-    if (strncmp(next_token->value, "\n", 1) == 0) { // TODO ?? use Lexer
+    if (strncmp(next_token.value, "\n", 1) == 0) { // TODO ?? use Lexer
         lmap_add(preprocessor->defines, identifier_str, NULL);
         
         return 0;
     }
 
-    token_c_destroy(next_token);
-
     Lexer_C lexer_saved = *lexer;
 
-    Token_C *macro_sequenze = lexer_c_next(lexer);
+    Token_C macro_sequenze;
+    t = lexer_c_next(lexer, &macro_sequenze);
     
-    if (macro_sequenze == NULL || macro_sequenze->type != T_MACRO_TOKEN_SEQUENZE) {
+    if (t == -1 || macro_sequenze.type != T_MACRO_TOKEN_SEQUENZE) {
         *lexer = lexer_saved;
 
         return 0;
     }
 
-    char *macro_sequenze_str = malloc(sizeof(char) * (macro_sequenze->len + 1));
-    strncpy(macro_sequenze_str, macro_sequenze->value, macro_sequenze->len);
+    char *macro_sequenze_str = malloc(sizeof(char) * (macro_sequenze.len + 1));
+    strncpy(macro_sequenze_str, macro_sequenze.value, macro_sequenze.len);
 
     lmap_add(preprocessor->defines, identifier_str, macro_sequenze_str);
 
@@ -336,11 +327,10 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
 {
     Lexer_C lexer_saved_begin = *lexer;
 
-    token_c_destroy(token);
-
     (void)preprocessor;
+    (void)token;
 
-    Token_C *identifier = lexer_c_next_skip_whitespace(lexer); // TODO lexer_c_macro_next_skip_whitespace ??
+    Token_C *identifier = lexer_c_next_skip_whitespace(lexer);
 
     if (identifier == NULL) {
         goto error;
@@ -373,7 +363,7 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
 
 int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
-    token_c_destroy(token);
+    (void)token;
 
     ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(lexer);
 
@@ -449,8 +439,7 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
-
-    token_c_destroy(token);
+    (void)token;
 
     Token_C *number = lexer_c_next_skip_whitespace(lexer);
  
@@ -488,10 +477,9 @@ int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Toke
 int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
+    (void)token;
 
     lexer_c_log(lexer, "#error directive encountered");
-
-    token_c_destroy(token);
 
     return -1;
 }
@@ -500,10 +488,9 @@ int preprocessor_c_parse_pragma(Preprocessor_C *preprocessor, Lexer_C *lexer, To
 {
     (void)preprocessor;
     (void)lexer;
+    (void)token;
 
     lexer_c_log(lexer, "warning: prama will be ignored");
-
-    token_c_destroy(token);
 
     return 0;
 }

@@ -18,7 +18,7 @@ typedef struct Lexer_C {
     Lexer_Location_C loc;
 } Lexer_C;
 
-extern Token_C *lexer_c_next(Lexer_C *lexer);
+extern int lexer_c_next(Lexer_C *lexer, Token_C *token);
 
 extern Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer);
 
