@@ -84,7 +84,7 @@ int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type)
 
     int result = token->type == type;
 
-    token_c_destroy(token);
+    free(token);
 
     return result;
 }

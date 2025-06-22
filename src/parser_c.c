@@ -206,7 +206,7 @@ ParseTreeNode_C *parser_c_parse_storage_class_specifier(Lexer_C *lexer)
     
     *lexer = lexer_saved;
 
-    token_c_destroy(token_storage_class_specifier);
+    free(token_storage_class_specifier);
 
     parse_tree_node_c_destroy(this_node);
 
@@ -252,7 +252,7 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Lexer_C *lexer)
 
     *lexer = lexer_saved;
 
-    token_c_destroy(token_type_specifier);
+    free(token_type_specifier);
 
     parse_tree_node_c_destroy(this_node);
 
@@ -279,7 +279,7 @@ ParseTreeNode_C *parser_c_parse_type_qualifier(Lexer_C *lexer)
 
     *lexer = lexer_saved;
 
-    token_c_destroy(token_type_qualifier);
+    free(token_type_qualifier);
 
     parse_tree_node_c_destroy(this_node);
 
@@ -434,7 +434,7 @@ ParseTreeNode_C *parser_c_parse_struct_or_union(Lexer_C *lexer)
 
     *lexer = lexer_saved;
 
-    token_c_destroy(token_struct_or_union);
+    free(token_struct_or_union);
 
     parse_tree_node_c_destroy(this_node);
 
@@ -457,7 +457,7 @@ ParseTreeNode_C *parser_c_parse_identifier(Lexer_C *lexer)
 
     *lexer = lexer_saved;
 
-    token_c_destroy(token_identifier);
+    free(token_identifier);
 
     parse_tree_node_c_destroy(this_node);
 
@@ -716,7 +716,7 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
 
-        token_c_destroy(token_after_direct_declarator);
+        free(token_after_direct_declarator);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -757,7 +757,7 @@ ParseTreeNode_C *parser_c_parse_parameter_type_list(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(token_dot_dot_dot);
+        free(token_dot_dot_dot);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -873,7 +873,7 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -979,7 +979,7 @@ ParseTreeNode_C *parser_c_parse_logical_and_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1054,7 +1054,7 @@ ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1129,7 +1129,7 @@ ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1204,7 +1204,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1281,7 +1281,7 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1362,7 +1362,7 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1439,7 +1439,7 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1518,7 +1518,7 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1597,7 +1597,7 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
         
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1690,7 +1690,7 @@ ParseTreeNode_C *parser_c_parse_unary_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
 
-        token_c_destroy(token);
+        free(token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1800,7 +1800,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Lexer_C *lexer)
             default: {
                 *lexer = lexer_saved_token;
                 
-                token_c_destroy(this_node_token);
+                free(this_node_token);
                 
                 goto ret;
             }
@@ -1814,7 +1814,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved; 
 
-        token_c_destroy(this_node_token);
+        free(this_node_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -1846,7 +1846,7 @@ ParseTreeNode_C *parser_c_parse_unary_operator(Lexer_C *lexer)
 
     *lexer = lexer_saved;
 
-    token_c_destroy(token_unary_operator);
+    free(token_unary_operator);
 
     parse_tree_node_c_destroy(this_node);
 
@@ -1978,7 +1978,7 @@ ParseTreeNode_C *parser_c_parse_string(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
 
-        token_c_destroy(token_string);
+        free(token_string);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -2020,7 +2020,7 @@ ParseTreeNode_C *parser_c_parse_assignment_operator(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
 
-        token_c_destroy(token_assignment_operator);
+        free(token_assignment_operator);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -2192,7 +2192,7 @@ ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Lexer_C *lexer)
     
     *lexer = lexer_saved;
     
-    token_c_destroy(this_node_token);
+    free(this_node_token);
     
     if (this_node->num != 0) {
         this_node->elements[0] = NULL;
@@ -2454,7 +2454,7 @@ ParseTreeNode_C *parser_c_parse_labeled_statement(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
 
-        token_c_destroy(token);
+        free(token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -2543,7 +2543,7 @@ ParseTreeNode_C *parser_c_parse_selection_statement(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
 
-        token_c_destroy(token);
+        free(token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -2642,7 +2642,7 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
     
-        token_c_destroy(iteration_statement_token);
+        free(iteration_statement_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -2690,7 +2690,7 @@ ParseTreeNode_C *parser_c_parse_jump_statement(Lexer_C *lexer)
     error: {
         *lexer = lexer_saved;
 
-        token_c_destroy(jump_statement_token);
+        free(jump_statement_token);
 
         parse_tree_node_c_destroy(this_node);
 
@@ -2912,7 +2912,10 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Lexer_C *lexer)
         goto error;
     }
 
-    Token_C *token_text_build = token_c_create(T_MACRO_TOKEN_SEQUENZE, token_text_begin, token_text_len);
+    Token_C *token_text_build = (Token_C *)malloc(sizeof(Token_C));
+    token_text_build->type = T_MACRO_TOKEN_SEQUENZE;
+    token_text_build->value = token_text_begin;
+    token_text_build->len = token_text_len;
 
     this_node->token = token_text_build;
 

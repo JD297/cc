@@ -353,7 +353,7 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     return 0;
     
     error: {
-        token_c_destroy(identifier);
+        free(identifier);
 
         *lexer = lexer_saved_begin;
 
