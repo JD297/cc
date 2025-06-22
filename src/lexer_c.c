@@ -25,9 +25,11 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token)
 
         lexer->pbuf += match.rm_eo;
 
-        token->type = type;
-        token->value = start;
-        token->len = match.rm_eo;
+        if (token != NULL) {
+            token->type = type;
+            token->value = start;
+            token->len = match.rm_eo;
+        }
 
         if (type == T_WHITESPACE && *start == '\n') {
             lexer->loc.row++;
@@ -43,12 +45,12 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token)
         return 0;
     }
 
-    lexer->pbuf += 1;
+    // lexer->pbuf += 1; // ?? this should prevent to progress on failures
 
 	return -1;
 }
 
-Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer)
+int lexer_c_next_skip_whitespace(Lexer_C *lexer, Token_C *token)
 {
     // TODO GENERATE CONST LOCKUPTABLE
     int token_type_skipable[TOKEN_TYPE_C_LENGTH] = { 0 };
@@ -57,43 +59,35 @@ Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer)
     token_type_skipable[T_COMMENT_MULTILINE] = 1;
     token_type_skipable[T_MACRO_LINE] = 1;
 
-    Token_C *token = malloc(sizeof(Token_C));
-
-    int t;
-
     do {
-        t = lexer_c_next(lexer, token);
-    } while (t != -1 && token_type_skipable[token->type]);
+        if (lexer_c_next(lexer, token) == -1) {
+            return -1;
+        }
+    } while (token_type_skipable[token->type] == 1);
 
-    if (t == -1) {
-        free(token);
-        
-        return NULL;
-    }
-
-    return token;
+    return 0;
 }
 
-int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type)
+int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, Token_C *token, TokenType_C type)
 {
-    Token_C *token = lexer_c_next_skip_whitespace(lexer);
-
+    Token_C token_stack;
+    
     if (token == NULL) {
+        token = &token_stack;
+    }
+
+    if (lexer_c_next_skip_whitespace(lexer, token) == -1) {
         return 0;
     }
 
-    int result = token->type == type;
-
-    free(token);
-
-    return result;
+    return token->type == type;
 }
 
 int lexer_c_parse_line(Lexer_C *lexer)
 {
-    Token_C *number = lexer_c_next_skip_whitespace(lexer);
+    Token_C token_number;
  
-    if (number == NULL || number->type != T_NUMBER) {
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_number, T_NUMBER) == 0) {
         lexer_c_log(lexer, "after #line is not a positive integer");
         
         return -1;
@@ -101,25 +95,25 @@ int lexer_c_parse_line(Lexer_C *lexer)
 
     lexer->loc.col = 1;
 
-    char *row_str = malloc(sizeof(char) * (number->len + 1));
-    strncpy(row_str, number->value, number->len);
+    char *row_str = malloc(sizeof(char) * (token_number.len + 1));
+    strncpy(row_str, token_number.value, token_number.len);
 
     lexer->loc.row = (size_t)atoi(row_str);
 
     Lexer_C lexer_saved = *lexer;
 
-    Token_C *filename = lexer_c_next_skip_whitespace(lexer);
+    Token_C token_filename;
 
-    if (filename == NULL || filename->type != T_STRING) {
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_filename, T_STRING) == 0) {
         *lexer = lexer_saved;
         
         return 0;
     }
 
-    char *filename_str = malloc(sizeof(char) * (filename->len + 1));
-    strncpy(filename_str, filename->value + 1, filename->len - 2);
+    char *token_filename_str = malloc(sizeof(char) * (token_filename.len + 1));
+    strncpy(token_filename_str, token_filename.value + 1, token_filename.len - 2);
 
-    lexer->loc.pathname = filename_str;
+    lexer->loc.pathname = token_filename_str;
 
     return 0;
 }

@@ -6,7 +6,7 @@
 
 typedef struct ParseTreeNode_C {
     ParseTreeType_C type;
-    Token_C *token;
+    Token_C token;
 
     struct ParseTreeNode_C **elements;
     size_t len;

@@ -14,7 +14,10 @@ void *parse_tree_node_c_create(ParseTreeType_C type, Token_C *token)
     }
 
     node->type = type;
-    node->token = token;
+
+    if (token != NULL) {
+        node->token = *token;
+    }
 
     node->elements = NULL;
     node->len = 0;

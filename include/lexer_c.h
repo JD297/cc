@@ -20,9 +20,9 @@ typedef struct Lexer_C {
 
 extern int lexer_c_next(Lexer_C *lexer, Token_C *token);
 
-extern Token_C *lexer_c_next_skip_whitespace(Lexer_C *lexer);
+extern int lexer_c_next_skip_whitespace(Lexer_C *lexer, Token_C *token);
 
-extern int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, TokenType_C type);
+extern int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, Token_C *token, TokenType_C type);
 
 extern int lexer_c_parse_line(Lexer_C *lexer);
 

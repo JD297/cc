@@ -278,27 +278,24 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     (void)preprocessor;
     (void)token;
 
-    Token_C *identifier = lexer_c_next_skip_whitespace(lexer);
+    Token_C identifier;
 
-    if (identifier == NULL || identifier->type != T_IDENTIFIER) {
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
         lexer_c_log(lexer, "macro names must be identifiers");
 
         return -1;
     }
 
-    int t;
-
     Token_C next_token;
-    t = lexer_c_next(lexer, &next_token);
 
-    if (t == -1 || next_token.type != T_WHITESPACE) {
+    if (lexer_c_next(lexer, &next_token) == -1 || next_token.type != T_WHITESPACE) {
         lexer_c_log(lexer, "missing whitespace after the macro name");
         
         return -1;
     }
 
-    char *identifier_str = malloc(sizeof(char) * (identifier->len + 1));
-    strncpy(identifier_str, identifier->value, identifier->len);
+    char *identifier_str = malloc(sizeof(char) * (identifier.len + 1));
+    strncpy(identifier_str, identifier.value, identifier.len);
 
     if (strncmp(next_token.value, "\n", 1) == 0) { // TODO ?? use Lexer
         lmap_add(preprocessor->defines, identifier_str, NULL);
@@ -309,9 +306,8 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     Lexer_C lexer_saved = *lexer;
 
     Token_C macro_sequenze;
-    t = lexer_c_next(lexer, &macro_sequenze);
     
-    if (t == -1 || macro_sequenze.type != T_MACRO_TOKEN_SEQUENZE) {
+    if (lexer_c_next(lexer, &macro_sequenze) == -1 || macro_sequenze.type != T_MACRO_TOKEN_SEQUENZE) {
         *lexer = lexer_saved;
 
         return 0;
@@ -332,19 +328,15 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     (void)preprocessor;
     (void)token;
 
-    Token_C *identifier = lexer_c_next_skip_whitespace(lexer);
+    Token_C identifier;
 
-    if (identifier == NULL) {
-        goto error;
-    }
-    
-    if (identifier->type != T_IDENTIFIER) {
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
         goto error;
     }
 
-    char *define_name = (char *)malloc(sizeof(char) * (identifier->len + 1));
+    char *define_name = (char *)malloc(sizeof(char) * (identifier.len + 1));
     
-    strncpy(define_name, identifier->value, identifier->len);
+    strncpy(define_name, identifier.value, identifier.len);
     
     lmap_remove(preprocessor->defines, define_name);
     
@@ -353,8 +345,6 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     return 0;
     
     error: {
-        free(identifier);
-
         *lexer = lexer_saved_begin;
 
         lexer_c_log(lexer, "no macro name given in #undef directive");
@@ -375,7 +365,7 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
         return -1;
     }
 
-    TokenType_C if_line_type = conditional->elements[0]->token->type;
+    TokenType_C if_line_type = conditional->elements[0]->token.type;
 
     int parse_result = 0;
 
@@ -388,22 +378,22 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
         case T_MACRO_IFNDEF: {
             int negate = if_line_type == T_MACRO_IFNDEF;
 
-            Token_C *identifier = conditional->elements[0]->elements[0]->token;
+            Token_C identifier = conditional->elements[0]->elements[0]->token;
             
-            char *identifier_name = (char *)malloc(sizeof(char) * (identifier->len + 1));
+            char *identifier_name = (char *)malloc(sizeof(char) * (identifier.len + 1));
     
-            strncpy(identifier_name, identifier->value, identifier->len);
+            strncpy(identifier_name, identifier.value, identifier.len);
 
             if ((lmap_has(preprocessor->defines, identifier_name) == 1) ^ (negate == 1)) {
-                Token_C *text = conditional->elements[1]->token;
+                Token_C text = conditional->elements[1]->token;
 
                 Lexer_C lexer_text = {
-                    .buf = text->value,
-                    .pbuf = text->value,
+                    .buf = text.value,
+                    .pbuf = text.value,
                     .loc = lexer->loc
                 };
 
-                parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text->value + text->len);
+                parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.value + text.len);
                 
                 goto ret;
             }
@@ -421,15 +411,15 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
         goto ret;
     }
 
-    Token_C *text = conditional->elements[3]->elements[1]->token;
+    Token_C text = conditional->elements[3]->elements[1]->token;
 
     Lexer_C lexer_text = {
-        .buf = text->value,
-        .pbuf = text->value,
+        .buf = text.value,
+        .pbuf = text.value,
         .loc = lexer->loc
     };
 
-    parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text->value + text->len);
+    parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.value + text.len);
 
     ret: {
         parse_tree_node_c_destroy(conditional);
@@ -443,9 +433,9 @@ int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Toke
     (void)preprocessor;
     (void)token;
 
-    Token_C *number = lexer_c_next_skip_whitespace(lexer);
- 
-    if (number == NULL || number->type != T_NUMBER) {
+    Token_C number;
+
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &number, T_NUMBER) == 0) {
         lexer_c_log(lexer, "after #line is not a positive integer");
         
         return -1;
@@ -453,23 +443,23 @@ int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Toke
 
     lexer->loc.col = 1;
 
-    char *row_str = malloc(sizeof(char) * (number->len + 1));
-    strncpy(row_str, number->value, number->len);
+    char *row_str = malloc(sizeof(char) * (number.len + 1));
+    strncpy(row_str, number.value, number.len);
 
     lexer->loc.row = (size_t)atoi(row_str);
 
     Lexer_C lexer_saved = *lexer;
 
-    Token_C *filename = lexer_c_next_skip_whitespace(lexer);
+    Token_C filename;
 
-    if (filename == NULL || filename->type != T_STRING) {
+    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &filename, T_STRING) == 0) {
         *lexer = lexer_saved;
         
         return 0;
     }
 
-    char *filename_str = malloc(sizeof(char) * (filename->len + 1));
-    strncpy(filename_str, filename->value + 1, filename->len - 2);
+    char *filename_str = malloc(sizeof(char) * (filename.len + 1));
+    strncpy(filename_str, filename.value + 1, filename.len - 2);
 
     lexer->loc.pathname = filename_str;
 
