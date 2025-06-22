@@ -46,6 +46,8 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname
         nread_total += fread(src + nread_total, sizeof(char), block, file);
     } while (feof(file) == 0);
 
+    fclose(file);
+
     Lexer_C lexer = {
         .buf = src,
         .pbuf = src,
