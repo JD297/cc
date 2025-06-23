@@ -115,9 +115,6 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 
             return preprocessor_c_parse_conditional(preprocessor, lexer, &token);
         }
-        case T_MACRO_LINE: {
-            return preprocessor_c_parse_line(preprocessor, lexer, &token);
-        }
         case T_MACRO_ERROR: {
             return preprocessor_c_parse_error(preprocessor, lexer, &token);
         }
@@ -426,44 +423,6 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 
         return parse_result;
     }
-}
-
-int preprocessor_c_parse_line(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
-{
-    (void)preprocessor;
-    (void)token;
-
-    Token_C number;
-
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &number, T_NUMBER) == 0) {
-        lexer_c_log(lexer, "after #line is not a positive integer");
-        
-        return -1;
-    }
-
-    lexer->loc.col = 1;
-
-    char *row_str = malloc(sizeof(char) * (number.len + 1));
-    strncpy(row_str, number.value, number.len);
-
-    lexer->loc.row = (size_t)atoi(row_str);
-
-    Lexer_C lexer_saved = *lexer;
-
-    Token_C filename;
-
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &filename, T_STRING) == 0) {
-        *lexer = lexer_saved;
-        
-        return 0;
-    }
-
-    char *filename_str = malloc(sizeof(char) * (filename.len + 1));
-    strncpy(filename_str, filename.value + 1, filename.len - 2);
-
-    lexer->loc.pathname = filename_str;
-
-    return 0;
 }
 
 int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)

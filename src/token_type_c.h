@@ -158,8 +158,7 @@ typedef enum TokenType_C {
 const TokenType_C token_type_skipable[TOKEN_TYPE_SKIPABLE_SIZE] = {
     T_WHITESPACE,
     T_COMMENT_LINE,
-    T_COMMENT_MULTILINE,
-    T_MACRO_LINE
+    T_COMMENT_MULTILINE
 };
 #endif
 
