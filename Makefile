@@ -1,42 +1,56 @@
+.POSIX:
+
+CC            = cc
+CFLAGS        = -Wall -Wextra -Wpedantic -g -I src
+LDFLAGS       = 
+
+TARGET        = cc
 PREFIX        = /usr/local
 BINDIR        = $(PREFIX)/bin
 MANDIR        = $(PREFIX)/share/man
-
-TARGET        = cc
-TARGETDIR     = bin
-BUILDDIR      = build
 SRCDIR        = src
-SRCINCLUDEDIR = include
-TESTDIR       = tests
+BUILDDIR      = build
 
-SRCFILEEXT    = c
-SRCFILES      = $(wildcard $(SRCDIR)/*.$(SRCFILEEXT))
-OBJFILEEXT    = o
-OBJFILES      = $(patsubst $(SRCDIR)/%.$(SRCFILEEXT),$(BUILDDIR)/%.$(OBJFILEEXT),$(SRCFILES))
+OBJFILES      = $(BUILDDIR)/cc.o $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o \
+                $(BUILDDIR)/parse_tree_node_c.o $(BUILDDIR)/preprocessor_c.o $(BUILDDIR)/token_type_c.o \
+                $(BUILDDIR)/vector.o
 
+HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
+                $(SRCDIR)/lexer_c.h $(SRCDIR)/parser_c.h $(SRCDIR)/parse_tree_node_c.h \
+                $(SRCDIR)/parse_tree_type_c.h $(SRCDIR)/preprocessor_c.h $(SRCDIR)/token_c.h $(SRCDIR)/token_type_c.h
 
-CC            = cc
-CCLIBS        = -static
-CCFLAGS       = -Wall -Wextra -Wpedantic -g
-CCINCLUDE     = -I $(SRCINCLUDEDIR)
-CCFLAGSPROG   = -DTARGET=\"$(TARGET)\"
+$(BUILDDIR)/$(TARGET): $(OBJFILES)
+	$(CC) -o $@ $(OBJFILES) $(LDFLAGS)
 
-$(TARGETDIR)/$(TARGET): $(OBJFILES)
-	$(CC) $(CCFLAGS) $(CCINCLUDE) $(OBJFILES) -o $(TARGETDIR)/$(TARGET) $(CCLIBS)
+$(BUILDDIR)/cc.o: $(HEADERS) $(SRCDIR)/cc.c 
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/cc.c
 
-$(BUILDDIR)/%.$(OBJFILEEXT): $(SRCDIR)/%.$(SRCFILEEXT)
-	$(CC) $(CCFLAGS) $(CCINCLUDE) $(CCFLAGSPROG) -c -o $@ $<
+$(BUILDDIR)/lexer_c.o: $(HEADERS) $(SRCDIR)/lexer_c.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lexer_c.c
+
+$(BUILDDIR)/lmap.o: $(HEADERS) $(SRCDIR)/lmap.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lmap.c
+
+$(BUILDDIR)/parser_c.o: $(HEADERS) $(SRCDIR)/parser_c.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/parser_c.c
+
+$(BUILDDIR)/parse_tree_node_c.o: $(HEADERS) $(SRCDIR)/parse_tree_node_c.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/parse_tree_node_c.c
+
+$(BUILDDIR)/preprocessor_c.o: $(HEADERS) $(SRCDIR)/preprocessor_c.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/preprocessor_c.c
+
+$(BUILDDIR)/token_type_c.o: $(HEADERS) $(SRCDIR)/token_type_c.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/token_type_c.c
+
+$(BUILDDIR)/vector.o: $(HEADERS) $(SRCDIR)/vector.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/vector.c
 
 clean:
-	rm -f $(BUILDDIR)/*.$(OBJFILEEXT) $(TARGETDIR)/$(TARGET)
+	rm -f $(BUILDDIR)/*
 
-install: $(TARGET)
-	cp $(TARGETDIR)/$(TARGET) $(BINDIR)/$(TARGET)
+install: $(BUILDDIR)/$(TARGET)
+	cp $(BUILDDIR)/$(TARGET) $(BINDIR)/$(TARGET)
 
 uninstall:
 	rm -f $(BINDIR)/$(TARGET)
-
-.PHONY: tests-always-fail
-
-tests: $(TARGETDIR)/$(TARGET) tests-always-fail
-	make -f $(TESTDIR)/Makefile TESTDIR="$(TESTDIR)" CC="$(CC)" CCINCLUDE="$(CCINCLUDE)" CCFLAGS="$(CCFLAGS)" BUILDDIR="$(BUILDDIR)" TARGET="$(TARGET)" SRCFILEEXT="$(SRCFILEEXT)" OBJFILEEXT="$(OBJFILEEXT)" OBJFILES="$(OBJFILES)"
