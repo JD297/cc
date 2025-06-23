@@ -1,4 +1,5 @@
 #include "token_type_c.h"
+#include "token_type_skipable_lookup.h"
 
 #include <regex.h>
 #include <stddef.h>

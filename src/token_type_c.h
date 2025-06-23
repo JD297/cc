@@ -151,6 +151,20 @@ typedef enum TokenType_C {
     TOKEN_TYPE_C_LENGTH
 } TokenType_C;
 
+#ifdef TOKEN_TYPE_SKIPABLE_LOOKUP_GENERATOR
+
+#define TOKEN_TYPE_SKIPABLE_SIZE 4
+
+const TokenType_C token_type_skipable[TOKEN_TYPE_SKIPABLE_SIZE] = {
+    T_WHITESPACE,
+    T_COMMENT_LINE,
+    T_COMMENT_MULTILINE,
+    T_MACRO_LINE
+};
+#endif
+
+extern const int token_type_skipable_lookup[TOKEN_TYPE_C_LENGTH];
+
 extern regex_t **token_type_c_regex;
 
 extern int token_type_c_regex_create();

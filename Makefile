@@ -22,7 +22,7 @@ HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
 $(BUILDDIR)/$(TARGET): $(OBJFILES)
 	$(CC) -o $@ $(OBJFILES) $(LDFLAGS)
 
-$(BUILDDIR)/cc.o: $(HEADERS) $(SRCDIR)/cc.c 
+$(BUILDDIR)/cc.o: $(HEADERS) $(SRCDIR)/cc.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/cc.c
 
 $(BUILDDIR)/lexer_c.o: $(HEADERS) $(SRCDIR)/lexer_c.c
@@ -40,14 +40,17 @@ $(BUILDDIR)/parse_tree_node_c.o: $(HEADERS) $(SRCDIR)/parse_tree_node_c.c
 $(BUILDDIR)/preprocessor_c.o: $(HEADERS) $(SRCDIR)/preprocessor_c.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/preprocessor_c.c
 
-$(BUILDDIR)/token_type_c.o: $(HEADERS) $(SRCDIR)/token_type_c.c
+$(BUILDDIR)/token_type_c.o: $(HEADERS) $(SRCDIR)/token_type_c.c $(SRCDIR)/token_type_skipable_lookup.h
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/token_type_c.c
 
 $(BUILDDIR)/vector.o: $(HEADERS) $(SRCDIR)/vector.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/vector.c
 
+$(SRCDIR)/token_type_skipable_lookup.h: $(SRCDIR)/token_type_c.h
+	sh -c -- "cd tools/token_type_skipable_lookup_generator && make run"
+
 clean:
-	rm -f $(BUILDDIR)/*
+	rm -f $(BUILDDIR)/* $(SRCDIR)/token_type_skipable_lookup.h
 
 install: $(BUILDDIR)/$(TARGET)
 	cp $(BUILDDIR)/$(TARGET) $(BINDIR)/$(TARGET)
