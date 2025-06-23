@@ -150,11 +150,20 @@ int preprocessor_c_parse_default(Preprocessor_C *preprocessor, Lexer_C *lexer, T
     return 0;
 }
 
-char *preprocessor_c_find_include_file(Preprocessor_C *preprocessor, const char *pathname, int mode)
+int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Token_C *include_file_token, char *include_file_path/*[PATH_MAX]*/)
 {
-    char *include_file = (char *)malloc(sizeof(char) * PATH_MAX);
+    const char *pathname = include_file_token->value;
+    const size_t pathname_len = include_file_token->len - 2; // to get the len between "..." or <...>
 
-    for (int i = 0 - mode; i < (int)vec_size(preprocessor->include_dirs); i++) {
+    const int mode = (*pathname == '"');
+
+    if (pathname_len == 0) {
+        return -1;
+    }
+
+    ++pathname; // this will be after the < or "
+
+    for (int i = 0 - mode; i < (int)vec_size(preprocessor->include_dirs); ++i) {
         const char *include_dir;
         
         if (i >= 0) {
@@ -163,100 +172,49 @@ char *preprocessor_c_find_include_file(Preprocessor_C *preprocessor, const char 
             include_dir = ".";
         }
     
-        if ((strlen(include_dir) + strlen(pathname) + 1) >= PATH_MAX) {
+        if ((strlen(include_dir) + pathname_len + 1) >= PATH_MAX) { // 1: for the NULL terminator
             continue;
         }
-
-        memset(include_file, 0, PATH_MAX);
         
-        strcpy(include_file, include_dir);
-        strcat(include_file, "/");
-        strcat(include_file, pathname);
+        strcpy(include_file_path, include_dir);
+        strcat(include_file_path, "/");
+        strncat(include_file_path, pathname, pathname_len);
 
-		if (access(include_file, R_OK) == -1) {
+		if (access(include_file_path, R_OK) == -1) {
 		    if (errno == ENOENT && ((int)vec_size(preprocessor->include_dirs) - 1) != i) {
     			continue;
 		    }
 
-	        return NULL;
+	        return -1;
 		}
 
-        return include_file;
+        return 0;
     }
-    
-    free(include_file);
 
-    return NULL;
+    return -1;
 }
 
 int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
-    (void)lexer;
+    (void)token;
 
-    int parse_result = -1;
+    Token_C include_file;
 
-    regex_t regex;
-    regmatch_t matches[2];
-
-    regcomp(&regex, "^#\\s*include\\s*<([^>]+)>", REG_EXTENDED);
-
-    if (regexec(&regex, token->value, 2, matches, 0) == 0) {
-        size_t start = matches[1].rm_so;
-        size_t end = matches[1].rm_eo;
-
-        size_t length = end - start;
-
-        char* include_file = (char*)malloc(length + 1);
-
-        if (include_file == NULL) {
-            return -1;
-        }
-
-        strncpy(include_file, token->value + start, length);
-        include_file[length] = '\0';
-        
-        char *include_file_path = preprocessor_c_find_include_file(preprocessor, include_file, PREPROCESSOR_INCLUDE_MODE_LIBRARARY);
-        
-        free(include_file);
-        
-        parse_result = preprocessor_c_parse_file(preprocessor, include_file_path);
-        
-        free(include_file_path);
-        
-        goto ret;
+    if (lexer_c_next_skip_whitespace(lexer, &include_file) == -1) {
+        return -1;
     }
     
-    regcomp(&regex, "^#\\s*include\\s*\"([^\"]+)\"", REG_EXTENDED);
-
-    if (regexec(&regex, token->value, 2, matches, 0) == 0) {
-        size_t start = matches[1].rm_so;
-        size_t end = matches[1].rm_eo;
-
-        size_t length = end - start;
-
-        char* include_file = (char*)malloc(length + 1);
-
-        if (include_file == NULL) {
-            return -1;
-        }
-
-        strncpy(include_file, token->value + start, length);
-        include_file[length] = '\0';
-
-        char *include_file_path = preprocessor_c_find_include_file(preprocessor, include_file, PREPROCESSOR_INCLUDE_MODE_STRING);
-        
-        free(include_file);
-        
-        parse_result = preprocessor_c_parse_file(preprocessor, include_file_path);
-        
-        free(include_file_path);
-        
-        goto ret;
+    if (include_file.type != T_MACRO_INCLUDE_FILE && include_file.type != T_STRING) {
+        return -1;
     }
 
-    ret: {
-        return parse_result;
+    char include_file_path[PATH_MAX];
+
+    if (preprocessor_c_find_include_file(preprocessor, &include_file, include_file_path) != 0) {
+        return -1;
     }
+
+    return preprocessor_c_parse_file(preprocessor, (const char *)&include_file_path);
 }
 
 int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)

@@ -4,6 +4,8 @@
 #define JD297_CC_TOKEN_TYPE_C_H
 
 typedef enum TokenType_C {
+    T_MACRO_INCLUDE_FILE,
+
     /* COMMENTS */
     T_COMMENT_LINE,
     T_COMMENT_MULTILINE,
@@ -153,7 +155,7 @@ typedef enum TokenType_C {
 
 #ifdef TOKEN_TYPE_SKIPABLE_LOOKUP_GENERATOR
 
-#define TOKEN_TYPE_SKIPABLE_SIZE 4
+#define TOKEN_TYPE_SKIPABLE_SIZE 3
 
 const TokenType_C token_type_skipable[TOKEN_TYPE_SKIPABLE_SIZE] = {
     T_WHITESPACE,

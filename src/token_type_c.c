@@ -9,7 +9,8 @@ const char *token_type_c_pattern(const TokenType_C type)
 {
     switch (type) {
         case T_IDENTIFIER: return "^[_a-zA-Z][_a-zA-Z0-9]*";
-        case T_STRING: return "^\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"";
+        case T_STRING: return "^\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\""; // TODO ?? remove capture group: then we could replace the ending " with a NULL terminator to get a termianted string
+        case T_MACRO_INCLUDE_FILE: return "^<[^>]+>";
         case T_CHARACTER: return "^'[^']{1}'";
         case T_NUMBER: return "^(0[xX][0-9a-fA-F]+|[-+]?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?)";
         case T_COMMENT_LINE: return "^//[^\n]*";
@@ -116,7 +117,7 @@ const char *token_type_c_pattern(const TokenType_C type)
         case T_MACRO_ELIFNDEF: return "^#\\s*elifndef\\b";
         case T_MACRO_DEFINE: return "^#\\s*define\\b";
         case T_MACRO_UNDEF: return "^#\\s*undef\\b";
-        case T_MACRO_INCLUDE: return "^#\\s*include\\s*<([^>]+)>|^#\\s*include\\s*\"([^\"]+)\"";
+        case T_MACRO_INCLUDE: return "^#\\s*include\\b";
         case T_MACRO_LINE: return "^#\\s*line\\b";
         case T_MACRO_ERROR: return "^#\\s*error\\b";
         case T_MACRO_PRAGMA: return "^#\\s*pragma\\b";

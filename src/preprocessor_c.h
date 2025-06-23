@@ -16,9 +16,6 @@ typedef struct {
     FILE *output;
 } Preprocessor_C;
 
-#define PREPROCESSOR_INCLUDE_MODE_LIBRARARY 0x0
-#define PREPROCESSOR_INCLUDE_MODE_STRING    0x1
-
 extern int preprocessor_c_run(Preprocessor_C *preprocessor);
 
 extern int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname);
