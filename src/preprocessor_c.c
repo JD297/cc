@@ -123,12 +123,6 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         }
         case T_COMMENT_LINE:
         case T_COMMENT_MULTILINE: return 0;
-
-        case T_CONSTEXPR:
-        case T_RESTRICT:
-            lexer_c_log(lexer, "warning: ´constexpr´ unsupported optimization keyword");
-            return 0;
-        break;
         case T_MACRO_ELIF: break;
         case T_EOF: {
             return 1;
