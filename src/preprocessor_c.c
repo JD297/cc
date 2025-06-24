@@ -93,11 +93,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 
     switch (token.type) {
         case T_MACRO_INCLUDE: {
-            if (preprocessor_c_parse_include(preprocessor, lexer, &token) == -1) {
-                return -1;
-            }
-
-            return 0;
+            return preprocessor_c_parse_include(preprocessor, lexer, &token);
         }
         case T_IDENTIFIER: {
             return preprocessor_c_parse_identifier(preprocessor, lexer, &token);
