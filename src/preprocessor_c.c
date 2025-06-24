@@ -83,12 +83,12 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
     Lexer_C lexer_saved_begin = *lexer;
 
     Token_C token;
-    
-    int t = lexer_c_next(lexer, &token);
-    
-    if (t == -1) {
-        lexer_c_log(lexer, "unreconized token");
-        return -1;
+
+    if (lexer_c_next(lexer, &token) == -1) {
+        fprintf(preprocessor->output, "%c", *lexer->pbuf);
+        lexer->pbuf += 1;
+
+        return 0;
     }
 
     switch (token.type) {
