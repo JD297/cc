@@ -9,6 +9,7 @@
 
 #include <jd297/lmap.h>
 #include <jd297/vector.h>
+#include <jd297/logger.h>
 
 #include "lexer_c.h"
 #include "parse_tree_type_c.h"
@@ -16,6 +17,20 @@
 #include "preprocessor_c.h"
 #include "token_c.h"
 #include "token_type_c.h"
+
+#define LOG_AT(level, lexer, token, format, ...)\
+    flog_at(stderr, (level), (lexer)->loc.pathname, (lexer)->loc.row, (lexer)->loc.col, (format), ##__VA_ARGS__);\
+    \
+    const char *lbegin = (lexer)->pbuf - (lexer)->loc.col + 1;\
+    const char *lend = strstr((lexer)->pbuf, "\n");\
+    \
+    if (lend == NULL) {\
+        flog_line(stderr, (lexer)->loc.row, "%s", lbegin);\
+    } else {\
+        flog_line(stderr, (lexer)->loc.row, "%.*s", (int)(lend - lbegin), lbegin);\
+    }\
+    \
+    flog_ptr(stderr, lbegin, (token)->value, (token)->len);
 
 int preprocessor_c_run(Preprocessor_C *preprocessor)
 {
@@ -116,7 +131,16 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         }
         case T_COMMENT_LINE:
         case T_COMMENT_MULTILINE: return 0;
-        case T_MACRO_ELIF: break;
+
+        case T_MACRO_ELIFDEF:
+        case T_MACRO_ELIFNDEF:
+        case T_MACRO_ELIF:
+        case T_MACRO_ELSE:
+        case T_MACRO_ENDIF: {
+            LOG_AT(L_ERROR, lexer, &token, "%.*s without #if", (int)(token.len), token.value);
+
+            return -1;
+        }
         case T_EOF: {
             return 1;
         }
@@ -137,7 +161,7 @@ int preprocessor_c_parse_default(Preprocessor_C *preprocessor, Lexer_C *lexer, T
     return 0;
 }
 
-int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Token_C *include_file_token, char *include_file_path/*[PATH_MAX]*/)
+int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *include_file_token, char *include_file_path/*[PATH_MAX]*/)
 {
     const char *pathname = include_file_token->value;
     const size_t pathname_len = include_file_token->len - 2; // to get the len between "..." or <...>
@@ -145,6 +169,8 @@ int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Token_C *incl
     const int mode = (*pathname == '"');
 
     if (pathname_len == 0) {
+        LOG_AT(L_ERROR, lexer, include_file_token, "empty filename in #include");
+
         return -1;
     }
 
@@ -172,11 +198,13 @@ int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Token_C *incl
     			continue;
 		    }
 
-	        return -1;
+	        break;
 		}
 
         return 0;
     }
+
+    LOG_AT(L_ERROR, lexer, include_file_token, "%s: %s", include_file_path + strlen(include_file_path) - pathname_len, strerror(ENOENT));
 
     return -1;
 }
@@ -188,16 +216,20 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, T
     Token_C include_file;
 
     if (lexer_c_next_skip_whitespace(lexer, &include_file) == -1) {
+        LOG_AT(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
+
         return -1;
     }
-    
+
     if (include_file.type != T_MACRO_INCLUDE_FILE && include_file.type != T_STRING) {
+        LOG_AT(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
+
         return -1;
     }
 
     char include_file_path[PATH_MAX];
 
-    if (preprocessor_c_find_include_file(preprocessor, &include_file, include_file_path) != 0) {
+    if (preprocessor_c_find_include_file(preprocessor, lexer, &include_file, include_file_path) != 0) {
         return -1;
     }
 
@@ -223,16 +255,18 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     Token_C identifier;
 
     if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
-        lexer_c_log(lexer, "macro names must be identifiers");
+        LOG_AT(L_ERROR, lexer, &identifier, "macro names must be identifiers");
 
         return -1;
     }
 
     Token_C next_token;
 
+    // TODO ?? not needed
+    // TODO i think now we should parse first the "^#\\s*" token and then a real directive like define, undef
     if (lexer_c_next(lexer, &next_token) == -1 || next_token.type != T_WHITESPACE) {
-        lexer_c_log(lexer, "missing whitespace after the macro name");
-        
+        LOG_AT(L_ERROR, lexer, &next_token, "missing whitespace after the macro name");
+
         return -1;
     }
 
@@ -273,7 +307,10 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     Token_C identifier;
 
     if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
-        goto error;
+        LOG_AT(L_ERROR, lexer, &identifier, "macro names must be identifiers");
+
+        *lexer = lexer_saved_begin;
+        return -1;
     }
 
     char *define_name = (char *)malloc(sizeof(char) * (identifier.len + 1));
@@ -285,14 +322,6 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     free(define_name);
 
     return 0;
-    
-    error: {
-        *lexer = lexer_saved_begin;
-
-        lexer_c_log(lexer, "no macro name given in #undef directive");
-        
-        return -1;
-    }
 }
 
 int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
@@ -301,8 +330,9 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 
     ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(lexer);
 
+    // TODO ?? how to error
     if (conditional == NULL) {
-        lexer_c_log(lexer, "conditional directive is not valid");
+        LOG_AT(L_ERROR, lexer, token, "conditional directive is not valid");
 
         return -1;
     }
@@ -373,13 +403,8 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
-    (void)token;
 
-    lexer_c_log(lexer, "#error directive encountered");
+    LOG_AT(L_ERROR, lexer, token, "%.*s", (int)(token->len), token->value);
 
     return -1;
-}
-
-
-
 }

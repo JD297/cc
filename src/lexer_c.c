@@ -81,7 +81,7 @@ int lexer_c_parse_line(Lexer_C *lexer)
     Token_C token_number;
  
     if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_number, T_NUMBER) == 0) {
-        lexer_c_log(lexer, "after #line is not a positive integer");
+        // lexer_c_log(lexer, "after #line is not a positive integer");
         
         return -1;
     }
@@ -109,23 +109,4 @@ int lexer_c_parse_line(Lexer_C *lexer)
     lexer->loc.pathname = token_filename_str;
 
     return 0;
-}
-
-void lexer_c_log(Lexer_C *lexer, const char *msg)
-{
-    fprintf(stderr, "%s:%zu:%zu: \033[31merror\033[0m: %s\n", lexer->loc.pathname, lexer->loc.row, lexer->loc.col, msg);
-    fprintf(stderr, "    %zu | ", lexer->loc.row);
-    
-    const char *begin = lexer->pbuf - (lexer->loc.col - 1);
-    const char *end = strstr(lexer->pbuf, "\n");
-
-    fprintf(stderr, "%.*s\n", (int)(end - begin), begin);
-    
-    fprintf(stderr, "      | ");
-
-    for (size_t i = 0; i < lexer->loc.col; i++) {
-        fprintf(stderr, " ");
-    }
-
-    fprintf(stderr, "\033[31m^\033[0m\n");
 }
