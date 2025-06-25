@@ -14,7 +14,7 @@ const char *token_type_c_pattern(const TokenType_C type)
         case T_CHARACTER: return "^'[^']{1}'";
         case T_NUMBER: return "^(0[xX][0-9a-fA-F]+|[-+]?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?)";
         case T_COMMENT_LINE: return "^//[^\n]*";
-        case T_COMMENT_MULTILINE: return "^/\\*.*?\\*/";
+        case T_COMMENT_MULTILINE: return "^/\\*([^*]|\\s|(\\*+([^*/]|\\s)))*\\*+/";
         case T_OPEN_BRACKET: return "^^\\[";
         case T_CLOSING_BRACKET: return "^\\]";
         case T_OPEN_PARENT: return "^[(]";
