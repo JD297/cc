@@ -114,9 +114,6 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         case T_MACRO_ERROR: {
             return preprocessor_c_parse_error(preprocessor, lexer, &token);
         }
-        case T_MACRO_PRAGMA: {
-            return preprocessor_c_parse_pragma(preprocessor, lexer, &token);
-        }
         case T_COMMENT_LINE:
         case T_COMMENT_MULTILINE: return 0;
         case T_MACRO_ELIF: break;
@@ -383,13 +380,6 @@ int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     return -1;
 }
 
-int preprocessor_c_parse_pragma(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
-{
-    (void)preprocessor;
-    (void)lexer;
-    (void)token;
 
-    lexer_c_log(lexer, "warning: prama will be ignored");
 
-    return 0;
 }
