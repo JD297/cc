@@ -1,4 +1,4 @@
-extern char *program_invocation_name;
+ char *program_invocation_name;
 
 #include <errno.h>
 #include <stdio.h>
