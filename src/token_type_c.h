@@ -168,8 +168,8 @@ extern const int token_type_skipable_lookup[TOKEN_TYPE_C_LENGTH];
 
 extern regex_t **token_type_c_regex;
 
-extern int token_type_c_regex_create();
+extern int token_type_c_regex_create(void);
 
-extern void token_type_c_regex_destroy();
+extern void token_type_c_regex_destroy(void);
 
 #endif

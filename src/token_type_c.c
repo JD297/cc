@@ -147,7 +147,7 @@ regex_t *token_type_c_regcomp(const TokenType_C type)
     return regex;
 }
 
-int token_type_c_regex_create()
+int token_type_c_regex_create(void)
 {
     token_type_c_regex = (regex_t **)malloc(sizeof(regex_t *) * TOKEN_TYPE_C_LENGTH);
     
@@ -162,7 +162,7 @@ int token_type_c_regex_create()
     return 0;
 }
 
-void token_type_c_regex_destroy()
+void token_type_c_regex_destroy(void)
 {
     for (TokenType_C type = 0; type < TOKEN_TYPE_C_LENGTH; type++) {
         regfree(token_type_c_regex[type]);

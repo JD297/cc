@@ -12,7 +12,7 @@
 
 #include "preprocessor_c.h"
 
-void print_usage()
+void print_usage(void)
 {
 	printf("usage: %s [-c][-C][-e epsym] [-D name[=value]]... [-E][-f][-F][-g]...\n", program_invocation_name);
 	printf("       %*s [-I directory]... [-L directory]... [-o outfile][-O][-p][-P]\n", (int)strlen(program_invocation_name), " ");
@@ -42,7 +42,7 @@ lmap_t undefines;
 vector_t phaseoptions;
 vector_t operands;
 
-void free_globals()
+void free_globals(void)
 {
     vec_free(&include_dirs);
     vec_free(&lib_dirs);
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 			case 'U': lmap_add(&undefines, optarg, NULL); break;
 			case 'W': vec_push_back(&phaseoptions, optarg); break;
 			default:
-				print_usage(argv);
+				print_usage();
 				exit(EXIT_FAILURE);
 		}
 	}
