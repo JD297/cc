@@ -1646,16 +1646,17 @@ ParseTreeNode_C *parser_c_parse_unary_expression(Lexer_C *lexer)
             parser_c_parse_required(lexer, this_node, unary_expression, error);
         } break;
         case T_SIZEOF: {
-            parser_c_parse_opt(lexer, this_node, unary_expression, ret);
+            parser_c_parse_opt(lexer, this_node, unary_expression, out);
             
             parser_c_parse_required(lexer, this_node, type_name, error);
         } break;
         default: goto error;
     }
 
+    out:
+    this_node->token = token;
+
     ret: {
-        this_node->token = token;
-    
         return this_node;
     }
 
