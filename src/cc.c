@@ -14,9 +14,9 @@
 
 void print_usage(void)
 {
-	printf("usage: %s [-c][-C][-e epsym] [-D name[=value]]... [-E][-f][-F][-g]...\n", program_invocation_name);
-	printf("       %*s [-I directory]... [-L directory]... [-o outfile][-O][-p][-P]\n", (int)strlen(program_invocation_name), " ");
-	printf("       %*s [-q][-r][-s][-S][-u symname]... [-U name]... [-W options]... operand...\n", (int)strlen(program_invocation_name), " ");
+	fprintf(stderr, "usage: %s [-c][-C][-e epsym] [-D name[=value]]... [-E][-f][-F][-g]...\n", program_invocation_name);
+	fprintf(stderr, "       %*s [-I directory]... [-L directory]... [-o outfile][-O][-p][-P]\n", (int)strlen(program_invocation_name), " ");
+	fprintf(stderr, "       %*s [-q][-r][-s][-S][-u symname]... [-U name]... [-W options]... operand...\n", (int)strlen(program_invocation_name), " ");
 }
 
 int cflag;
