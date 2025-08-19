@@ -1,10 +1,12 @@
  char *program_invocation_name;
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <jd297/lmap.h>
@@ -111,18 +113,86 @@ int main(int argc, char **argv)
 	vec_push_back(&lib_dirs, "/usr/lib");
 	vec_push_back(&lib_dirs, "/lib");
 
-	if (Eflag == 0 && Sflag == 0 && cflag == 0) {
-		cflag = 1;
-	}
-
 	if (optind == argc) {
 		fprintf(stderr, "%s: error: no input file\n", program_invocation_name);
 		exit(EXIT_FAILURE);
 	}
 
 	if (cflag == 0 && Sflag == 0 && Eflag == 0) {
-		fprintf(stderr, "%s: error: linking is not supported\n", program_invocation_name);
-		exit(EXIT_FAILURE);
+		if (outfile == NULL) {
+			outfile = "a.out";
+		}
+
+		vector_t ld_args = { 0 };
+
+		vec_push_back(&ld_args, "ld");
+
+		// TODO HARD works on OBSD but not on linux
+		// TODO only shard linking is supported
+		vec_push_back(&ld_args, "--dynamic-linker=/usr/libexec/ld.so");
+
+		vec_push_back(&ld_args, "-o");
+		vec_push_back(&ld_args, outfile);
+
+		// TODO HARD works on OBSD but not on linux
+		// TODO maybe differences between clang and gcc (compiler lib??)
+		// TODO check for flags with nostdlib etc.
+		vec_push_back(&ld_args, "/usr/lib/crt0.o");
+		vec_push_back(&ld_args, "/usr/lib/crtbegin.o");
+
+		// TODO compile .c files
+		// TODO currently only .o files
+		for (int i = optind; i < argc; i++) {
+			struct stat sb;
+
+			if (stat(argv[i], &sb) == -1) {
+				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(errno), argv[i]);
+			}
+
+			if ((sb.st_mode & S_IFMT) == S_IFDIR) {
+				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(EISDIR), argv[i]);
+			}
+
+			// TODO check for .o file
+			vec_push_back(&ld_args, argv[i]);
+		}
+
+		for (char **it = (char **)vec_begin(&lib_dirs); it < (char **)vec_end(&lib_dirs); it++) {
+			vec_push_back(&ld_args, "-L");
+			vec_push_back(&ld_args, *it);
+		}
+
+		// -l c
+		// TODO default libs
+		vec_push_back(&ld_args, "-l");
+		vec_push_back(&ld_args, "c");
+
+		vec_push_back(&ld_args, "/usr/lib/crtend.o");
+		vec_push_back(&ld_args, NULL);
+
+		pid_t pid;
+
+		if ((pid = fork()) == -1) {
+			err(EXIT_FAILURE, NULL);
+		}
+
+		if (pid == 0) {
+			if (execvp(*vec_begin(&ld_args), (char **)vec_begin(&ld_args)) == -1) {
+				err(EXIT_FAILURE, "%s", (char *)*vec_begin(&ld_args));
+			}
+		}
+
+		vec_free(&ld_args);
+
+		int wstatus;
+
+		if (waitpid(pid, &wstatus, 0) == -1) {
+			err(EXIT_FAILURE, NULL);
+		}
+
+		int code = WEXITSTATUS(wstatus);
+
+		exit(code);
 	}
 
 	if (Sflag == 1) {
