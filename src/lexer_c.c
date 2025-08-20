@@ -35,9 +35,11 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token)
             lexer->loc.row++;
             lexer->loc.col = 1;
         } else if (type == T_MACRO_LINE) {
-            if (lexer_c_parse_line(lexer) != -1 || lexer_c_next(lexer, token) != -1) {
+            if (lexer_c_parse_line(lexer) == -1) {
                 return -1;
             }
+
+            return lexer_c_next(lexer, token);
         } else {
             lexer->loc.col += match.rm_eo;
         }
