@@ -1,5 +1,3 @@
- char *program_invocation_name;
-
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -8,17 +6,95 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <jd297/lmap.h>
 #include <jd297/vector.h>
 
 #include "preprocessor_c.h"
+#include "compiler_c.h"
+
+#define CC_TEMPLATE_PATH "%s/%s-XXXXXXXXXX%s"
+
+const char *tmp_path = "/tmp";
+
+char *cc_gentemplate(const char *tmp_path, const char *path, const char *suffix)
+{
+	char *file_name = strdup(path);
+
+	if (file_name == NULL) {
+		return NULL;
+	}
+
+	char *file_suffix = strrchr(file_name, '.');
+	
+	if (file_suffix != NULL) {
+		*file_suffix = '\0';
+	}
+	
+	char *file_basename = strrchr(file_name, '/');
+	
+	if (file_basename != NULL) {
+		++file_basename;
+	}
+
+	char *template = malloc(sizeof(char) * PATH_MAX);
+
+	if (template == NULL) {
+		return NULL;
+	}
+
+	snprintf(template, PATH_MAX, CC_TEMPLATE_PATH, tmp_path, file_basename, suffix);
+
+	free(file_name);
+
+	return template;
+}
+
+FILE *cc_tmpfile(char*template)
+{
+	int fd;
+	FILE *fp = NULL;
+	char *suffix = strrchr(template, '.');
+
+	int suffixlen = 0;
+	
+	if (suffix != NULL) {
+		suffixlen = (int)strlen(suffix);
+	}
+
+	if ((fd = mkstemps(template, suffixlen)) == -1 || (fp = fdopen(fd, "w+")) == NULL) {
+		if (fd != -1) {
+			unlink(template);
+			close(fd);
+		}
+	}
+	
+	return fp;
+}
+
+pid_t cc_fork_execvp(vector_t *args)
+{
+	pid_t pid;
+
+	if ((pid = fork()) == -1) {
+		err(EXIT_FAILURE, NULL);
+	}
+
+	if (pid == 0) {
+		if (execvp(*vec_begin(args), (char **)vec_begin(args)) == -1) {
+			err(EXIT_FAILURE, "%s", (char *)*vec_begin(args));
+		}
+	}
+	
+	return pid;
+}
 
 void print_usage(void)
 {
-	fprintf(stderr, "usage: %s [-c][-C][-e epsym] [-D name[=value]]... [-E][-f][-F][-g]...\n", program_invocation_name);
-	fprintf(stderr, "       %*s [-I directory]... [-L directory]... [-o outfile][-O][-p][-P]\n", (int)strlen(program_invocation_name), " ");
-	fprintf(stderr, "       %*s [-q][-r][-s][-S][-u symname]... [-U name]... [-W options]... operand...\n", (int)strlen(program_invocation_name), " ");
+	fprintf(stderr, "usage: cc [-c][-C][-e epsym] [-D name[=value]]... [-E][-f][-F][-g]...\n");
+	fprintf(stderr, "          [-i directory]... [-L directory]... [-o outfile][-O][-p][-P]\n");
+	fprintf(stderr, "          [-q][-r][-s][-S][-u symname]... [-U name]... [-W options]... operand...\n");
 }
 
 int cflag;
@@ -56,8 +132,6 @@ void free_globals(void)
 
 int main(int argc, char **argv)
 {
-    program_invocation_name = argv[0];
-
 	atexit(free_globals);
 
 	int opt;
@@ -86,7 +160,7 @@ int main(int argc, char **argv)
 			case 'f': fflag = 1; break;
 			case 'F': Fflag = 1; break;
 			case 'g': gflag = 1; break;
-			case 'I': vec_push_back(&include_dirs, optarg); break;
+			case 'i': vec_push_back(&include_dirs, optarg); break;
 			case 'L': vec_push_back(&lib_dirs, optarg); break;
 			case 'o': outfile = optarg; break;
 			case 'O': optlevel = optarg; break;
@@ -114,9 +188,15 @@ int main(int argc, char **argv)
 	vec_push_back(&lib_dirs, "/lib");
 
 	if (optind == argc) {
-		fprintf(stderr, "%s: error: no input file\n", program_invocation_name);
-		exit(EXIT_FAILURE);
+		errx(EXIT_FAILURE, "error: no input file");
 	}
+
+	// precompile regex patterns for lexer
+    if (token_type_c_regex_create() == -1) {
+        return EXIT_FAILURE;
+    }
+
+    atexit(token_type_c_regex_destroy);
 
 	if (cflag == 0 && Sflag == 0 && Eflag == 0) {
 		if (outfile == NULL) {
@@ -140,21 +220,91 @@ int main(int argc, char **argv)
 		vec_push_back(&ld_args, "/usr/lib/crt0.o");
 		vec_push_back(&ld_args, "/usr/lib/crtbegin.o");
 
-		// TODO compile .c files
-		// TODO currently only .o files
 		for (int i = optind; i < argc; i++) {
+			char *input_file = argv[i];
+
 			struct stat sb;
 
-			if (stat(argv[i], &sb) == -1) {
-				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(errno), argv[i]);
+			if (stat(input_file, &sb) == -1) {
+				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(errno), input_file);
 			}
 
 			if ((sb.st_mode & S_IFMT) == S_IFDIR) {
-				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(EISDIR), argv[i]);
+				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(EISDIR), input_file);
 			}
 
-			// TODO check for .o file
-			vec_push_back(&ld_args, argv[i]);
+			char *extension = strrchr(input_file, '.');
+
+			if (extension != NULL && strcmp(".c", extension) == 0) {
+				char *preprocessor_template = cc_gentemplate(tmp_path, input_file, ".i");
+
+				FILE *preprocessor_output = cc_tmpfile(preprocessor_template);
+
+				if (preprocessor_output == NULL) {
+					err(EXIT_FAILURE, NULL);
+				}
+
+				vector_t source_files = { 0 };
+				vec_push_back(&source_files, input_file);
+
+			    Preprocessor_C preprocessor = {
+			        .include_dirs = &include_dirs,
+			        .source_files = &source_files,
+			        .defines = &defines,
+			        .output = preprocessor_output
+			    };
+
+			    if (preprocessor_c_run(&preprocessor) == -1) {
+					warnx("preprocessor crashed");
+			        return EXIT_FAILURE;
+			    }
+
+				char *compiler_template = cc_gentemplate(tmp_path, input_file, ".s");
+
+				FILE *compiler_output = cc_tmpfile(compiler_template);
+
+				if (compiler_output == NULL) {
+					err(EXIT_FAILURE, NULL);
+				}
+
+				Compiler_C compiler = {
+			    	.input = preprocessor_output,
+					.output = compiler_output
+				};
+
+				if (compiler_c_run(&compiler) == -1) {
+					warnx("compiler crashed");
+					return EXIT_FAILURE;
+				}
+
+				unlink(preprocessor_template);
+				fclose(preprocessor_output);
+				fclose(compiler_output);
+			    vec_free(&source_files);
+
+				char *assemler_template = cc_gentemplate(tmp_path, input_file, ".o");
+
+				fclose(cc_tmpfile(assemler_template));
+				
+				vector_t as_args = { 0 };
+				vec_push_back(&as_args, "as");
+				vec_push_back(&as_args, compiler_template);
+				vec_push_back(&as_args, "-o");
+				vec_push_back(&as_args, assemler_template);
+				vec_push_back(&as_args, NULL);
+
+				if (waitpid(cc_fork_execvp(&as_args), NULL, 0) == -1) {
+					warn(NULL);
+				}
+
+				vec_free(&as_args);
+
+				vec_push_back(&ld_args, assemler_template);
+
+				continue;
+			}
+
+			vec_push_back(&ld_args, input_file);
 		}
 
 		for (char **it = (char **)vec_begin(&lib_dirs); it < (char **)vec_end(&lib_dirs); it++) {
@@ -162,90 +312,73 @@ int main(int argc, char **argv)
 			vec_push_back(&ld_args, *it);
 		}
 
-		// -l c
-		// TODO default libs
 		vec_push_back(&ld_args, "-l");
 		vec_push_back(&ld_args, "c");
 
 		vec_push_back(&ld_args, "/usr/lib/crtend.o");
 		vec_push_back(&ld_args, NULL);
 
-		pid_t pid;
+		int wstatus;
 
-		if ((pid = fork()) == -1) {
+		if (waitpid(cc_fork_execvp(&ld_args), &wstatus, 0) == -1) {
 			err(EXIT_FAILURE, NULL);
-		}
-
-		if (pid == 0) {
-			if (execvp(*vec_begin(&ld_args), (char **)vec_begin(&ld_args)) == -1) {
-				err(EXIT_FAILURE, "%s", (char *)*vec_begin(&ld_args));
-			}
 		}
 
 		vec_free(&ld_args);
 
-		int wstatus;
-
-		if (waitpid(pid, &wstatus, 0) == -1) {
-			err(EXIT_FAILURE, NULL);
-		}
-
-		int code = WEXITSTATUS(wstatus);
-
-		exit(code);
+		exit(WEXITSTATUS(wstatus));
 	}
 
 	if (Sflag == 1) {
-		fprintf(stderr, "%s: error: assambling is not supported\n", program_invocation_name);
-		exit(EXIT_FAILURE);
+		errx(EXIT_FAILURE, "error: assambling is not supported");
 	}
 
 	if (cflag == 1) {
-		fprintf(stderr, "%s: error: compiling is not supported\n", program_invocation_name);
-		exit(EXIT_FAILURE);
+		errx(EXIT_FAILURE, "error: compiling is not supported");
 	}
 
 	if (optind + 1 != argc && outfile != NULL && (Eflag == 1 || Sflag == 1 || cflag == 1)) {
-		fprintf(stderr, "%s: error: cannot specify -o when generating multiple output files\n", program_invocation_name);
-		exit(EXIT_FAILURE);
+		errx(EXIT_FAILURE, "error: cannot specify -o when generating multiple output files");
 	}
 
 	for (int i = optind; i < argc; i++) {
 		struct stat sb;
 
 		if (stat(argv[i], &sb) == -1) {
-			fprintf(stderr, "%s: error: %s: input file unused: %s\n", program_invocation_name, argv[i], strerror(errno));
+			warnx("warning: %s: input file unused: %s", argv[i], strerror(errno));
 			continue;
 		}
 
 		if ((sb.st_mode & S_IFMT) == S_IFDIR) {
-			fprintf(stderr, "%s: error: %s: input file unused: %s\n", program_invocation_name, argv[i], strerror(EISDIR));
+			warnx("warning: %s: input file unused: %s", argv[i], strerror(EISDIR));
 			continue;
 		}
 
 		vec_push_back(&operands, argv[i]);
 	}
 
-    // precompile regex patterns for lexer
-    if (token_type_c_regex_create() == -1) {
-        return EXIT_FAILURE;
-    }
-
-    atexit(token_type_c_regex_destroy);
-
     // PREPROCESSOR START
-    FILE *output = Eflag == 1 ? stdout : tmpfile();
+    FILE *preprocessor_output = Eflag == 1 ? stdout : tmpfile();
 
     Preprocessor_C preprocessor = {
         .include_dirs = &include_dirs,
         .source_files = &operands,
         .defines = &defines,
-        .output = output
+        .output = preprocessor_output
     };
 
     if (preprocessor_c_run(&preprocessor) == -1) {
         return EXIT_FAILURE;
     }
+
+    Compiler_C compiler = {
+    	.input = preprocessor_output,
+		.output = stdout
+	};
+
+	if (compiler_c_run(&compiler) == -1) {
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }
