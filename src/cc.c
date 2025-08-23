@@ -179,6 +179,10 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (optind + 1 != argc && outfile != NULL && (Eflag == 1 || Sflag == 1 || cflag == 1)) {
+		errx(EXIT_FAILURE, "error: cannot specify -o when generating multiple output files");
+	}
+
 	// usual places:
 	vec_push_back(&include_dirs, "/usr/local/include");
 	vec_push_back(&include_dirs, "/usr/include");
@@ -335,10 +339,6 @@ int main(int argc, char **argv)
 
 	if (cflag == 1) {
 		errx(EXIT_FAILURE, "error: compiling is not supported");
-	}
-
-	if (optind + 1 != argc && outfile != NULL && (Eflag == 1 || Sflag == 1 || cflag == 1)) {
-		errx(EXIT_FAILURE, "error: cannot specify -o when generating multiple output files");
 	}
 
 	for (int i = optind; i < argc; i++) {
