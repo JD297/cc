@@ -179,6 +179,10 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (optind == argc) {
+		errx(EXIT_FAILURE, "error: no input file");
+	}
+
 	if (optind + 1 != argc && outfile != NULL && (Eflag == 1 || Sflag == 1 || cflag == 1)) {
 		errx(EXIT_FAILURE, "error: cannot specify -o when generating multiple output files");
 	}
@@ -190,10 +194,6 @@ int main(int argc, char **argv)
 	vec_push_back(&lib_dirs, "/usr/local/lib");
 	vec_push_back(&lib_dirs, "/usr/lib");
 	vec_push_back(&lib_dirs, "/lib");
-
-	if (optind == argc) {
-		errx(EXIT_FAILURE, "error: no input file");
-	}
 
 	// precompile regex patterns for lexer
     if (token_type_c_regex_create() == -1) {
