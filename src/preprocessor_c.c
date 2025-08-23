@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <jd297/lmap.h>
 #include <jd297/vector.h>
@@ -45,33 +48,37 @@ int preprocessor_c_run(Preprocessor_C *preprocessor)
 
 int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname)
 {
-    FILE *file;
+    struct stat sb;
+    int fd;
     char *src = NULL;
 
-    if ((file = fopen(pathname, "r")) == NULL) {
+	if (stat(pathname, &sb) == -1) {
+		return -1;
+	}
+
+    if ((fd = open(pathname, O_RDONLY)) == -1) {
         return -1;
     }
 
-    const size_t block = 4096;
-    size_t nread_total = 0;
+	src = (char *)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
-    do {
-        src = (char *)realloc(src, nread_total + block);
+	if (src == NULL) {
+		return -1;
+	}
 
-        nread_total += fread(src + nread_total, sizeof(char), block, file);
-    } while (feof(file) == 0);
+	if (close(fd) == -1) {
+		return -1;
+	}
 
-    fclose(file);
-
-    Lexer_C lexer = {
-        .buf = src,
-        .pbuf = src,
-        .loc = {
-            .pathname = pathname,
-            .row = 1,
-            .col = 1
-        }
-    };
+	Lexer_C lexer = {
+		.buf = src,
+		.pbuf = src,
+		.loc = {
+			.pathname = pathname,
+			.row = 1,
+			.col = 1
+		}
+	};
 
     fprintf(preprocessor->output, "#line 0 \"%s\"\n", pathname);
 
@@ -79,7 +86,7 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname
 
     parse_next_result = preprocessor_c_parse_lexer(preprocessor, &lexer, src + strlen(src));
 
-    free(src);
+    munmap(src, sb.st_size);
 
     return parse_next_result;
 }
