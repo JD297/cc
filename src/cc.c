@@ -130,6 +130,211 @@ void free_globals(void)
     lmap_free(&undefines);
 }
 
+int validate_target_extension(char *input_file, const char *target_extension)
+{
+	char *extension = strrchr(input_file, '.');
+
+	if (extension == NULL) {
+		warnx("warning: %s: 'linker' input unused [-Wunused-command-line-argument]", input_file);
+		return -1;
+	}
+
+	if (strcmp(target_extension, extension) == 0) {
+		if (strcmp(".i", extension) == 0) {
+			warnx("warning: %s: previously preprocessed input [-Wunused-command-line-argument]", input_file);
+			return -1;
+		}
+
+		if (strcmp(".s", extension) == 0) {
+			warnx("warning: %s: 'assembler' input unused [-Wunused-command-line-argument]", input_file);
+			return -1;
+		}
+
+		warnx("warning: %s: 'linker' input unused [-Wunused-command-line-argument]", input_file);
+		return -1;
+	}
+
+	if (strcmp(".i", target_extension) == 0 && strcmp(".c", extension) != 0) {
+		if (strcmp(".s", extension) == 0) {
+			warnx("warning: %s: 'assembler' input unused [-Wunused-command-line-argument]", input_file);
+		} else {
+			warnx("warning: %s: 'linker' input unused [-Wunused-command-line-argument]", input_file);
+		}
+
+		return -1;
+	}
+
+	if (strcmp(".s", target_extension) == 0 && strcmp(".c", extension) != 0 && strcmp(".i", extension) != 0) {
+		warnx("warning: %s: 'linker' input unused [-Wunused-command-line-argument]", input_file);
+
+		return -1;
+	}
+
+	struct stat sb;
+
+	if (stat(input_file, &sb) == -1) {
+		warnx("error: %s: '%s'", strerror(errno), input_file);
+		return -1;
+	}
+
+	if ((sb.st_mode & S_IFMT) == S_IFDIR) {
+		warnx("error: %s: '%s'", strerror(EISDIR), input_file);
+		return -1;
+	}
+
+	if (strcmp(".c", extension) != 0 &&
+	    strcmp(".i", extension) != 0 &&
+	    strcmp(".a", extension) != 0 &&
+	    strcmp(".so", extension) != 0 &&
+	    strcmp(".o", extension) != 0
+	) {
+		warnx("warning: %s: 'linker' input unused [-Wunused-command-line-argument]", input_file);
+		return -1;
+	}
+
+	return 0;
+}
+
+char *produce_target_extension(char *input_file, const char *target_extension)
+{
+	char *extension = strrchr(input_file, '.');
+
+	FILE *preprocessor_output = NULL;
+
+	if (strcmp(".c", extension) == 0) {
+		char *preprocessor_template = cc_gentemplate(tmp_path, input_file, ".i");
+
+		if ((preprocessor_output = cc_tmpfile(preprocessor_template)) == NULL) {
+			warn(NULL);
+			return NULL;
+		}
+
+		//unlink(preprocessor_template); // TODO add and free / unlink later
+		//free(preprocessor_template);
+
+		vector_t source_files = { 0 };
+		vec_push_back(&source_files, input_file);
+	    
+	    Preprocessor_C preprocessor = {
+			.include_dirs = &include_dirs,
+			.source_files = &source_files,
+			.defines = &defines,
+			.output = preprocessor_output
+		};
+
+		if (preprocessor_c_run(&preprocessor) == -1) { // TODO free on errro source_f
+			warnx("%s: error: preprocessor: something failed!", input_file);
+	        return NULL;
+	    }
+	    
+	    vec_free(&source_files);
+	}
+
+	char *compiler_outfile = NULL;
+
+	if (strcmp(".i", extension) == 0 || preprocessor_output != NULL) {
+		FILE *compiler_output = NULL;
+		
+		if (outfile != NULL) {
+			compiler_outfile = outfile;
+		} else if (strcmp(".s", target_extension) == 0) {
+			compiler_outfile = strdup(input_file);
+			
+			char *compiler_outfile_extension = strrchr(compiler_outfile, '.') + 1;
+			
+			*compiler_outfile_extension = 's';
+			
+			compiler_output = fopen(compiler_outfile, "w+");
+		} else {
+			compiler_outfile = cc_gentemplate(tmp_path, input_file, ".s");
+			
+			compiler_output = cc_tmpfile(compiler_outfile);
+		}
+
+		if (compiler_output == NULL) {
+			warn(NULL);
+			return NULL;
+		}
+
+		if (preprocessor_output == NULL) {
+			if ((preprocessor_output = fopen(input_file, "r")) == NULL) {
+				warn(NULL);
+				return NULL;
+			}
+		}
+
+		Compiler_C compiler = {
+	    	.input = preprocessor_output,
+			.output = compiler_output
+		};
+
+		if (compiler_c_run(&compiler) == -1) {
+			warnx("%s: error: compiler: something failed!", input_file);
+			return NULL;
+		}
+
+		if (preprocessor_output != NULL) {
+			fclose(preprocessor_output);
+		}
+
+		fclose(compiler_output);
+
+		if (strcmp(".s", target_extension) == 0) {
+			return compiler_outfile;
+		}
+
+		//unlink(compiler_outfile);
+		//free(compiler_outfile); // TODO push to temp_files_vector and free / unlink all on exit
+	}
+	
+	char *assemler_outfile = NULL;
+	
+	if (strcmp(".s", extension) == 0 || compiler_outfile != NULL) {
+		if (outfile != NULL) {
+			assemler_outfile = outfile;
+		} else if (strcmp(".o", target_extension) == 0) {
+			assemler_outfile = strdup(input_file); // TODO free // TODO basename
+			
+			char *assembler_outfile_extension = strrchr(assemler_outfile, '.') + 1;
+			
+			*assembler_outfile_extension = 'o';
+		} else {
+			assemler_outfile = cc_gentemplate(tmp_path, input_file, ".o");
+
+			fclose(cc_tmpfile(assemler_outfile));
+		}
+
+		vector_t as_args = { 0 };
+		vec_push_back(&as_args, "as");
+		vec_push_back(&as_args, compiler_outfile);
+		vec_push_back(&as_args, "-o");
+		vec_push_back(&as_args, assemler_outfile);
+		vec_push_back(&as_args, NULL);
+
+		int status;
+
+		// TODO check code and on error ret NULL
+		if (waitpid(cc_fork_execvp(&as_args), &status, 0) == -1) {
+			warn(NULL);
+			status = 1;
+		}
+
+		vec_free(&as_args);
+		
+		if (status != 0) {
+			return NULL;
+		}
+		
+		return assemler_outfile;
+	}
+	
+	if (assemler_outfile != NULL) {
+		return assemler_outfile;
+	}
+	
+	return input_file;
+}
+
 int main(int argc, char **argv)
 {
 	atexit(free_globals);
@@ -201,184 +406,141 @@ int main(int argc, char **argv)
     }
 
     atexit(token_type_c_regex_destroy);
+    
+    if (Eflag == 1) {
+    	FILE *output = stdout;
 
-	if (cflag == 0 && Sflag == 0 && Eflag == 0) {
-		if (outfile == NULL) {
-			outfile = "a.out";
+    	if (outfile != NULL) {
+			output = fopen(outfile, "w+");
 		}
 
-		vector_t ld_args = { 0 };
-
-		vec_push_back(&ld_args, "ld");
-
-		// TODO HARD works on OBSD but not on linux
-		// TODO only shard linking is supported
-		vec_push_back(&ld_args, "--dynamic-linker=/usr/libexec/ld.so");
-
-		vec_push_back(&ld_args, "-o");
-		vec_push_back(&ld_args, outfile);
-
-		// TODO HARD works on OBSD but not on linux
-		// TODO maybe differences between clang and gcc (compiler lib??)
-		// TODO check for flags with nostdlib etc.
-		vec_push_back(&ld_args, "/usr/lib/crt0.o");
-		vec_push_back(&ld_args, "/usr/lib/crtbegin.o");
-
+    	if (output == NULL) {
+			err(EXIT_FAILURE, NULL);
+		}
+		
+		vector_t source_files = { 0 };
+		
 		for (int i = optind; i < argc; i++) {
 			char *input_file = argv[i];
 
-			struct stat sb;
-
-			if (stat(input_file, &sb) == -1) {
-				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(errno), input_file);
-			}
-
-			if ((sb.st_mode & S_IFMT) == S_IFDIR) {
-				errx(EXIT_FAILURE, "error: %s: '%s'", strerror(EISDIR), input_file);
-			}
-
-			char *extension = strrchr(input_file, '.');
-
-			if (extension != NULL && strcmp(".c", extension) == 0) {
-				char *preprocessor_template = cc_gentemplate(tmp_path, input_file, ".i");
-
-				FILE *preprocessor_output = cc_tmpfile(preprocessor_template);
-
-				if (preprocessor_output == NULL) {
-					err(EXIT_FAILURE, NULL);
-				}
-
-				vector_t source_files = { 0 };
-				vec_push_back(&source_files, input_file);
-
-			    Preprocessor_C preprocessor = {
-			        .include_dirs = &include_dirs,
-			        .source_files = &source_files,
-			        .defines = &defines,
-			        .output = preprocessor_output
-			    };
-
-			    if (preprocessor_c_run(&preprocessor) == -1) {
-					warnx("preprocessor crashed");
-			        return EXIT_FAILURE;
-			    }
-
-				char *compiler_template = cc_gentemplate(tmp_path, input_file, ".s");
-
-				FILE *compiler_output = cc_tmpfile(compiler_template);
-
-				if (compiler_output == NULL) {
-					err(EXIT_FAILURE, NULL);
-				}
-
-				Compiler_C compiler = {
-			    	.input = preprocessor_output,
-					.output = compiler_output
-				};
-
-				if (compiler_c_run(&compiler) == -1) {
-					warnx("compiler crashed");
-					return EXIT_FAILURE;
-				}
-
-				unlink(preprocessor_template);
-				fclose(preprocessor_output);
-				fclose(compiler_output);
-			    vec_free(&source_files);
-
-				char *assemler_template = cc_gentemplate(tmp_path, input_file, ".o");
-
-				fclose(cc_tmpfile(assemler_template));
-				
-				vector_t as_args = { 0 };
-				vec_push_back(&as_args, "as");
-				vec_push_back(&as_args, compiler_template);
-				vec_push_back(&as_args, "-o");
-				vec_push_back(&as_args, assemler_template);
-				vec_push_back(&as_args, NULL);
-
-				if (waitpid(cc_fork_execvp(&as_args), NULL, 0) == -1) {
-					warn(NULL);
-				}
-
-				vec_free(&as_args);
-
-				vec_push_back(&ld_args, assemler_template);
-
+			if (validate_target_extension(input_file, ".i") == -1) {
 				continue;
 			}
-
-			vec_push_back(&ld_args, input_file);
+			
+			vec_push_back(&source_files, input_file);
 		}
 
-		for (char **it = (char **)vec_begin(&lib_dirs); it < (char **)vec_end(&lib_dirs); it++) {
-			vec_push_back(&ld_args, "-L");
-			vec_push_back(&ld_args, *it);
-		}
+    	Preprocessor_C preprocessor = {
+			.include_dirs = &include_dirs,
+			.source_files = &source_files,
+			.defines = &defines,
+			.output = output
+		};
 
-		vec_push_back(&ld_args, "-l");
-		vec_push_back(&ld_args, "c");
-
-		vec_push_back(&ld_args, "/usr/lib/crtend.o");
-		vec_push_back(&ld_args, NULL);
-
-		int wstatus;
-
-		if (waitpid(cc_fork_execvp(&ld_args), &wstatus, 0) == -1) {
-			err(EXIT_FAILURE, NULL);
-		}
-
-		vec_free(&ld_args);
-
-		exit(WEXITSTATUS(wstatus));
+		if (preprocessor_c_run(&preprocessor) == -1) { // TODO free on error source_f
+	        return EXIT_FAILURE;
+	    }
+	    
+	    vec_free(&source_files);
+	    
+	    return EXIT_SUCCESS;
 	}
 
 	if (Sflag == 1) {
-		errx(EXIT_FAILURE, "error: assambling is not supported");
+		int code = EXIT_SUCCESS;
+	
+		for (int i = optind; i < argc; i++) {
+			char *input_file = argv[i];
+
+			if (validate_target_extension(input_file, ".s") == -1) {
+				continue;
+			}
+
+			if (produce_target_extension(input_file, ".s") == NULL) {
+				code = EXIT_FAILURE;
+			}
+		}
+		
+		return code;
+	}
+	
+	if (cflag == 1) {
+		int code = EXIT_SUCCESS;
+	
+		for (int i = optind; i < argc; i++) {
+			char *input_file = argv[i];
+
+			if (validate_target_extension(input_file, ".o") == -1) {
+				continue;
+			}
+
+			if (produce_target_extension(input_file, ".o") == NULL) {
+				code = EXIT_FAILURE;
+			}
+		}
+		
+		return code;
 	}
 
-	if (cflag == 1) {
-		errx(EXIT_FAILURE, "error: compiling is not supported");
+	if (outfile == NULL) {
+		outfile = "a.out";
 	}
+
+	vector_t ld_args = { 0 };
+
+	vec_push_back(&ld_args, "ld");
+
+	// TODO HARD works on OBSD but not on linux
+	// TODO only shard linking is supported
+	vec_push_back(&ld_args, "--dynamic-linker=/usr/libexec/ld.so");
+
+	vec_push_back(&ld_args, "-o");
+	vec_push_back(&ld_args, outfile);
+
+	outfile = NULL; // TODO HACK
+
+	// TODO HARD works on OBSD but not on linux
+	// TODO maybe differences between clang and gcc (compiler lib??)
+	// TODO check for flags with nostdlib etc.
+	vec_push_back(&ld_args, "/usr/lib/crt0.o");
+	vec_push_back(&ld_args, "/usr/lib/crtbegin.o");
 
 	for (int i = optind; i < argc; i++) {
-		struct stat sb;
+		char *input_file = argv[i];
 
-		if (stat(argv[i], &sb) == -1) {
-			warnx("warning: %s: input file unused: %s", argv[i], strerror(errno));
+		if (validate_target_extension(input_file, ".o") == -1) {
 			continue;
 		}
 
-		if ((sb.st_mode & S_IFMT) == S_IFDIR) {
-			warnx("warning: %s: input file unused: %s", argv[i], strerror(EISDIR));
+		char *linker_file;
+
+		if ((linker_file = produce_target_extension(input_file, ".x")) == NULL) { // TODO HACK .x
+			// code = EXIT_FAILURE; // TODO
 			continue;
 		}
 
-		vec_push_back(&operands, argv[i]);
+		vec_push_back(&ld_args, linker_file);
 	}
 
-    // PREPROCESSOR START
-    FILE *preprocessor_output = Eflag == 1 ? stdout : tmpfile();
-
-    Preprocessor_C preprocessor = {
-        .include_dirs = &include_dirs,
-        .source_files = &operands,
-        .defines = &defines,
-        .output = preprocessor_output
-    };
-
-    if (preprocessor_c_run(&preprocessor) == -1) {
-        return EXIT_FAILURE;
-    }
-
-    Compiler_C compiler = {
-    	.input = preprocessor_output,
-		.output = stdout
-	};
-
-	if (compiler_c_run(&compiler) == -1) {
-		return EXIT_FAILURE;
+	for (char **it = (char **)vec_begin(&lib_dirs); it < (char **)vec_end(&lib_dirs); it++) {
+		vec_push_back(&ld_args, "-L");
+		vec_push_back(&ld_args, *it);
 	}
 
-	return EXIT_SUCCESS;
+	vec_push_back(&ld_args, "-l");
+	vec_push_back(&ld_args, "c");
+
+	vec_push_back(&ld_args, "/usr/lib/crtend.o");
+	vec_push_back(&ld_args, NULL);
+
+
+	int wstatus;
+
+	if (waitpid(cc_fork_execvp(&ld_args), &wstatus, 0) == -1) { // TODO free ld_args on error
+		err(EXIT_FAILURE, NULL);
+	}
+
+	vec_free(&ld_args);
+
+	return WEXITSTATUS(wstatus);
 }
