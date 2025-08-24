@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "compiler_c.h"
 #include "lexer_c.h"
@@ -38,7 +39,7 @@ int compiler_c_run(Compiler_C *compiler)
 	ParseTreeNode_C *translation_unit = parser_c_parse(&lexer);
 
 	if (translation_unit == NULL) {
-		printf("WAHT?\n");
+		return -1;
 	}
 
 	compiler_c_codegen(compiler, translation_unit);
@@ -87,11 +88,29 @@ int compiler_c_codegen_function_definition(Compiler_C *compiler, ParseTreeNode_C
 
 			// retrieve identifier from declarator
 			case PTT_C_DECLARATOR: {
+				ParseTreeNode_C *direct_decl = node->elements[0];
+				
+				if (direct_decl->type != PTT_C_DIRECT_DECLARATOR) {
+					assert(0 && "Function Pointers are not supported!");
+				}
+				
+				ParseTreeNode_C *identifier_node = direct_decl->elements[0];
+				
+				if (identifier_node->type != PTT_C_IDENTIFIER) {
+					assert(0 && "Only simple functions with identifieres are supporteds!");
+				}
+
+				char *identifier = malloc(identifier_node->token.len + 1);
+				
+				assert(identifier != NULL);
+
+				strlcpy(identifier, identifier_node->token.value, identifier_node->token.len + 1);
+			
 				fprintf(compiler->output, ".text\n");
-				// TODO TEXT SECTION APPEND: .globl  main
-				fprintf(compiler->output, ".globl\tmain # (PTT_C_DECLARATOR)\n\n");
-				// TODO TEXT CODE APPEND:  main:
-				fprintf(compiler->output, "main: # (PTT_C_DECLARATOR)\n");
+				fprintf(compiler->output, ".globl %s\n\n", identifier);
+				fprintf(compiler->output, "%s:\n", identifier);
+				
+				free(identifier);
 			} break;
 
 			// TODO IGNORE
