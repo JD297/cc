@@ -26,4 +26,6 @@ extern int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, Token_C *t
 
 extern int lexer_c_parse_line(Lexer_C *lexer);
 
+extern void lexer_c_log_at(int level, Lexer_C *lexer, Token_C *token, const char *format, ...);
+
 #endif

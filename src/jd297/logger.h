@@ -47,34 +47,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern void flog(FILE *stream, int level, const char *format, ...);
 
-extern void flog_at(FILE *stream, int level, const char *pathname, size_t row, size_t col, const char *format, ...);
+extern void flog_at(FILE *stream, int level, const char *pathname, size_t row, size_t col, const char *format, va_list ap);
 
 extern void flog_line(FILE *stream, size_t row, const char *format, ...);
 
 extern void flog_ptr(FILE *stream, const char *begin, const char *pos, size_t len);
 
-/* TODO REMOVE ?? 
-#define log(level, format, ...) flog((JD297_LOGGER_DEFAULT_STREAM), (level), (format), ##__VA_ARGS__)
-
-#define log_at(level, pathname, row, col, format, ...) flog_at((JD297_LOGGER_DEFAULT_STREAM), (level), (pathname), (row), (col), (format), ##__VA_ARGS__)
-
-#define log_at_pathname(level, pathname, format, ...) flog_at((JD297_LOGGER_DEFAULT_STREAM), (level), (pathname), 0, 0, (format), ##__VA_ARGS__)
-
-#define log_at_pathname_row(level, pathname, row, format, ...) flog_at((JD297_LOGGER_DEFAULT_STREAM), (level), (pathname), (row), 0, (format), ##__VA_ARGS__)
-
-#define log_line(row, format, ...) flog((JD297_LOGGER_DEFAULT_STREAM), (row), (format), ##__VA_ARGS__)
-
-#define log_ptr(begin, pos, len) flog((JD297_LOGGER_DEFAULT_STREAM), (begin), (pos), (len))
-*/
-
 #endif
 
 #ifdef JD297_LOGGER_IMPLEMENTATION
-/* TODO REMOVE ?? 
-#ifndef JD297_LOGGER_DEFAULT_STREAM
-#define JD297_LOGGER_DEFAULT_STREAM stderr
-#endif
-*/
+
 static void flog_level(FILE *stream, int level)
 {
     switch (level) {
@@ -100,7 +82,7 @@ void flog(FILE *stream, int level, const char *format, ...)
 	va_end(ap);
 }
 
-void flog_at(FILE *stream, int level, const char *pathname, size_t row, size_t col, const char *format, ...)
+void flog_at(FILE *stream, int level, const char *pathname, size_t row, size_t col, const char *format, va_list ap)
 {
     if (pathname != NULL) {
         fprintf(stream, "%s:", pathname);
@@ -118,10 +100,7 @@ void flog_at(FILE *stream, int level, const char *pathname, size_t row, size_t c
 
     flog_level(stream, level);
 
-    va_list ap;
-	va_start(ap, format);
 	vfprintf(stream, format, ap);
-	va_end(ap);
 	
 	fprintf(stream, "\n");
 }

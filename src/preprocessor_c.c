@@ -21,20 +21,6 @@
 #include "token_c.h"
 #include "token_type_c.h"
 
-#define LOG_AT(level, lexer, token, format, ...)\
-    flog_at(stderr, (level), (lexer)->loc.pathname, (lexer)->loc.row, (lexer)->loc.col, (format), ##__VA_ARGS__);\
-    \
-    const char *lbegin = (lexer)->pbuf - (lexer)->loc.col + 1;\
-    const char *lend = strstr((lexer)->pbuf, "\n");\
-    \
-    if (lend == NULL) {\
-        flog_line(stderr, (lexer)->loc.row, "%s", lbegin);\
-    } else {\
-        flog_line(stderr, (lexer)->loc.row, "%.*s", (int)(lend - lbegin), lbegin);\
-    }\
-    \
-    flog_ptr(stderr, lbegin, (token)->value, (token)->len);
-
 int preprocessor_c_run(Preprocessor_C *preprocessor)
 {
     for (char **it = (char **)vec_begin(preprocessor->source_files); it < (char **)vec_end(preprocessor->source_files); ++it) {
@@ -144,7 +130,7 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         case T_MACRO_ELIF:
         case T_MACRO_ELSE:
         case T_MACRO_ENDIF: {
-            LOG_AT(L_ERROR, lexer, &token, "%.*s without #if", (int)(token.len), token.value);
+            lexer_c_log_at(L_ERROR, lexer, &token, "%.*s without #if", (int)(token.len), token.value);
 
             return -1;
         }
@@ -176,7 +162,7 @@ int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexe
     const int mode = (*pathname == '"');
 
     if (pathname_len == 0) {
-        LOG_AT(L_ERROR, lexer, include_file_token, "empty filename in #include");
+        lexer_c_log_at(L_ERROR, lexer, include_file_token, "empty filename in #include");
 
         return -1;
     }
@@ -214,7 +200,7 @@ int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexe
         return 0;
     }
 
-    LOG_AT(L_ERROR, lexer, include_file_token, "%s: %s", include_file_path + strlen(include_file_path) - pathname_len, strerror(ENOENT));
+    lexer_c_log_at(L_ERROR, lexer, include_file_token, "%s: %s", include_file_path + strlen(include_file_path) - pathname_len, strerror(ENOENT));
 
     return -1;
 }
@@ -226,13 +212,13 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, T
     Token_C include_file;
 
     if (lexer_c_next_skip_whitespace(lexer, &include_file) == -1) {
-        LOG_AT(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
+        lexer_c_log_at(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
 
         return -1;
     }
 
     if (include_file.type != T_MACRO_INCLUDE_FILE && include_file.type != T_STRING) {
-        LOG_AT(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
+        lexer_c_log_at(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
 
         return -1;
     }
@@ -265,7 +251,7 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     Token_C identifier;
 
     if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
-        LOG_AT(L_ERROR, lexer, &identifier, "macro names must be identifiers");
+        lexer_c_log_at(L_ERROR, lexer, &identifier, "macro names must be identifiers");
 
         return -1;
     }
@@ -275,7 +261,7 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
     // TODO ?? not needed
     // TODO i think now we should parse first the "^#\\s*" token and then a real directive like define, undef
     if (lexer_c_next(lexer, &next_token) == -1 || next_token.type != T_WHITESPACE) {
-        LOG_AT(L_ERROR, lexer, &next_token, "missing whitespace after the macro name");
+        lexer_c_log_at(L_ERROR, lexer, &next_token, "missing whitespace after the macro name");
 
         return -1;
     }
@@ -317,7 +303,7 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
     Token_C identifier;
 
     if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
-        LOG_AT(L_ERROR, lexer, &identifier, "macro names must be identifiers");
+        lexer_c_log_at(L_ERROR, lexer, &identifier, "macro names must be identifiers");
 
         *lexer = lexer_saved_begin;
         return -1;
@@ -342,7 +328,7 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 
     // TODO ?? how to error
     if (conditional == NULL) {
-        LOG_AT(L_ERROR, lexer, token, "conditional directive is not valid");
+        lexer_c_log_at(L_ERROR, lexer, token, "conditional directive is not valid");
 
         return -1;
     }
@@ -414,7 +400,7 @@ int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
 {
     (void)preprocessor;
 
-    LOG_AT(L_ERROR, lexer, token, "%.*s", (int)(token->len), token->value);
+    lexer_c_log_at(L_ERROR, lexer, token, "%.*s", (int)(token->len), token->value);
 
     return -1;
 }

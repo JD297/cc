@@ -1,6 +1,7 @@
 #include "lexer_c.h"
 #include "token_type_c.h"
 #include "token_c.h"
+#include "jd297/logger.h"
 
 #include <regex.h>
 #include <stddef.h>
@@ -83,8 +84,8 @@ int lexer_c_parse_line(Lexer_C *lexer)
     Token_C token_number;
  
     if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_number, T_NUMBER) == 0) {
-        // lexer_c_log(lexer, "after #line is not a positive integer");
-        
+        lexer_c_log_at(L_ERROR, lexer, &token_number, "after #line is not a positive integer");
+
         return -1;
     }
 
@@ -111,4 +112,25 @@ int lexer_c_parse_line(Lexer_C *lexer)
     lexer->loc.pathname = token_filename_str;
 
     return 0;
+}
+
+void lexer_c_log_at(int level, Lexer_C *lexer, Token_C *token, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+
+	flog_at(stderr, level, lexer->loc.pathname, lexer->loc.row, lexer->loc.col, format, ap);
+
+	va_end(ap);
+
+	const char *lbegin = lexer->pbuf - lexer->loc.col + 1;
+	const char *lend = strstr(lexer->pbuf, "\n");
+
+	if (lend == NULL) {
+		flog_line(stderr, lexer->loc.row, "%s", lbegin);
+	} else {
+		flog_line(stderr, lexer->loc.row, "%.*s", (int)(lend - lbegin), lbegin);
+	}
+
+	flog_ptr(stderr, lbegin, token->value, token->len);
 }
