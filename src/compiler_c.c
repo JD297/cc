@@ -1,7 +1,9 @@
 #include <assert.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 
 #include "compiler_c.h"
 #include "lexer_c.h"
@@ -11,18 +13,14 @@
 
 int compiler_c_run(Compiler_C *compiler)
 {
-	rewind(compiler->input);
+	int fd = fileno(compiler->input);
+	off_t filesize = ftello(compiler->input);
+	char *src = (char *)mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
 
-    char *src = NULL;
-
-    const size_t block = 4096;
-    size_t nread_total = 0;
-
-    do {
-        src = (char *)realloc(src, nread_total + block);
-
-        nread_total += fread(src + nread_total, sizeof(char), block, compiler->input);
-    } while (feof(compiler->input) == 0);
+	if (src == MAP_FAILED) {
+		warn("error");
+		return -1;
+	}
 
     fclose(compiler->input);
 
@@ -30,7 +28,7 @@ int compiler_c_run(Compiler_C *compiler)
         .buf = src,
         .pbuf = src,
         .loc = {
-            .pathname = "COMPILING",
+            .pathname = "",
             .row = 1,
             .col = 1
         }
@@ -45,7 +43,8 @@ int compiler_c_run(Compiler_C *compiler)
 	compiler_c_codegen(compiler, translation_unit);
 
 	parse_tree_node_c_destroy(translation_unit);
-    free(src);
+
+    munmap(src, filesize);
 
     return 0;
 }
