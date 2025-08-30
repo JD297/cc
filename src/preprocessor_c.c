@@ -185,6 +185,7 @@ int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexe
 
     for (int i = 0 - mode; i < (int)vec_size(preprocessor->include_dirs); ++i) {
         const char *include_dir;
+        size_t include_dir_len;
         
         if (i >= 0) {
             include_dir = vec_at(preprocessor->include_dirs, i);
@@ -192,12 +193,14 @@ int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexe
             include_dir = ".";
         }
     
-        if ((strlen(include_dir) + pathname_len + 1) >= PATH_MAX) { // 1: for the NULL terminator
+    	include_dir_len = strlen(include_dir);
+    
+        if ((include_dir_len + pathname_len + 1) >= PATH_MAX) { // 1: for the NULL terminator
             continue;
         }
         
-        strcpy(include_file_path, include_dir);
-        strcat(include_file_path, "/");
+        strncpy(include_file_path, include_dir, include_dir_len);
+        strncat(include_file_path, "/", 1);
         strncat(include_file_path, pathname, pathname_len);
 
 		if (access(include_file_path, R_OK) == -1) {
