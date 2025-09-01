@@ -108,6 +108,7 @@ int lexer_c_parse_line(Lexer_C *lexer)
 
     char *token_filename_str = malloc(sizeof(char) * (token_filename.len + 1));
     strncpy(token_filename_str, token_filename.value + 1, token_filename.len - 2);
+    token_filename_str[token_filename.len - 2] = '\0';
 
     lexer->loc.pathname = token_filename_str;
 
