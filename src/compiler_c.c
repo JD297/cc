@@ -105,9 +105,13 @@ int compiler_c_codegen_function_definition(Compiler_C *compiler, ParseTreeNode_C
 
 				strlcpy(identifier, identifier_node->token.value, identifier_node->token.len + 1);
 			
-				fprintf(compiler->output, ".text\n");
-				fprintf(compiler->output, ".globl %s\n\n", identifier);
+				fprintf(compiler->output, "\t// IR [IR_OC_FUNC_BEGIN     , IR_T_I32, NULL, NULL, \"main\"]\n");
+				fprintf(compiler->output, "\t.text\n");
+				fprintf(compiler->output, "\t.globl %s\n", identifier);
 				fprintf(compiler->output, "%s:\n", identifier);
+				fprintf(compiler->output, "\tendbr64\n");
+				fprintf(compiler->output, "\tpushq\t%%rbp\n");
+				fprintf(compiler->output, "\tmovq\t%%rsp, %%rbp\n");
 				
 				free(identifier);
 			} break;
@@ -116,17 +120,22 @@ int compiler_c_codegen_function_definition(Compiler_C *compiler, ParseTreeNode_C
 			case PTT_C_DECLARATION: break;
 
 			case PTT_C_COMPOUND_STATEMENT: {
-				// prolog
-				fprintf(compiler->output, "\tendbr64\n");
-				fprintf(compiler->output, "\tpushq\t%%rbp\n");
-				fprintf(compiler->output, "\tmovq\t%%rsp, %%rbp\n");
-
 				// TODO compiler_c_codegen_compound_statement(compiler, stmt);
-				fprintf(compiler->output, "\tmovl\t$42, %%eax # (PTT_C_COMPOUND_STATEMENT)\n");
+				
+				fprintf(compiler->output, "\t// IR [IR_OC_STORE     , IR_T_I32, \"42\", NULL, \"t1\"]\n");
+				fprintf(compiler->output, "\tmovl\t$42, -4(%%rbp)\n");
+
+				fprintf(compiler->output, "\t// IR [IR_OC_RET     , IR_T_I32, \"t1\", NULL, NULL]\n");
+				fprintf(compiler->output, "\tmovl\t-4(%%rbp), %%eax\n");
+				fprintf(compiler->output, "\tjmp .Lfunc_end_0\n");
 
 				// epilog
+				// TODO IR [IR_OC_FUNC_END] , IR_T_I32, NULL, NULL, NULL]
+				fprintf(compiler->output, "\t// IR [IR_OC_FUNC_END    , IR_T_I32, NULL, NULL, NULL]\n");
+				fprintf(compiler->output, ".Lfunc_end_0:\n");
 				fprintf(compiler->output, "\tleave\n");
 				fprintf(compiler->output, "\tret\n");
+				
 			} break;
 
 			default: assert(0 && "NOT REACHABLE");
