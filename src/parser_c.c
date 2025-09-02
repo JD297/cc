@@ -99,6 +99,9 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C_CTX *ctx)
         goto error;
     }
 
+	// TODO add to symtbl
+	// TODO extra typedef and enum
+
     return this_node;
 
     error: {
@@ -173,6 +176,9 @@ ParseTreeNode_C *parser_c_parse_compound_statement(Parser_C_CTX *ctx)
     if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_BRACE) == 0) {
         goto error;
     }
+    
+    // TODO create new symtbl and add .. with ++ctx->anonymous_block_count
+    // but only when ctx->symtbl length > 1
 
 	// TODO this_node could be stack_node
     parser_c_parse_list_opt(ctx, this_node, declaration);
@@ -259,11 +265,11 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C_CTX *ctx)
     ParseTreeNode_C *enum_specifier;
     ParseTreeNode_C *typedef_name;
 
-    parser_c_parse_opt(ctx, this_node, struct_or_union_specifier, ret);
+    parser_c_parse_opt(ctx, this_node, struct_or_union_specifier, ret); // TODO add symtbl ??
 
-    parser_c_parse_opt(ctx, this_node, enum_specifier, ret);
+    parser_c_parse_opt(ctx, this_node, enum_specifier, ret); // TODO add symtbl ??
 
-    parser_c_parse_opt(ctx, this_node, typedef_name, ret);
+    parser_c_parse_opt(ctx, this_node, typedef_name, ret); // TODO add symtbl ??
 
     error: {
         *ctx->lexer = lexer_saved;
@@ -743,7 +749,7 @@ ParseTreeNode_C *parser_c_parse_parameter_type_list(Parser_C_CTX *ctx)
     
     Lexer_C lexer_saved = *ctx->lexer;
     
-    parser_c_parse_required(ctx, this_node, parameter_list, error);
+    parser_c_parse_required(ctx, this_node, parameter_list, error); // TODO add symtbl
 
     Lexer_C lexer_saved_comma = *ctx->lexer;
     
@@ -1717,7 +1723,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C_CTX *ctx)
     ParseTreeNode_C *primary_expression;
     ParseTreeNode_C *expression;
     ParseTreeNode_C *assignment_expression;
-    ParseTreeNode_C *identifier;
+    ParseTreeNode_C *identifier; // TODO check symtbl exists??
 
     Lexer_C lexer_saved = *ctx->lexer;
 
@@ -1840,7 +1846,7 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C_CTX *ctx)
 
     Lexer_C lexer_saved = *ctx->lexer;
 
-    parser_c_parse_opt(ctx, this_node, identifier, ret);
+    parser_c_parse_opt(ctx, this_node, identifier, ret); // TODO symtbl check exists??
 
     parser_c_parse_opt(ctx, this_node, constant, ret);
 
@@ -2052,7 +2058,7 @@ ParseTreeNode_C *parser_c_parse_parameter_declaration(Parser_C_CTX *ctx)
 
     parser_c_parse_list_required(ctx, this_node, declaration_specifier, error);
     
-    parser_c_parse_opt(ctx, this_node, declarator, ret);
+    parser_c_parse_opt(ctx, this_node, declarator, ret); // TODO add symtbl
     
     parser_c_parse_opt(ctx, this_node, abstract_declarator, ret);
 
@@ -2160,6 +2166,9 @@ ParseTreeNode_C *parser_c_parse_enumerator_list(Parser_C_CTX *ctx)
         
         *ctx->lexer = lexer_saved_comma;
     }
+
+	// TODO add symtbl
+	// TODO extra add value of enumerator or counter 0..n (iota)
 
     return this_node;
 
