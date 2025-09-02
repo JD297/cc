@@ -324,7 +324,15 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 {
     (void)token;
 
-    ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(lexer);
+	lmap_t symtbl = { 0 };
+
+	Parser_C_CTX parser_ctx = {
+		.error_count = 0,
+		.lexer = lexer,
+		.symtbl = &symtbl
+	};
+
+    ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(&parser_ctx);
 
     // TODO ?? how to error
     if (conditional == NULL) {

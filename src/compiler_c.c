@@ -33,8 +33,16 @@ int compiler_c_run(Compiler_C *compiler)
             .col = 1
         }
     };
+    
+    lmap_t symtbl = { 0 };
 
-	ParseTreeNode_C *translation_unit = parser_c_parse(&lexer);
+	Parser_C_CTX parser_ctx = {
+		.error_count = 0,
+		.lexer = &lexer,
+		.symtbl = &symtbl
+	};
+
+	ParseTreeNode_C *translation_unit = parser_c_parse(&parser_ctx);
 
 	if (translation_unit == NULL) {
 		return -1;
