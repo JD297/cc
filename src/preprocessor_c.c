@@ -327,6 +327,7 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 	lmap_t symtbl = { 0 };
 
 	Parser_C_CTX parser_ctx = {
+		.anonymous_block_count = 0,
 		.error_count = 0,
 		.lexer = lexer,
 		.symtbl = &symtbl

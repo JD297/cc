@@ -5,6 +5,7 @@
 #include <jd297/lmap.h>
 
 typedef struct {
+	int anonymous_block_count;
 	int error_count;
 	Lexer_C *lexer;
 	lmap_t *symtbl;

@@ -37,6 +37,7 @@ int compiler_c_run(Compiler_C *compiler)
     lmap_t symtbl = { 0 };
 
 	Parser_C_CTX parser_ctx = {
+		.anonymous_block_count = 0,
 		.error_count = 0,
 		.lexer = &lexer,
 		.symtbl = &symtbl
