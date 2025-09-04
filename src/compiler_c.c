@@ -10,6 +10,12 @@
 #include "parse_tree_type_c.h"
 #include "parse_tree_node_c.h"
 #include "parser_c.h"
+#include "ir.h"
+#include "optimizer.h"
+#include "codegen.h"
+
+#include <jd297/lmap.h>
+#include <jd297/list.h>
 
 int compiler_c_run(Compiler_C *compiler)
 {
@@ -45,15 +51,42 @@ int compiler_c_run(Compiler_C *compiler)
 
 	ParseTreeNode_C *translation_unit = parser_c_parse(&parser_ctx);
 
+	if (parser_ctx.error_count > 0) {
+		printf("%d errors generated.", parser_ctx.error_count);
+		return -1;
+	}
+
 	if (translation_unit == NULL) {
 		return -1;
 	}
 
-	compiler_c_codegen(compiler, translation_unit);
+	// TODO DEBUG
+    printf(">>[main] (%p)\n", lmap_get(parser_ctx.symtbl, "main"));
+    printf(">>[putchar] (%p)\n", lmap_get(parser_ctx.symtbl, "putchar"));
+
+	list_t ir_code;
+
+	if (list_create(&ir_code) == -1) {
+		return -1;
+	}
+
+	IR_CTX ir_ctx = {
+		.code = &ir_code,
+		.symtbl = &symtbl
+	};
+
+	ir_run(&ir_ctx, translation_unit);
 
 	parse_tree_node_c_destroy(translation_unit);
+	munmap(src, filesize);
 
-    munmap(src, filesize);
+	assert(optimizer_run(&ir_ctx) == 0);
+
+	codegen_run_func codegen_run = codegen_x86_64_run;
+
+	assert(codegen_run(&ir_ctx, compiler->output) == 0);
+
+	list_free(&ir_code);
 
     return 0;
 }

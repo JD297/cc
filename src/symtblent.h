@@ -8,20 +8,20 @@
 typedef enum {
 	I32,
 	I64
-} symtbltype;
+} SymtblType;
 
 typedef enum {
 	FUNCTION,
 	LABEL,
 	VARIABLE
-} symtbluse;
+} SymtblUse;
 
 typedef struct {
 	int ptrc; // 0 = no pointer, 1 = *, 2 = **, ...
-	symtbltype type;
-	symtbluse use;
+	SymtblType type;
+	SymtblUse use;
 	size_t addr_r2b;
 	Lexer_Location_C loc;
-} symtblent;
+} SymtblEnt;
 
 #endif

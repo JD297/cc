@@ -14,14 +14,16 @@ BUILDDIR      = build
 OBJFILES      = $(BUILDDIR)/cc.o $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o \
                 $(BUILDDIR)/parse_tree_node_c.o $(BUILDDIR)/preprocessor_c.o $(BUILDDIR)/token_type_c.o \
                 $(BUILDDIR)/vector.o $(BUILDDIR)/logger.o $(BUILDDIR)/compiler_c.o \
-                $(BUILDDIR)/list.o
+                $(BUILDDIR)/list.o $(BUILDDIR)/optimizer.o $(BUILDDIR)/ir.o \
+                $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o
 
 HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/lexer_c.h $(SRCDIR)/parser_c.h \
                 $(SRCDIR)/parse_tree_node_c.h  $(SRCDIR)/parse_tree_type_c.h \
                 $(SRCDIR)/preprocessor_c.h $(SRCDIR)/token_c.h \
                 $(SRCDIR)/token_type_c.h $(SRCDIR)/jd297/logger.h \
-                $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h
+                $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h \
+                $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h
 
 $(BUILDDIR)/$(TARGET): $(OBJFILES)
 	$(CC) -o $@ $(OBJFILES) $(LDFLAGS)
@@ -58,6 +60,18 @@ $(BUILDDIR)/compiler_c.o: $(HEADERS) $(SRCDIR)/compiler_c.c
 
 $(BUILDDIR)/list.o: $(HEADERS) $(SRCDIR)/list.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/list.c
+
+$(BUILDDIR)/optimizer.o: $(HEADERS) $(SRCDIR)/optimizer.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/optimizer.c
+
+$(BUILDDIR)/ir.o: $(HEADERS) $(SRCDIR)/ir.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/ir.c
+
+$(BUILDDIR)/codegen_x86_64.o: $(HEADERS) $(SRCDIR)/codegen_x86_64.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/codegen_x86_64.c
+
+$(BUILDDIR)/codegen_aarch64.o: $(HEADERS) $(SRCDIR)/codegen_aarch64.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/codegen_aarch64.c
 
 $(SRCDIR)/token_type_skipable_lookup.h: $(SRCDIR)/token_type_c.h
 	sh -c -- "cd tools/token_type_skipable_lookup_generator && make run"
