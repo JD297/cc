@@ -1,10 +1,13 @@
 #include "lexer_c.h"
+#include "symtblent.h"
 #include "parser_c.h"
 #include "parse_tree_node_c.h"
 #include "parse_tree_type_c.h"
 #include "jd297/logger.h"
 
+#include <assert.h>
 #include <stddef.h>
+#include <string.h>
 #include <stdlib.h>
 
 ParseTreeNode_C *parser_c_parse(Parser_C_CTX *ctx)
@@ -67,9 +70,45 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
     // TODO create new symtbl and add it with the identifier
     // TODO add .. to symtbl
     // TODO maybe function for this ??
-    lmap_t *newsymtbl;
+    
+    lmap_t *symtbl_saved = ctx->symtbl;
+
+    ctx->symtbl = calloc(1, sizeof(lmap_t));
+
+    assert(ctx->symtbl != NULL);
+
+    lmap_add(ctx->symtbl, "..", symtbl_saved);
+    
+    SymtblEnt *entry = calloc(1, sizeof(SymtblEnt));
+    entry->type = I32; // TODO hard
+	entry->use = FUNCTION;
+	
+	// TODO get identifier from declarator
+	ParseTreeNode_C *direct_decl = declarator->elements[0];
+				
+	if (direct_decl->type != PTT_C_DIRECT_DECLARATOR) {
+		assert(0 && "Function Pointers are not supported!");
+	}
+	
+	ParseTreeNode_C *identifier_node = direct_decl->elements[0];
+	
+	if (identifier_node->type != PTT_C_IDENTIFIER) {
+		assert(0 && "Only simple functions with identifieres are supporteds!");
+	}
+
+	char *identifier = malloc(identifier_node->token.len + 1);
+	
+	assert(identifier != NULL);
+
+	strlcpy(identifier, identifier_node->token.value, identifier_node->token.len + 1);
+	// TODO END
+	
+    
+    lmap_add(symtbl_saved, identifier, entry);
     
     parser_c_parse_required(ctx, this_node, compound_statement, error);
+
+	ctx->symtbl = symtbl_saved;
 
     return this_node;
 
