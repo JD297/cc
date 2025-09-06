@@ -10,6 +10,7 @@
 typedef struct {
 	list_t *code;
 	lmap_t *symtbl;
+	size_t label_func_count;
 } IR_CTX;
 
 typedef enum {
