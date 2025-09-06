@@ -82,6 +82,7 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
     SymtblEnt *entry = calloc(1, sizeof(SymtblEnt));
     entry->type = I32; // TODO hard
 	entry->use = FUNCTION;
+	entry->value = ctx->symtbl;
 	
 	// TODO get identifier from declarator
 	ParseTreeNode_C *direct_decl = declarator->elements[0];
@@ -103,6 +104,7 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
 	strlcpy(identifier, identifier_node->token.value, identifier_node->token.len + 1);
 	// TODO END
 	
+	entry->id = identifier;
     
     lmap_add(symtbl_saved, identifier, entry);
     
