@@ -1,21 +1,21 @@
 #ifndef JD297_CC_IR_H
 #define JD297_CC_IR_H
 
-#include "symtblent.h"
+#include "symtbl.h"
 #include "parse_tree_node_c.h"
 
 #include <jd297/list.h>
-#include <jd297/lmap.h>
+#include <jd297/lmap_sv.h>
 
 typedef struct {
 	list_t *code;
-	lmap_t *symtbl;
-	size_t label_func_count;
+	SymTbl *symtbl; // TODO remove ??
 } IR_CTX;
 
 typedef enum {
 	IR_OC_FUNC_BEGIN,
 	IR_OC_FUNC_END,
+	IR_OC_JMP_FUNC_END,
 	IR_OC_LABEL,
 	IR_OC_JMP,
 	IR_OC_RET
@@ -23,19 +23,12 @@ typedef enum {
 
 typedef struct {
 	IROpCode op;
-	SymtblEnt *arg1;
-	SymtblEnt *arg2;
-	SymtblEnt *result;
+	SymTblEnt *arg1;
+	SymTblEnt *arg2;
+	SymTblEnt *result;
 } IRCode;
 
 extern int ir_run(IR_CTX *ctx, ParseTreeNode_C *translation_unit);
-/*
-extern int ir_external_declaration(IR_CTX *ctx, ParseTreeNode_C *external_declaration);
-extern int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *function_definition);
-extern int ir_declaration(IR_CTX *ctx, ParseTreeNode_C *declaration);
-extern int ir_compound_statement(IR_CTX *ctx, ParseTreeNode_C *compound_statement);
-extern int ir_statement(IR_CTX *ctx, ParseTreeNode_C *statement);
-*/
 
 extern int ir_translation_unit(IR_CTX *ctx, ParseTreeNode_C *this_node);
 extern int ir_external_declaration(IR_CTX *ctx, ParseTreeNode_C *this_node);

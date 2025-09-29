@@ -43,100 +43,54 @@ int ir_external_declaration(IR_CTX *ctx, ParseTreeNode_C *external_declaration)
 
 int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *function_definition)
 {
+	ctx->symtbl = function_definition->symtbl;
+
+	assert(ctx->symtbl != NULL);
+
+	IRCode *func_begin_code = malloc(sizeof(IRCode));
+
+	assert(func_begin_code != NULL);
+
+	*func_begin_code = (IRCode){
+		.op = IR_OC_FUNC_BEGIN,
+		.result = symtbl_get(ctx->symtbl, ctx->symtbl->id)
+	};
+
+	list_insert(ctx->code, list_end(ctx->code), func_begin_code);
+
 	for (size_t i = 0; i < function_definition->num; ++i) {
 		ParseTreeNode_C *node = function_definition->elements[i];
 
 		switch (node->type) {
 			case PTT_C_DECLARATION_SPECIFIER: break;
 
-			case PTT_C_DECLARATOR: {
-				ParseTreeNode_C *direct_decl = node->elements[0];
-				
-				if (direct_decl->type != PTT_C_DIRECT_DECLARATOR) {
-					assert(0 && "Function Pointers are not supported!");
-				}
-				
-				ParseTreeNode_C *identifier_node = direct_decl->elements[0];
-				
-				if (identifier_node->type != PTT_C_IDENTIFIER) {
-					assert(0 && "Only simple functions with identifieres are supporteds!");
-				}
-
-				char *identifier = malloc(identifier_node->token.len + 1);
-				
-				assert(identifier != NULL);
-
-				strlcpy(identifier, identifier_node->token.value, identifier_node->token.len + 1);
-
-				SymtblEnt *entry = lmap_get(ctx->symtbl, identifier);
-
-				IRCode *code = malloc(sizeof(IRCode));
-				
-				assert(code != NULL);
-				
-				*code = (IRCode){
-					.op = IR_OC_FUNC_BEGIN,
-					.result = entry
-				};;
-
-				list_insert(ctx->code, list_end(ctx->code), code);
-
-				ctx->symtbl = (lmap_t *)entry->value;
-			} break;
+			case PTT_C_DECLARATOR: break; // TODO IGNORE ??
 
 			// TODO IGNORE
-			case PTT_C_DECLARATION: break;
+			case PTT_C_DECLARATION: break; // TODO save param count
 
 			case PTT_C_COMPOUND_STATEMENT: {
-				char *endfuncstr = malloc(sizeof(char) * 32); // TODO HACK
-				
-				assert(endfuncstr != NULL);
-				
-				snprintf(endfuncstr, 31, ".Lfunc_end%zu", ctx->label_func_count);
-				
-				SymtblEnt *endent = malloc(sizeof(SymtblEnt));
-				*endent = (SymtblEnt){
-					.id = endfuncstr,
-					.use = LABEL
-				};
-				
-				lmap_add(ctx->symtbl, endfuncstr, endent);
-
-
 				if (ir_compound_statement(ctx, node) != 0) {
 					return -1;
 				}
-
-				IRCode *label = malloc(sizeof(IRCode));
-				
-				assert(label != NULL);
-
-				*label = (IRCode){
-					.op = IR_OC_LABEL,
-					.result = endent
-				};
-
-				list_insert(ctx->code, list_end(ctx->code), label);
-
-				IRCode *code = malloc(sizeof(IRCode));
-				
-				assert(code != NULL);
-				
-				*code = (IRCode){
-					.op = IR_OC_FUNC_END
-				};
-
-				list_insert(ctx->code, list_end(ctx->code), code);
-				
-				
-				ctx->symtbl = lmap_get(ctx->symtbl, "..");
-
-				++ctx->label_func_count;
 			} break;
 
 			default: assert(0 && "NOT REACHABLE");
 		}
 	}
+
+	IRCode *func_end_code = malloc(sizeof(IRCode));
+
+	assert(func_end_code != NULL);
+
+	*func_end_code = (IRCode){
+		.op = IR_OC_FUNC_END,
+		.result = symtbl_get(ctx->symtbl, ctx->symtbl->id)
+	};
+
+	list_insert(ctx->code, list_end(ctx->code), func_end_code);
+
+	ctx->symtbl = ctx->symtbl->parent;
 
 	return 0;
 }
@@ -376,10 +330,13 @@ int ir_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
-
-        assert(0 && "TODO not implemented");
+		for (size_t i = 0; i < this_node->num; ++i) {
+			// TODO NOTE: the last assignment_expression
+			// is the result of an expression
+			if (ir_assignment_expression(ctx, this_node->elements[i]) != -1) {
+				return -1;
+			}
+		}
 
         return 0;
 }
@@ -760,27 +717,29 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 			} break;
 			case T_RETURN: {
 				if (this_node->num > 0) {
-					//return 0;
-					//assert(0 && "TODO not implemented (return with expressions)");
-					fprintf(stderr, "TODO not implemented (return with expressions)\n");
+					if (ir_expression(ctx, this_node->elements[0]) != 0) {
+						return -1;
+					}
+
+					IRCode *ret = malloc(sizeof(IRCode));
+
+					assert(ret != NULL);
+
+					*ret = (IRCode){
+						.op = IR_OC_RET,
+						.result = NULL // TODO put in last tmp
+					};
+
+					list_insert(ctx->code, list_end(ctx->code), ret);
 				}
 			
 				IRCode *code = malloc(sizeof(IRCode));
 				
 				assert(code != NULL);
 				
-				// TODO get symtblent Lfunc_end_%zu, label_func_count
-				char *endfuncstr = malloc(sizeof(char) * 32); // TODO HACK
-				
-				snprintf(endfuncstr, 31, ".Lfunc_end%zu", ctx->label_func_count);
-				
-				SymtblEnt *endent = lmap_get(ctx->symtbl, endfuncstr);
-
-				assert(endent != NULL);
-				
 				*code = (IRCode){
-					.op = IR_OC_JMP,
-					.result = endent
+					.op = IR_OC_JMP_FUNC_END,
+					.result = symtbl_function(ctx->symtbl)
 				};
 
 				list_insert(ctx->code, list_end(ctx->code), code);

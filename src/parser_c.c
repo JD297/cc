@@ -1,9 +1,12 @@
 #include "lexer_c.h"
-#include "symtblent.h"
+#include "symtbl.h"
 #include "parser_c.h"
 #include "parse_tree_node_c.h"
 #include "parse_tree_type_c.h"
-#include "jd297/logger.h"
+
+#include <jd297/logger.h>
+#include <jd297/sv.h>
+#include <jd297/lmap_sv.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -66,23 +69,6 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
     parser_c_parse_required(ctx, this_node, declarator, error);
 
     parser_c_parse_list_opt(ctx, this_node, declaration);
-    
-    // TODO create new symtbl and add it with the identifier
-    // TODO add .. to symtbl
-    // TODO maybe function for this ??
-    
-    lmap_t *symtbl_saved = ctx->symtbl;
-
-    ctx->symtbl = calloc(1, sizeof(lmap_t));
-
-    assert(ctx->symtbl != NULL);
-
-    lmap_add(ctx->symtbl, "..", symtbl_saved);
-    
-    SymtblEnt *entry = calloc(1, sizeof(SymtblEnt));
-    entry->type = I32; // TODO hard
-	entry->use = FUNCTION;
-	entry->value = ctx->symtbl;
 	
 	// TODO get identifier from declarator
 	ParseTreeNode_C *direct_decl = declarator->elements[0];
@@ -97,24 +83,22 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
 		assert(0 && "Only simple functions with identifieres are supporteds!");
 	}
 
-	char *identifier = malloc(identifier_node->token.len + 1);
-	
-	assert(identifier != NULL);
+	symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, I32, FUNCTION);
+    
+    SymTbl *symtbl_parent = ctx->symtbl;
 
-	strlcpy(identifier, identifier_node->token.value, identifier_node->token.len + 1);
-	// TODO END
-	
-	entry->id = identifier;
+    ctx->symtbl = symtbl_create(&identifier_node->token.view, symtbl_parent);
     
-    lmap_add(symtbl_saved, identifier, entry);
-    
+    this_node->symtbl = ctx->symtbl;
+
     parser_c_parse_required(ctx, this_node, compound_statement, error);
 
-	ctx->symtbl = symtbl_saved;
+	ctx->symtbl = symtbl_parent;
 
     return this_node;
 
     error: {
+    	// TODO restore ctx->symtbl = symtbl_parent; ??
         *ctx->lexer = lexer_saved;
 
         parse_tree_node_c_destroy(this_node);
@@ -2875,10 +2859,10 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Parser_C_CTX *ctx)
         }
 
         if (token_text_begin == NULL) {
-            token_text_begin = token_text.value;
+            token_text_begin = token_text.view.value;
         }
 
-        token_text_len += token_text.len;
+        token_text_len += token_text.view.len;
     }
     
     while_end:
@@ -2889,8 +2873,10 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Parser_C_CTX *ctx)
 
     Token_C token_text_build = {
         .type = T_MACRO_TOKEN_SEQUENZE,
-        .value = token_text_begin,
-        .len = token_text_len
+        .view = (sv_t) {
+		    .value = token_text_begin,
+		    .len = token_text_len
+        }
     };
 
     return parse_tree_node_c_create(PTT_C_PREPROCESSOR_TEXT, &token_text_build);

@@ -13,10 +13,4 @@ typedef struct {
 
 extern int compiler_c_run(Compiler_C *compiler);
 
-extern int compiler_c_codegen(Compiler_C *compiler, ParseTreeNode_C *translation_unit);
-
-extern int compiler_c_codegen_function_definition(Compiler_C *compiler, ParseTreeNode_C *node);
-
-extern int compiler_c_codegen_compound_statement(Compiler_C *compiler, ParseTreeNode_C *node);
-
 #endif

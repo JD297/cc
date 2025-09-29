@@ -15,7 +15,8 @@ OBJFILES      = $(BUILDDIR)/cc.o $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUIL
                 $(BUILDDIR)/parse_tree_node_c.o $(BUILDDIR)/preprocessor_c.o $(BUILDDIR)/token_type_c.o \
                 $(BUILDDIR)/vector.o $(BUILDDIR)/logger.o $(BUILDDIR)/compiler_c.o \
                 $(BUILDDIR)/list.o $(BUILDDIR)/optimizer.o $(BUILDDIR)/ir.o \
-                $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o
+                $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o \
+                $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/symtbl.o
 
 HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/lexer_c.h $(SRCDIR)/parser_c.h \
@@ -23,7 +24,9 @@ HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/preprocessor_c.h $(SRCDIR)/token_c.h \
                 $(SRCDIR)/token_type_c.h $(SRCDIR)/jd297/logger.h \
                 $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h \
-                $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h
+                $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h \
+                $(SRCDIR)/jd297/sv.h $(SRCDIR)/jd297/lmap_sv.h \
+                $(SRCDIR)/symtbl.h
 
 $(BUILDDIR)/$(TARGET): $(OBJFILES)
 	$(CC) -o $@ $(OBJFILES) $(LDFLAGS)
@@ -72,6 +75,15 @@ $(BUILDDIR)/codegen_x86_64.o: $(HEADERS) $(SRCDIR)/codegen_x86_64.c
 
 $(BUILDDIR)/codegen_aarch64.o: $(HEADERS) $(SRCDIR)/codegen_aarch64.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/codegen_aarch64.c
+
+$(BUILDDIR)/sv.o: $(HEADERS) $(SRCDIR)/sv.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/sv.c
+
+$(BUILDDIR)/symtbl.o: $(HEADERS) $(SRCDIR)/symtbl.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/symtbl.c
+
+$(BUILDDIR)/lmap_sv.o: $(HEADERS) $(SRCDIR)/lmap_sv.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lmap_sv.c
 
 $(SRCDIR)/token_type_skipable_lookup.h: $(SRCDIR)/token_type_c.h
 	sh -c -- "cd tools/token_type_skipable_lookup_generator && make run"

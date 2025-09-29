@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include <jd297/lmap.h>
+#include <jd297/lmap_sv.h>
 #include <jd297/vector.h>
 
 #include "lexer_c.h"

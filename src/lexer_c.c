@@ -28,8 +28,8 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token)
 
         if (token != NULL) {
             token->type = type;
-            token->value = start;
-            token->len = match.rm_eo;
+            token->view.value = start;
+            token->view.len = match.rm_eo;
         }
 
         if (type == T_WHITESPACE && *start == '\n') {
@@ -91,8 +91,9 @@ int lexer_c_parse_line(Lexer_C *lexer)
 
     lexer->loc.col = 1;
 
-    char *row_str = malloc(sizeof(char) * (token_number.len + 1));
-    strncpy(row_str, token_number.value, token_number.len);
+	// TODO atoi function with sv_t param
+    char *row_str = malloc(sizeof(char) * (token_number.view.len + 1));
+    strncpy(row_str, token_number.view.value, token_number.view.len);
 
     lexer->loc.row = (size_t)atoi(row_str);
 
@@ -106,9 +107,10 @@ int lexer_c_parse_line(Lexer_C *lexer)
         return 0;
     }
 
-    char *token_filename_str = malloc(sizeof(char) * (token_filename.len + 1));
-    strncpy(token_filename_str, token_filename.value + 1, token_filename.len - 2);
-    token_filename_str[token_filename.len - 2] = '\0';
+	// TODO Lexer_Location_C pathname should be sv_t
+    char *token_filename_str = malloc(sizeof(char) * (token_filename.view.len + 1));
+    strncpy(token_filename_str, token_filename.view.value + 1, token_filename.view.len - 2);
+    token_filename_str[token_filename.view.len - 2] = '\0';
 
     lexer->loc.pathname = token_filename_str;
 
@@ -133,5 +135,5 @@ void lexer_c_log_at(int level, Lexer_C *lexer, Token_C *token, const char *forma
 		flog_line(stderr, lexer->loc.row, "%.*s", (int)(lend - lbegin), lbegin);
 	}
 
-	flog_ptr(stderr, lbegin, token->value, token->len);
+	flog_ptr(stderr, lbegin, token->view.value, token->view.len); // TODO use sv_t
 }

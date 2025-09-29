@@ -13,6 +13,8 @@
 #include <jd297/lmap.h>
 #include <jd297/vector.h>
 #include <jd297/logger.h>
+#include <jd297/sv.h>
+#include <jd297/lmap_sv.h>
 
 #include "lexer_c.h"
 #include "parse_tree_type_c.h"
@@ -130,7 +132,8 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         case T_MACRO_ELIF:
         case T_MACRO_ELSE:
         case T_MACRO_ENDIF: {
-            lexer_c_log_at(L_ERROR, lexer, &token, "%.*s without #if", (int)(token.len), token.value);
+        	// TODO sv_t lexer_c_log_at / use token
+            lexer_c_log_at(L_ERROR, lexer, &token, "%.*s without #if", (int)(token.view.len), token.view.value);
 
             return -1;
         }
@@ -149,15 +152,15 @@ int preprocessor_c_parse_default(Preprocessor_C *preprocessor, Lexer_C *lexer, T
 {
     (void)lexer;
 
-    fprintf(preprocessor->output, "%.*s", (int)token->len, token->value);
+	fprintf(preprocessor->output, SV_FMT, SV_PARAMS(&token->view));
 
     return 0;
 }
 
 int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *include_file_token, char *include_file_path/*[PATH_MAX]*/)
 {
-    const char *pathname = include_file_token->value;
-    const size_t pathname_len = include_file_token->len - 2; // to get the len between "..." or <...>
+    const char *pathname = include_file_token->view.value;
+    const size_t pathname_len = include_file_token->view.len - 2; // to get the len between "..." or <...>
 
     const int mode = (*pathname == '"');
 
@@ -236,7 +239,7 @@ int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, Lexer_C *lexer
 {
     (void)lexer;
 
-    fprintf(preprocessor->output, "%.*s", (int)token->len, token->value);
+    fprintf(preprocessor->output, SV_FMT, SV_PARAMS(&token->view));
 
     // TODO token->value in preprocessor->defines
 
@@ -266,11 +269,11 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
         return -1;
     }
 
-    char *identifier_str = malloc(sizeof(char) * (identifier.len + 1));
-    strncpy(identifier_str, identifier.value, identifier.len);
+    char *identifier_str = malloc(sizeof(char) * (identifier.view.len + 1));
+    strncpy(identifier_str, identifier.view.value, identifier.view.len);
 
-    if (strncmp(next_token.value, "\n", 1) == 0) { // TODO ?? use Lexer
-        lmap_add(preprocessor->defines, identifier_str, NULL);
+    if (strncmp(next_token.view.value, "\n", 1) == 0) { // TODO ?? use Lexer
+        lmap_add(preprocessor->defines, identifier_str, NULL); // TODO use sv_lmap
         
         return 0;
     }
@@ -285,10 +288,10 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
         return 0;
     }
 
-    char *macro_sequenze_str = malloc(sizeof(char) * (macro_sequenze.len + 1));
-    strncpy(macro_sequenze_str, macro_sequenze.value, macro_sequenze.len);
+    char *macro_sequenze_str = malloc(sizeof(char) * (macro_sequenze.view.len + 1));
+    strncpy(macro_sequenze_str, macro_sequenze.view.value, macro_sequenze.view.len);
 
-    lmap_add(preprocessor->defines, identifier_str, macro_sequenze_str);
+    lmap_add(preprocessor->defines, identifier_str, macro_sequenze_str); // TODO use sv_lmap
 
     return 0;
 }
@@ -309,11 +312,11 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
         return -1;
     }
 
-    char *define_name = (char *)malloc(sizeof(char) * (identifier.len + 1));
+    char *define_name = (char *)malloc(sizeof(char) * (identifier.view.len + 1));
     
-    strncpy(define_name, identifier.value, identifier.len);
+    strncpy(define_name, identifier.view.value, identifier.view.len);
     
-    lmap_remove(preprocessor->defines, define_name);
+    lmap_remove(preprocessor->defines, define_name); // TODO use sv_lmap
     
     free(define_name);
 
@@ -324,13 +327,12 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 {
     (void)token;
 
-	lmap_t symtbl = { 0 };
+	SymTbl *symtbl_root = symtbl_create(NULL, NULL);
 
 	Parser_C_CTX parser_ctx = {
-		.anonymous_block_count = 0,
 		.error_count = 0,
 		.lexer = lexer,
-		.symtbl = &symtbl
+		.symtbl = symtbl_root
 	};
 
     ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(&parser_ctx);
@@ -357,20 +359,21 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 
             Token_C identifier = conditional->elements[0]->elements[0]->token;
             
-            char *identifier_name = (char *)malloc(sizeof(char) * (identifier.len + 1));
+            char *identifier_name = (char *)malloc(sizeof(char) * (identifier.view.len + 1));
     
-            strncpy(identifier_name, identifier.value, identifier.len);
+            strncpy(identifier_name, identifier.view.value, identifier.view.len);
 
+			// TODO use sv_lmap
             if ((lmap_has(preprocessor->defines, identifier_name) == 1) ^ (negate == 1)) {
                 Token_C text = conditional->elements[1]->token;
 
                 Lexer_C lexer_text = {
-                    .buf = text.value,
-                    .pbuf = text.value,
+                    .buf = text.view.value,
+                    .pbuf = text.view.value,
                     .loc = lexer->loc
                 };
-
-                parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.value + text.len);
+				// TODO sv_t param
+                parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.view.value + text.view.len);
                 
                 goto ret;
             }
@@ -391,12 +394,12 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
     Token_C text = conditional->elements[3]->elements[1]->token;
 
     Lexer_C lexer_text = {
-        .buf = text.value,
-        .pbuf = text.value,
+        .buf = text.view.value,
+        .pbuf = text.view.value,
         .loc = lexer->loc
     };
 
-    parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.value + text.len);
+    parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.view.value + text.view.len);
 
     ret: {
         parse_tree_node_c_destroy(conditional);
@@ -409,7 +412,7 @@ int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
 {
     (void)preprocessor;
 
-    lexer_c_log_at(L_ERROR, lexer, token, "%.*s", (int)(token->len), token->value);
+    lexer_c_log_at(L_ERROR, lexer, token, SV_FMT, SV_PARAMS(&token->view));
 
     return -1;
 }
