@@ -76,7 +76,7 @@ int codegen_x86_64_func_end(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, ".func_end_" SV_FMT "\n", SV_PARAMS(code->result->id));
+	fprintf(output, ".func_end_" SV_FMT ":\n", SV_PARAMS(code->result->id));
 	fprintf(output, "\tleave\n");
 	fprintf(output, "\tret\n");
 
