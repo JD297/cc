@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "ir.h"
+#include "jd297/lmap_sv.h"
 
 int ir_run(IR_CTX *ctx, ParseTreeNode_C *translation_unit)
 {
@@ -311,21 +312,27 @@ int ir_parameter_type_list(IR_CTX *ctx, ParseTreeNode_C *this_node)
 int ir_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_TERNARY) {
+        	assert(0 && "TODO not implemented: with T_TERNARY");
+        }
+        
+        return ir_logical_or_expression(ctx, node);
 }
 
 int ir_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_LOGICAL_OR) {
+        	assert(0 && "TODO not implemented: with T_LOGICAL_OR");
+        }
+        
+        return ir_logical_and_expression(ctx, node);
 }
 
 int ir_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -344,111 +351,177 @@ int ir_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 int ir_logical_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_LOGICAL_AND) {
+        	assert(0 && "TODO not implemented: with T_LOGICAL_AND");
+        }
+        
+        return ir_inclusive_or_expression(ctx, node);
 }
 
 int ir_inclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_BITWISE_OR) {
+        	assert(0 && "TODO not implemented: with T_BITWISE_OR");
+        }
+        
+        return ir_exclusive_or_expression(ctx, node);
 }
 
 int ir_exclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_BITWISE_XOR) {
+        	assert(0 && "TODO not implemented: with T_BITWISE_XOR");
+        }
+        
+        return ir_and_expression(ctx, node);
 }
 
 int ir_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_BITWISE_AND) {
+        	assert(0 && "TODO not implemented: with T_BITWISE_AND");
+        }
+        
+        return ir_equality_expression(ctx, node);
 }
 
 int ir_equality_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_EQUAL_TO) {
+        	assert(0 && "TODO not implemented: with T_EQUAL_TO");
+        }
+        
+        if (node->token.type == T_NOT_EQUAL_TO) {
+        	assert(0 && "TODO not implemented: with T_NOT_EQUAL_TO");
+        }
+        
+        return ir_relational_expression(ctx, node);
 }
 
 int ir_relational_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_GREATER_THAN) {
+        	assert(0 && "TODO not implemented: with T_GREATER_THAN");
+        }
+        
+        if (node->token.type == T_LESS_THAN) {
+        	assert(0 && "TODO not implemented: with T_LESS_THAN");
+        }
+        
+        if (node->token.type == T_GREATER_THAN_OR_EQUAL_TO) {
+        	assert(0 && "TODO not implemented: with T_GREATER_THAN_OR_EQUAL_TO");
+        }
+        
+        if (node->token.type == T_LESS_THAN_OR_EQUAL_TO) {
+        	assert(0 && "TODO not implemented: with T_LESS_THAN_OR_EQUAL_TO");
+        }
+        
+        return ir_shift_expression(ctx, node);
 }
 
 int ir_shift_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_BITWISE_LEFTSHIFT) {
+        	assert(0 && "TODO not implemented: with T_BITWISE_LEFTSHIFT");
+        }
+        
+        if (node->token.type == T_BITWISE_RIGHTSHIFT) {
+        	assert(0 && "TODO not implemented: with T_BITWISE_RIGHTSHIFT");
+        }
+        
+        return ir_additive_expression(ctx, node);
 }
 
 int ir_additive_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_PLUS_ASSIGN) {
+        	assert(0 && "TODO not implemented: with T_PLUS_ASSIGN");
+        }
+        
+        if (node->token.type == T_MINUS_ASSIGN) {
+        	assert(0 && "TODO not implemented: with T_MINUS_ASSIGN");
+        }
+        
+        return ir_multiplicative_expression(ctx, node);
 }
 
 int ir_multiplicative_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        ParseTreeNode_C *node = this_node->elements[0];
+        
+        if (node->token.type == T_MULTIPLY_ASSIGN) {
+        	assert(0 && "TODO not implemented: with T_MULTIPLY_ASSIGN");
+        }
+        
+        if (node->token.type == T_DIVIDE_ASSIGN) {
+        	assert(0 && "TODO not implemented: with T_DIVIDE_ASSIGN");
+        }
+        
+        if (node->token.type == T_MODULUS_ASSIGN) {
+        	assert(0 && "TODO not implemented: with T_MODULUS_ASSIGN");
+        }
+        
+        return ir_cast_expression(ctx, node);
 }
 
 int ir_cast_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
+        ParseTreeNode_C *node = this_node->elements[0];
 
-        return 0;
+		// TODO will happen because parser is buggy ??
+		if (node->token.type == T_OPEN_PARENT) {
+        	assert(0 && "TODO not implemented: with T_OPEN_PARENT");
+        }
+
+        return ir_unary_expression(ctx, node);
 }
 
 int ir_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
+        ParseTreeNode_C *node = this_node->elements[0];
 
-        return 0;
+		if (node->token.type != 0) {
+        	assert(0 && "TODO not implemented: with ANY TOKEN");
+        }
+
+        return ir_postfix_expression(ctx, node);
 }
 
 int ir_type_name(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -464,11 +537,14 @@ int ir_type_name(IR_CTX *ctx, ParseTreeNode_C *this_node)
 int ir_postfix_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
+        ParseTreeNode_C *node = this_node->elements[0];
 
-        return 0;
+		if (node->token.type != 0) {
+        	assert(0 && "TODO not implemented: with ANY TOKEN");
+        }
+
+        return ir_primary_expression(ctx, node);
 }
 
 int ir_unary_operator(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -484,9 +560,26 @@ int ir_unary_operator(IR_CTX *ctx, ParseTreeNode_C *this_node)
 int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
+        ParseTreeNode_C *node = this_node->elements[0];
+
+		switch (node->type) {
+			case PTT_C_IDENTIFIER: {
+				assert(0 && "TODO not implemented: PTT_C_IDENTIFIER");
+			} break;
+			case PTT_C_CONSTANT: {
+				return ir_constant(ctx, node);
+			} break;
+			case PTT_C_STRING: {
+				assert(0 && "TODO not implemented: PTT_C_STRING");
+			} break;
+			case PTT_C_EXPRESSION: {
+				assert(0 && "TODO not implemented: PTT_C_EXPRESSION");
+			} break;
+			default: {
+				assert(0 && "NOT REACHABLE");
+			} break;
+		}
 
         return 0;
 }
@@ -494,19 +587,66 @@ int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         (void) ctx;
-        (void) this_node;
 
-        assert(0 && "TODO not implemented");
+		ParseTreeNode_C *node = this_node->elements[0];
+		
+		switch (node->type) {
+			case PTT_C_CONDITIONAL_EXPRESSION: {
+				return ir_conditional_expression(ctx, node);
+			} break;
+			case PTT_C_UNARY_EXPRESSION: {
+				assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION");
+			} break;
+			default: {
+				assert(0 && "NOT REACHABLE");
+			} break;
+		}
 
         return 0;
 }
 
+sv_t temp_hack = {
+	.value = "t1",
+	.len = 2
+};
+
+sv_t *gentemp()
+{
+	return &temp_hack;
+}
+
 int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+        switch (this_node->token.type) {
+			case T_NUMBER: {
+				symtbl_add_entry(ctx->symtbl, gentemp(), I32, CONST, &this_node->token.view);
 
-        assert(0 && "TODO not implemented");
+				/*IRCode *store_const = malloc(sizeof(IRCode));
+
+				assert(store_const != NULL);
+
+				*store_const = (IRCode) {
+					.op = IR_OC_STORE_CONST,
+					.result = const_entry
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), store_const);*/
+				
+				return 0;
+			} break;
+			case T_CHARACTER: {
+				assert(0 && "TODO not implemented: T_CHARACTER");
+			} break;
+			/*case PTT_C_FLOATING_CONSTANT: { // TODO also T_NUMBER ??
+				assert(0 && "TODO not implemented: PTT_C_FLOATING_CONSTANT");
+			} break;*/
+			case T_IDENTIFIER: {
+				assert(0 && "TODO not implemented: PTT_C_ENUMERATION_CONSTANT");
+			} break;
+			default: {
+				assert(0 && "NOT REACHABLE");
+			} break;
+		}
 
         return 0;
 }
@@ -725,9 +865,13 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 					assert(ret != NULL);
 
+					SymTblEnt *ent = symtbl_get(ctx->symtbl, &temp_hack); // TODO HACK
+
 					*ret = (IRCode){
 						.op = IR_OC_RET,
-						.result = NULL // TODO put in last tmp
+						.result = ent // TODO put in last tmp
+						
+						
 					};
 
 					list_insert(ctx->code, list_end(ctx->code), ret);

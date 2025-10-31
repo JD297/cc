@@ -18,7 +18,8 @@ typedef enum {
 	IR_OC_JMP_FUNC_END,
 	IR_OC_LABEL,
 	IR_OC_JMP,
-	IR_OC_RET
+	IR_OC_RET,
+	IR_OC_STORE_CONST
 } IROpCode;
 
 typedef struct {

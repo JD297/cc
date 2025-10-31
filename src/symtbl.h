@@ -17,7 +17,8 @@ typedef enum {
 typedef enum {
 	FUNCTION,
 	LABEL,
-	VARIABLE
+	VARIABLE,
+	CONST
 } SymTblEntUse;
 
 typedef struct {
@@ -26,6 +27,7 @@ typedef struct {
 	SymTblEntUse use;
 	size_t addr;
 	Lexer_Location_C loc;
+	sv_t val;
 } SymTblEnt;
 
 typedef struct SymTbl {
@@ -40,7 +42,7 @@ extern SymTbl *symtbl_create(sv_t *id, SymTbl *parent);
 
 extern void symtbl_free(SymTbl *tbl);
 
-extern int symtbl_add_entry(SymTbl *tbl, sv_t *id, SymTblEntType type, SymTblEntUse use);
+extern SymTblEnt *symtbl_add_entry(SymTbl *tbl, sv_t *id, SymTblEntType type, SymTblEntUse use, sv_t *val);
 
 extern SymTblEnt *symtbl_get(SymTbl *tbl, sv_t *id);
 

@@ -4,6 +4,8 @@
 #define JD297_CC_TOKEN_TYPE_C_H
 
 typedef enum TokenType_C {
+	// TODO maybe introduce T_ZERO which matches nothing but is there for 0 init ??
+	// becauce parse_tree_node_c -> parse_tree_node_c_create calloc
     T_MACRO_INCLUDE_FILE,
 
     /* COMMENTS */

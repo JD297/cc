@@ -31,19 +31,29 @@ void symtbl_free(SymTbl *tbl)
 	free(tbl);
 }
 
-int symtbl_add_entry(SymTbl *tbl, sv_t *id, SymTblEntType type, SymTblEntUse use)
+SymTblEnt *symtbl_add_entry(SymTbl *tbl, sv_t *id, SymTblEntType type, SymTblEntUse use, sv_t *val)
 {
 	SymTblEnt *ent = calloc(1, sizeof(SymTblEnt));
 
 	if (ent == NULL) {
-		return -1;	
+		return NULL;	
 	}
 
 	ent->id = id;
 	ent->type = type;
 	ent->use = use;
+	
+	if (val != NULL) {
+		ent->val = *val;
+	}
 
-	return lmap_sv_add(&tbl->entries, id, ent);
+	if (lmap_sv_add(&tbl->entries, id, ent) == -1) {
+		free(ent);
+		
+		return NULL;
+	}
+	
+	return ent;
 }
 
 SymTblEnt *symtbl_get(SymTbl *tbl, sv_t *id)

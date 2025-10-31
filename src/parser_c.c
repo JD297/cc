@@ -83,7 +83,7 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
 		assert(0 && "Only simple functions with identifieres are supporteds!");
 	}
 
-	symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, I32, FUNCTION);
+	symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, I32, FUNCTION, NULL);
     
     SymTbl *symtbl_parent = ctx->symtbl;
 

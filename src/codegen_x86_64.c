@@ -95,14 +95,27 @@ int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code)
 int codegen_x86_64_ret(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
-	(void) code;
 
-	// TODO get func SymtblType e.g. I32
-	// IF SymtblType == I32 THEN
-	// fprintf(output, "\tmovl -4(%%rbp), %%eax\n");
-	// IF SymtblType == I64 THEN
-	// fprintf(output, "\tmovq -8(%%rbp), %%rax\n");
-	fprintf(output, "\t# TODO codegen_x86_64_ret\n");
+	SymTblEnt *result = code->result;
+
+	if (result == NULL) {
+		return -1;
+	}
+
+	switch (result->use) {
+		case CONST: {
+			switch (result->type) {
+				case I32: {
+					fprintf(output, "\tmovl $" SV_FMT ", %%eax\n", SV_PARAMS(&code->result->val));
+				} break;
+				case I64: {
+					fprintf(output, "\tmovq $" SV_FMT ", %%rax\n", SV_PARAMS(&code->result->val));
+				} break;
+				default: assert(0 && "TODO not implemented: TYPE RESULT");
+			}
+		} break;
+		default: assert(0 && "TODO not implemented: USE RESULT");
+	}
 
 	return 0;
 }

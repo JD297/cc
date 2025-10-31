@@ -7,7 +7,7 @@
 
 void *parse_tree_node_c_create(ParseTreeType_C type, Token_C *token)
 {
-    ParseTreeNode_C *node = (ParseTreeNode_C *)malloc(sizeof(ParseTreeNode_C));
+    ParseTreeNode_C *node = (ParseTreeNode_C *)calloc(1, sizeof(ParseTreeNode_C));
 
     if (node == NULL) {
         return NULL;
@@ -18,10 +18,6 @@ void *parse_tree_node_c_create(ParseTreeType_C type, Token_C *token)
     if (token != NULL) {
         node->token = *token;
     }
-
-    node->elements = NULL;
-    node->len = 0;
-    node->num = 0;
 
     return node;
 }
