@@ -340,7 +340,7 @@ int ir_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 		for (size_t i = 0; i < this_node->num; ++i) {
 			// TODO NOTE: the last assignment_expression
 			// is the result of an expression
-			if (ir_assignment_expression(ctx, this_node->elements[i]) != -1) {
+			if (ir_assignment_expression(ctx, this_node->elements[i]) == -1) {
 				return -1;
 			}
 		}
