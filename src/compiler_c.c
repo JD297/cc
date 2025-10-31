@@ -60,10 +60,6 @@ int compiler_c_run(Compiler_C *compiler)
 		return -1;
 	}
 
-	// TODO DEBUG
-    printf(">>[main] (%p)\n", (void *)symtbl_get(symtbl_root, &((sv_t) {.value="main", .len = 4})));
-    printf(">>[putchar] (%p)\n", (void *)symtbl_get(symtbl_root, &((sv_t) {.value="putchar", .len = 7})));
-
 	list_t ir_code;
 
 	if (list_create(&ir_code) == -1) {
