@@ -9,7 +9,8 @@
 
 typedef struct {
 	list_t *code;
-	SymTbl *symtbl; // TODO remove ??
+	SymTbl *symtbl;
+	size_t stack_offset;
 } IR_CTX;
 
 typedef enum {
@@ -19,14 +20,25 @@ typedef enum {
 	IR_OC_LABEL,
 	IR_OC_JMP,
 	IR_OC_RET,
-	IR_OC_STORE_CONST
+	IR_OC_LOCAL,
+	IR_OC_STACK_ALLOC,
+	IR_OC_STACK_DEALLOC
 } IROpCode;
 
 typedef struct {
 	IROpCode op;
-	SymTblEnt *arg1;
-	SymTblEnt *arg2;
-	SymTblEnt *result;
+	union {
+		SymTblEnt *ptr;
+		SymTblEnt stack;
+	} arg1;
+	union {
+		SymTblEnt *ptr;
+		SymTblEnt stack;
+	} arg2;
+	union {
+		SymTblEnt *ptr;
+		SymTblEnt stack;
+	} result;
 } IRCode;
 
 extern int ir_run(IR_CTX *ctx, ParseTreeNode_C *translation_unit);

@@ -13,6 +13,7 @@
 
 #include "preprocessor_c.h"
 #include "compiler_c.h"
+#include "codegen.h"
 
 #define CC_TEMPLATE_PATH "%s/%s-XXXXXXXXXX%s"
 

@@ -13,6 +13,7 @@ extern int codegen_x86_64_ret(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_stack_alloc(IR_CTX *ctx, FILE *output, IRCode *code);
 
 int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 {
@@ -50,8 +51,14 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 					return -1;
 				}
 			} break;
+			case IR_OC_STACK_ALLOC: {
+				if (codegen_x86_64_stack_alloc(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_STACK_DEALLOC: break; // asm leave does the job
 		
-			default: assert(0 && "OP Code not implemented yet");
+			default: printf(">>>>>%d\n", code->op); assert(0 && "OP Code not implemented yet");
 		}
 	}
 
@@ -63,8 +70,8 @@ int codegen_x86_64_func_begin(IR_CTX *ctx, FILE *output, IRCode *code)
 	(void) ctx;
 
 	fprintf(output, "\t.text\n");
-	fprintf(output, "\t.globl " SV_FMT "\n", SV_PARAMS(code->result->id));
-	fprintf(output, SV_FMT ":\n", SV_PARAMS(code->result->id));
+	fprintf(output, "\t.globl " SV_FMT "\n", SV_PARAMS(code->result.ptr->id));
+	fprintf(output, SV_FMT ":\n", SV_PARAMS(code->result.ptr->id));
 	fprintf(output, "\tendbr64\n");
 	fprintf(output, "\tpushq\t%%rbp\n");
 	fprintf(output, "\tmovq\t%%rsp, %%rbp\n");
@@ -76,7 +83,7 @@ int codegen_x86_64_func_end(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, ".func_end_" SV_FMT ":\n", SV_PARAMS(code->result->id));
+	fprintf(output, ".func_end_" SV_FMT ":\n", SV_PARAMS(code->result.ptr->id));
 	fprintf(output, "\tleave\n");
 	fprintf(output, "\tret\n");
 
@@ -87,7 +94,7 @@ int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, "\tjmp .func_end_" SV_FMT "\n", SV_PARAMS(code->result->id));
+	fprintf(output, "\tjmp .func_end_" SV_FMT "\n", SV_PARAMS(code->result.ptr->id));
 
 	return 0;
 }
@@ -96,7 +103,7 @@ int codegen_x86_64_ret(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	SymTblEnt *result = code->result;
+	SymTblEnt *result = code->result.ptr;
 
 	if (result == NULL) {
 		return -1;
@@ -105,11 +112,8 @@ int codegen_x86_64_ret(IR_CTX *ctx, FILE *output, IRCode *code)
 	switch (result->use) {
 		case CONST: {
 			switch (result->type) {
-				case I32: {
-					fprintf(output, "\tmovl $" SV_FMT ", %%eax\n", SV_PARAMS(&code->result->val));
-				} break;
-				case I64: {
-					fprintf(output, "\tmovq $" SV_FMT ", %%rax\n", SV_PARAMS(&code->result->val));
+				case INT: {
+					fprintf(output, "\tmovl $" SV_FMT ", %%eax\n", SV_PARAMS(&code->result.ptr->val));
 				} break;
 				default: assert(0 && "TODO not implemented: TYPE RESULT");
 			}
@@ -124,7 +128,7 @@ int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, "\tjmp " SV_FMT "\n", SV_PARAMS(code->result->id));
+	fprintf(output, "\tjmp " SV_FMT "\n", SV_PARAMS(code->result.ptr->id));
 
 	return 0;
 }
@@ -133,7 +137,16 @@ int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, SV_FMT ":\n", SV_PARAMS(code->result->id));
+	fprintf(output, SV_FMT ":\n", SV_PARAMS(code->result.ptr->id));
+
+	return 0;
+}
+
+int codegen_x86_64_stack_alloc(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	fprintf(output, "\tsubq\t$%zu, %%rsp\n", code->result.stack.addr);
 
 	return 0;
 }

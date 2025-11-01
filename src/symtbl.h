@@ -10,14 +10,15 @@
 #define JD297_CC_SYMTBL_H
 
 typedef enum {
-	I32,
-	I64
+	REG,
+	INT
 } SymTblEntType;
 
 typedef enum {
+	REGISTER,
 	FUNCTION,
 	LABEL,
-	VARIABLE,
+	LOCAL,
 	CONST
 } SymTblEntUse;
 

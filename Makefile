@@ -11,11 +11,12 @@ MANDIR        = $(PREFIX)/share/man
 SRCDIR        = src
 BUILDDIR      = build
 
-OBJFILES      = $(BUILDDIR)/cc.o $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o \
+OBJFILES      = $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o \
                 $(BUILDDIR)/parse_tree_node_c.o $(BUILDDIR)/preprocessor_c.o $(BUILDDIR)/token_type_c.o \
                 $(BUILDDIR)/vector.o $(BUILDDIR)/logger.o $(BUILDDIR)/compiler_c.o \
                 $(BUILDDIR)/list.o $(BUILDDIR)/optimizer.o $(BUILDDIR)/ir.o \
                 $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o \
+                $(BUILDDIR)/codegen.o \
                 $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/symtbl.o
 
 HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
@@ -28,8 +29,16 @@ HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/jd297/sv.h $(SRCDIR)/jd297/lmap_sv.h \
                 $(SRCDIR)/symtbl.h
 
-$(BUILDDIR)/$(TARGET): $(OBJFILES)
-	$(CC) -o $@ $(OBJFILES) $(LDFLAGS)
+all: $(BUILDDIR)/$(TARGET) $(BUILDDIR)/cc_ir_test
+
+$(BUILDDIR)/cc_ir_test: $(OBJFILES) $(BUILDDIR)/cc_ir_test.o
+	$(CC) -o $@ $(OBJFILES) $(BUILDDIR)/cc_ir_test.o $(LDFLAGS)
+
+$(BUILDDIR)/cc_ir_test.o: $(HEADERS) $(SRCDIR)/cc_ir_test.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/cc_ir_test.c
+
+$(BUILDDIR)/$(TARGET): $(OBJFILES) $(BUILDDIR)/cc.o
+	$(CC) -o $@ $(OBJFILES) $(BUILDDIR)/cc.o $(LDFLAGS)
 
 $(BUILDDIR)/cc.o: $(HEADERS) $(SRCDIR)/cc.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/cc.c
@@ -69,6 +78,9 @@ $(BUILDDIR)/optimizer.o: $(HEADERS) $(SRCDIR)/optimizer.c
 
 $(BUILDDIR)/ir.o: $(HEADERS) $(SRCDIR)/ir.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/ir.c
+
+$(BUILDDIR)/codegen.o: $(HEADERS) $(SRCDIR)/codegen.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/codegen.c
 
 $(BUILDDIR)/codegen_x86_64.o: $(HEADERS) $(SRCDIR)/codegen_x86_64.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/codegen_x86_64.c

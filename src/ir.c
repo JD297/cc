@@ -52,9 +52,9 @@ int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *function_definition)
 
 	assert(func_begin_code != NULL);
 
-	*func_begin_code = (IRCode){
+	*func_begin_code = (IRCode) {
 		.op = IR_OC_FUNC_BEGIN,
-		.result = symtbl_get(ctx->symtbl, ctx->symtbl->id)
+		.result.ptr = symtbl_get(ctx->symtbl, ctx->symtbl->id)
 	};
 
 	list_insert(ctx->code, list_end(ctx->code), func_begin_code);
@@ -86,7 +86,7 @@ int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *function_definition)
 
 	*func_end_code = (IRCode){
 		.op = IR_OC_FUNC_END,
-		.result = symtbl_get(ctx->symtbl, ctx->symtbl->id)
+		.result.ptr = symtbl_get(ctx->symtbl, ctx->symtbl->id)
 	};
 
 	list_insert(ctx->code, list_end(ctx->code), func_end_code);
@@ -610,7 +610,7 @@ sv_t temp_hack = {
 	.len = 2
 };
 
-sv_t *gentemp()
+sv_t *gentemp(void)
 {
 	return &temp_hack;
 }
@@ -619,7 +619,7 @@ int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         switch (this_node->token.type) {
 			case T_NUMBER: {
-				symtbl_add_entry(ctx->symtbl, gentemp(), I32, CONST, &this_node->token.view);
+				symtbl_add_entry(ctx->symtbl, gentemp(), INT, CONST, &this_node->token.view);
 
 				/*IRCode *store_const = malloc(sizeof(IRCode));
 
@@ -869,7 +869,7 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 					*ret = (IRCode){
 						.op = IR_OC_RET,
-						.result = ent // TODO put in last tmp
+						.result.ptr = ent // TODO put in last tmp
 						
 						
 					};
@@ -883,7 +883,7 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				
 				*code = (IRCode){
 					.op = IR_OC_JMP_FUNC_END,
-					.result = symtbl_function(ctx->symtbl)
+					.result.ptr = symtbl_function(ctx->symtbl)
 				};
 
 				list_insert(ctx->code, list_end(ctx->code), code);
