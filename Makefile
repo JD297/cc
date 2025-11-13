@@ -58,7 +58,7 @@ $(BUILDDIR)/parse_tree_node_c.o: $(HEADERS) $(SRCDIR)/parse_tree_node_c.c
 $(BUILDDIR)/preprocessor_c.o: $(HEADERS) $(SRCDIR)/preprocessor_c.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/preprocessor_c.c
 
-$(BUILDDIR)/token_type_c.o: $(HEADERS) $(SRCDIR)/token_type_c.c $(SRCDIR)/token_type_skipable_lookup.h
+$(BUILDDIR)/token_type_c.o: $(HEADERS) $(SRCDIR)/token_type_c.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/token_type_c.c
 
 $(BUILDDIR)/vector.o: $(HEADERS) $(SRCDIR)/vector.c
@@ -97,11 +97,8 @@ $(BUILDDIR)/symtbl.o: $(HEADERS) $(SRCDIR)/symtbl.c
 $(BUILDDIR)/lmap_sv.o: $(HEADERS) $(SRCDIR)/lmap_sv.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lmap_sv.c
 
-$(SRCDIR)/token_type_skipable_lookup.h: $(SRCDIR)/token_type_c.h
-	sh -c -- "cd tools/token_type_skipable_lookup_generator && make run"
-
 clean:
-	rm -f $(BUILDDIR)/* $(SRCDIR)/token_type_skipable_lookup.h
+	rm -f $(BUILDDIR)/*
 
 install: $(BUILDDIR)/$(TARGET)
 	cp $(BUILDDIR)/$(TARGET) $(BINDIR)/$(TARGET)
