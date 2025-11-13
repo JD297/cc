@@ -122,6 +122,8 @@ typedef enum TokenType_C {
     T_WHILE,
 
     /* PREPROCESSOR KEYWORDS*/
+    T_PREPROCESSOR,
+    
     T_MACRO_IFDEF,
     T_MACRO_IFNDEF,
     T_MACRO_IF,

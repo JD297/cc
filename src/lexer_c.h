@@ -7,25 +7,18 @@
 
 typedef struct Lexer_Location_C {
     const char *pathname;
-    size_t row;
+    size_t line;
     size_t col;
 } Lexer_Location_C;
 
 typedef struct Lexer_C {
-    const char *buf;
-    const char *pbuf;
-    
+    const char *start;
+    const char *current;
     Lexer_Location_C loc;
 } Lexer_C;
 
+extern void lexer_c_create(Lexer_C *lexer, const char *pathname, const char *source);
+
 extern int lexer_c_next(Lexer_C *lexer, Token_C *token);
-
-extern int lexer_c_next_skip_whitespace(Lexer_C *lexer, Token_C *token);
-
-extern int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, Token_C *token, TokenType_C type);
-
-extern int lexer_c_parse_line(Lexer_C *lexer);
-
-extern void lexer_c_log_at(int level, Lexer_C *lexer, Token_C *token, const char *format, ...);
 
 #endif

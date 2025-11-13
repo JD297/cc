@@ -1,139 +1,245 @@
 #include "lexer_c.h"
 #include "token_type_c.h"
 #include "token_c.h"
-#include "jd297/logger.h"
+#include <jd297/sv.h>
 
-#include <regex.h>
+#include <assert.h>
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int lexer_c_next(Lexer_C *lexer, Token_C *token)
+static int lexer_c_is_at_end(Lexer_C *lexer);
+
+static char lexer_c_advance(Lexer_C *lexer);
+
+static char lexer_c_peek(Lexer_C *lexer, size_t n);
+
+static int lexer_c_match(Lexer_C *lexer, char expected);
+
+static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type);
+
+void lexer_c_create(Lexer_C *lexer, const char *pathname, const char *source)
 {
-    for (TokenType_C type = 0; type < TOKEN_TYPE_C_LENGTH; type++) {
-        if (type == T_EOF && *(lexer->pbuf) != '\0') {
-            continue;
-        }
-
-        regmatch_t match;
-
-        if (regexec(token_type_c_regex[type], lexer->pbuf, 1, &match, 0) != 0) {
-            continue;
-        }
-
-        const char* start = lexer->pbuf;
-
-        lexer->pbuf += match.rm_eo;
-
-        if (token != NULL) {
-            token->type = type;
-            token->view.value = start;
-            token->view.len = match.rm_eo;
-        }
-
-        if (type == T_WHITESPACE && *start == '\n') {
-            lexer->loc.row++;
-            lexer->loc.col = 1;
-        } else if (type == T_MACRO_LINE) {
-            if (lexer_c_parse_line(lexer) == -1) {
-                return -1;
-            }
-
-            return lexer_c_next(lexer, token);
-        } else {
-            lexer->loc.col += match.rm_eo;
-        }
-
-        return 0;
-    }
-
-    // lexer->pbuf += 1; // ?? this should prevent to progress on failures
-
-	return -1;
+	*lexer = (Lexer_C) {
+		.start = source,
+		.current = source,
+		.loc = (Lexer_Location_C) {
+			.pathname = pathname,
+			.line = 1,
+			.col = 0
+		}
+	};
 }
 
-int lexer_c_next_skip_whitespace(Lexer_C *lexer, Token_C *token)
+int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? easy equalty checks
 {
-    do {
-        if (lexer_c_next(lexer, token) == -1) {
-            return -1;
-        }
-    } while (token_type_skipable_lookup[token->type] == 1);
+	switch (lexer_c_advance(lexer))
+	{
+        case '(':
+			lexer_c_set_token(lexer, token, T_OPEN_PARENT);
+			break;
+		case ')':
+			lexer_c_set_token(lexer, token, T_CLOSING_PARENT);
+			break;
+		case '[':
+			lexer_c_set_token(lexer, token, T_OPEN_BRACKET);
+			break;
+		case ']':
+			lexer_c_set_token(lexer, token, T_CLOSING_BRACKET);
+			break;
+		case '{':
+			lexer_c_set_token(lexer, token, T_OPEN_BRACE);
+			break;
+		case '}':
+			lexer_c_set_token(lexer, token, T_CLOSING_BRACE);
+			break;
+		case '~':
+			lexer_c_set_token(lexer, token, T_TILDE);
+			break;
+		case ',':
+			lexer_c_set_token(lexer, token, T_COMMA);
+			break;
+		case ':':
+			lexer_c_set_token(lexer, token, T_COLON);
+			break;
+		case ';':
+			lexer_c_set_token(lexer, token, T_SEMICOLON);
+			break;
+		case '?':
+			lexer_c_set_token(lexer, token, T_TERNARY);
+			break;
+		case '#':
+			// TODO parse the line statement to manipulate the lexer->loc
+			lexer_c_set_token(lexer, token, T_PREPROCESSOR);
+			break;
+		case '=':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_EQUAL_TO : T_ASSIGNMENT);
+			break;
+		case '*':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_MULTIPLY_ASSIGN : T_MULTIPLY);
+			break;
+		case '%':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_MODULUS_ASSIGN : T_MODULUS);
+			break;
+		case '^':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_BITWISE_XOR_ASSIGN : T_BITWISE_XOR);
+			break;
+		case '!':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_NOT_EQUAL_TO : T_LOGICAL_NOT);
+			break;	
+		case '|':
+        	lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_BITWISE_OR_ASSIGN : lexer_c_match(lexer, '|') == 0 ? T_LOGICAL_OR : T_BITWISE_OR);
+        	break;
+    	case '&':
+        	lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_BITWISE_AND_ASSIGN : lexer_c_match(lexer, '&') == 0 ? T_LOGICAL_AND : T_BITWISE_AND);
+        	break;
+		case '<':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_LESS_THAN_OR_EQUAL_TO : lexer_c_match(lexer, '<') == 0 ? lexer_c_match(lexer, '<') == 0 ? T_BITWISE_LEFTSHIFT_ASSIGN : T_BITWISE_LEFTSHIFT : T_LESS_THAN);
+			break;
+		case '>':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_GREATER_THAN_OR_EQUAL_TO : lexer_c_match(lexer, '>') == 0 ? lexer_c_match(lexer, '>') == 0 ? T_BITWISE_RIGHTSHIFT_ASSIGN : T_BITWISE_RIGHTSHIFT : T_GREATER_THAN);
+			break;
+		case '/': {
 
-    return 0;
-}
+			if (lexer_c_match(lexer, '/') == 0) {
+				while (lexer_c_peek(lexer, 0) != '\n' && !lexer_c_is_at_end(lexer)) {
+					lexer_c_advance(lexer);
+				}
 
-int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, Token_C *token, TokenType_C type)
-{
-    Token_C token_stack;
-    
-    if (token == NULL) {
-        token = &token_stack;
-    }
+				return lexer_c_next(lexer, token);
+			}
 
-    if (lexer_c_next_skip_whitespace(lexer, token) == -1) {
-        return 0;
-    }
+			if (lexer_c_match(lexer, '*') == 0) {
+				
+				while (1) {
+					if (lexer_c_peek(lexer, 0) == '*' && lexer_c_peek(lexer, 1) == '/') {
+						lexer_c_advance(lexer);
+						lexer_c_advance(lexer);
 
-    return token->type == type;
-}
+						lexer->start = lexer->current;
+						
+						return lexer_c_next(lexer, token);
+					}
 
-int lexer_c_parse_line(Lexer_C *lexer)
-{
-    Token_C token_number;
- 
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_number, T_NUMBER) == 0) {
-        lexer_c_log_at(L_ERROR, lexer, &token_number, "after #line is not a positive integer");
+					if (lexer_c_is_at_end(lexer)) {
+						assert(0 && "NOT MULTILNE COMMENT NOT TERMINATED TODO:");	
+					}
+					
+					if (lexer_c_peek(lexer, 0) == '\n') {
+						++lexer->loc.line;
+						lexer->loc.col = 0;
 
-        return -1;
-    }
+						lexer->current++;
 
-    lexer->loc.col = 1;
+						continue;
+					}
+					
+					lexer_c_advance(lexer);
+				}
+			}
+			
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_DIVIDE_ASSIGN : T_DIVIDE);
+		} break;
+		
+		case '.': {
+			if (lexer_c_peek(lexer, 0) == '.' && lexer_c_peek(lexer, 1) == '.') {
+				lexer->current += 2;
+				/* TODO maybe we could do a variadic match(n, '.', '.') ?? */
+				lexer_c_set_token(lexer, token, T_DOT_DOT_DOT);
 
-	// TODO atoi function with sv_t param
-    char *row_str = malloc(sizeof(char) * (token_number.view.len + 1));
-    strncpy(row_str, token_number.view.value, token_number.view.len);
+				break;
+			}
+			
+			// TODO check for a number:
+				// true: advance and fallthorugh to NUMBER
+				// false: set_token and break
+		
+			lexer_c_set_token(lexer, token, T_DOT);
+		} break;
+	
+		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+        case 'G': case 'H': case 'I': case 'J': case 'K': case 'L':
+        case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
+        case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
+        case 'Y': case 'Z':
+        case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+        case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+        case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
+        case 's': case 't': case 'u': case 'v': case 'w': case 'x':
+        case 'y': case 'z': 
+        case '_': {
+        	assert(0 && "IDENTIFIER / KEYWORDS");
+        } break;
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9': {
+			// TOOD +- can follow a number to
+			// TODO . can be at first
+			assert(0 && "NUMBER");
+			break;
+		}
+		case '\n': {
+			++lexer->loc.line;
+			lexer->loc.col = 0;
 
-    lexer->loc.row = (size_t)atoi(row_str);
+			lexer->start = lexer->current;
 
-    Lexer_C lexer_saved = *lexer;
+			return lexer_c_next(lexer, token);
+		} break;
+		case ' ': case '\r': case '\t': case '\f': case '\v': {
+			lexer->start = lexer->current;
 
-    Token_C token_filename;
-
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_filename, T_STRING) == 0) {
-        *lexer = lexer_saved;
-        
-        return 0;
-    }
-
-	// TODO Lexer_Location_C pathname should be sv_t
-    char *token_filename_str = malloc(sizeof(char) * (token_filename.view.len + 1));
-    strncpy(token_filename_str, token_filename.view.value + 1, token_filename.view.len - 2);
-    token_filename_str[token_filename.view.len - 2] = '\0';
-
-    lexer->loc.pathname = token_filename_str;
-
-    return 0;
-}
-
-void lexer_c_log_at(int level, Lexer_C *lexer, Token_C *token, const char *format, ...)
-{
-	va_list ap;
-	va_start(ap, format);
-
-	flog_at(stderr, level, lexer->loc.pathname, lexer->loc.row, lexer->loc.col, format, ap);
-
-	va_end(ap);
-
-	const char *lbegin = lexer->pbuf - lexer->loc.col + 1;
-	const char *lend = strstr(lexer->pbuf, "\n");
-
-	if (lend == NULL) {
-		flog_line(stderr, lexer->loc.row, "%s", lbegin);
-	} else {
-		flog_line(stderr, lexer->loc.row, "%.*s", (int)(lend - lbegin), lbegin);
+			return lexer_c_next(lexer, token);
+		} break;
+		case '\0': {
+			lexer_c_set_token(lexer, token, T_EOF);
+		} break;
+		default: {
+			printf("%s:%zu:%zu: unexpected character: \""SV_FMT"\"\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col, 1, lexer->start);
+			
+			lexer->start = lexer->current;
+		
+			return lexer_c_next(lexer, token);
+		}
 	}
 
-	flog_ptr(stderr, lbegin, token->view.value, token->view.len); // TODO use sv_t
+	lexer->start = lexer->current;
+
+    return 0;
+}
+
+static int lexer_c_is_at_end(Lexer_C *lexer)
+{
+	return *lexer->current == '\0';
+}
+
+static char lexer_c_advance(Lexer_C *lexer)
+{
+	++lexer->loc.col;
+
+	return *(lexer->current++); // TODO test this
+}
+
+static char lexer_c_peek(Lexer_C *lexer, size_t n)
+{
+	return *(lexer->current + n);
+}
+
+static int lexer_c_match(Lexer_C *lexer, char expected)
+{
+	if (*lexer->current != expected) {
+		return -1;
+	}
+
+	lexer->current++;
+
+	return 0;
+}
+
+static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type)
+{
+	token->type = type;
+	token->view.value = lexer->start;
+	token->view.len = lexer->current - lexer->start;
 }

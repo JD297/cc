@@ -31,6 +31,10 @@ HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
 
 all: $(BUILDDIR)/$(TARGET) $(BUILDDIR)/cc_ir_test
 
+lex: $(BUILDDIR)/lexer_c.o lexer_test.c
+	$(CC) $(CFLAGS) -o $@ lexer_test.c $(BUILDDIR)/lexer_c.o
+	./lex
+
 $(BUILDDIR)/cc_ir_test: $(OBJFILES) $(BUILDDIR)/cc_ir_test.o
 	$(CC) -o $@ $(OBJFILES) $(BUILDDIR)/cc_ir_test.o $(LDFLAGS)
 
