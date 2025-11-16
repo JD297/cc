@@ -4,6 +4,8 @@
 #include "optimizer.h"
 #include "codegen.h"
 
+#include <assert.h>
+
 extern int optimizer_func_begin(IR_CTX *ctx, list_node_t *it);
 
 extern int optimizer_stack_allocation(IR_CTX *ctx, list_node_t *it);

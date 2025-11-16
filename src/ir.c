@@ -311,8 +311,6 @@ int ir_parameter_type_list(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
         if (node->token.type == T_TERNARY) {
@@ -324,8 +322,6 @@ int ir_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
         if (node->token.type == T_LOGICAL_OR) {
@@ -350,8 +346,6 @@ int ir_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_logical_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
         if (node->token.type == T_LOGICAL_AND) {
@@ -376,8 +370,6 @@ int ir_inclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_exclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
         if (node->token.type == T_BITWISE_XOR) {
@@ -389,8 +381,6 @@ int ir_exclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
         if (node->token.type == T_BITWISE_AND) {
@@ -402,8 +392,6 @@ int ir_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_equality_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
         if (node->token.type == T_EQUAL_TO) {
@@ -419,8 +407,6 @@ int ir_equality_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_relational_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
         if (node->token.type == T_GREATER_THAN) {
@@ -444,15 +430,13 @@ int ir_relational_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_shift_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
         
-        if (node->token.type == T_BITWISE_LEFTSHIFT) {
+        if (this_node->token.type == T_BITWISE_LEFTSHIFT) {
         	assert(0 && "TODO not implemented: with T_BITWISE_LEFTSHIFT");
         }
         
-        if (node->token.type == T_BITWISE_RIGHTSHIFT) {
+        if (this_node->token.type == T_BITWISE_RIGHTSHIFT) {
         	assert(0 && "TODO not implemented: with T_BITWISE_RIGHTSHIFT");
         }
         
@@ -461,49 +445,103 @@ int ir_shift_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_additive_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
+		if (this_node->num == 1) {
+			ParseTreeNode_C *node = this_node->elements[0];
 
-        ParseTreeNode_C *node = this_node->elements[0];
+			return ir_multiplicative_expression(ctx, node);
+		}
+
+        ParseTreeNode_C *right = this_node->elements[1];
         
-        if (node->token.type == T_PLUS_ASSIGN) {
-        	assert(0 && "TODO not implemented: with T_PLUS_ASSIGN");
+        if (ir_multiplicative_expression(ctx, right) != 0) {
+        	return -1;
         }
+		
+		IRCode *push = malloc(sizeof(IRCode));
+		*push = (IRCode) {
+			.op = IR_OC_PUSH,
+			// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), push);
+
+		ParseTreeNode_C *left = this_node->elements[0];
         
-        if (node->token.type == T_MINUS_ASSIGN) {
-        	assert(0 && "TODO not implemented: with T_MINUS_ASSIGN");
+        if (ir_multiplicative_expression(ctx, left) != 0) {
+        	return -1;
         }
-        
-        return ir_multiplicative_expression(ctx, node);
+		
+        IRCode *pop = malloc(sizeof(IRCode));
+		*pop = (IRCode) {
+			.op = IR_OC_POP,
+			// .result.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), pop);
+
+        switch (this_node->token.type) {
+        	case T_MINUS: {
+        		IRCode *sub = malloc(sizeof(IRCode));
+				*sub = (IRCode) {
+					.op = IR_OC_SUB,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), sub);
+
+        		return 0;
+    		}
+        	case T_PLUS: {
+	        	IRCode *add = malloc(sizeof(IRCode));
+				*add = (IRCode) {
+					.op = IR_OC_ADD,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), add);
+				
+        		return 0;
+        	}
+        	default:
+        		assert(0 && "not reachable");
+        }
 }
 
 int ir_multiplicative_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
-{
-        (void) ctx;
+{       
+        if (this_node->num == 1) {
+			ParseTreeNode_C *node = this_node->elements[0];
 
-        ParseTreeNode_C *node = this_node->elements[0];
+			return ir_cast_expression(ctx, node);
+		}
         
-        if (node->token.type == T_MULTIPLY_ASSIGN) {
-        	assert(0 && "TODO not implemented: with T_MULTIPLY_ASSIGN");
+        switch (this_node->token.type) {
+        	case T_MULTIPLY: {
+        		assert(0 && "TODO not implemented: with T_MULTIPLY");
+        	
+        		return 0;
+        	}
+        	case T_DIVIDE: {
+        		assert(0 && "TODO not implemented: with T_DIVIDE");
+        	
+        		return 0;
+        	}
+        	case T_MODULUS: {
+        		assert(0 && "TODO not implemented: with T_MODULUS");
+        	
+        		return 0;
+        	}
+        	default:
+        		assert(0 && "not reachable");
         }
-        
-        if (node->token.type == T_DIVIDE_ASSIGN) {
-        	assert(0 && "TODO not implemented: with T_DIVIDE_ASSIGN");
-        }
-        
-        if (node->token.type == T_MODULUS_ASSIGN) {
-        	assert(0 && "TODO not implemented: with T_MODULUS_ASSIGN");
-        }
-        
-        return ir_cast_expression(ctx, node);
 }
 
 int ir_cast_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
 
 		// TODO will happen because parser is buggy ??
+		// TODO this_node ??
 		if (node->token.type == T_OPEN_PARENT) {
         	assert(0 && "TODO not implemented: with T_OPEN_PARENT");
         }
@@ -513,11 +551,9 @@ int ir_cast_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
 
-		if (node->token.type != 0) {
+		if (node->token.type != 0) { // TODO this_node ??
         	assert(0 && "TODO not implemented: with ANY TOKEN");
         }
 
@@ -536,8 +572,6 @@ int ir_type_name(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_postfix_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
 
 		if (node->token.type != 0) {
@@ -559,8 +593,6 @@ int ir_unary_operator(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
         ParseTreeNode_C *node = this_node->elements[0];
 
 		switch (node->type) {
@@ -586,9 +618,7 @@ int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-
-		ParseTreeNode_C *node = this_node->elements[0];
+        ParseTreeNode_C *node = this_node->elements[0];
 		
 		switch (node->type) {
 			case PTT_C_CONDITIONAL_EXPRESSION: {
@@ -605,33 +635,19 @@ int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
         return 0;
 }
 
-sv_t temp_hack = {
-	.value = "t1",
-	.len = 2
-};
-
-sv_t *gentemp(void)
-{
-	return &temp_hack;
-}
-
 int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         switch (this_node->token.type) {
 			case T_NUMBER: {
-				symtbl_add_entry(ctx->symtbl, gentemp(), INT, CONST, &this_node->token.view);
-
-				/*IRCode *store_const = malloc(sizeof(IRCode));
-
-				assert(store_const != NULL);
-
-				*store_const = (IRCode) {
-					.op = IR_OC_STORE_CONST,
-					.result = const_entry
-				};
-
-				list_insert(ctx->code, list_end(ctx->code), store_const);*/
 				
+				IRCode *imm = malloc(sizeof(IRCode));
+				*imm = (IRCode) {
+					.op = IR_OC_IMM,
+					// .result.ptr = &r1, // TODO set a register probably R1 (return register)
+					.arg1.sv = &this_node->token.view
+				};
+				list_insert(ctx->code, list_end(ctx->code), imm);
+
 				return 0;
 			} break;
 			case T_CHARACTER: {
@@ -860,21 +876,6 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 					if (ir_expression(ctx, this_node->elements[0]) != 0) {
 						return -1;
 					}
-
-					IRCode *ret = malloc(sizeof(IRCode));
-
-					assert(ret != NULL);
-
-					SymTblEnt *ent = symtbl_get(ctx->symtbl, &temp_hack); // TODO HACK
-
-					*ret = (IRCode){
-						.op = IR_OC_RET,
-						.result.ptr = ent // TODO put in last tmp
-						
-						
-					};
-
-					list_insert(ctx->code, list_end(ctx->code), ret);
 				}
 			
 				IRCode *code = malloc(sizeof(IRCode));
@@ -887,7 +888,7 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				};
 
 				list_insert(ctx->code, list_end(ctx->code), code);
-				
+
 				return 0;
 			} break;
 			default: {

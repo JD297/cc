@@ -6,6 +6,7 @@
 
 #include <jd297/list.h>
 #include <jd297/lmap_sv.h>
+#include <jd297/sv.h>
 
 typedef struct {
 	list_t *code;
@@ -16,6 +17,11 @@ typedef struct {
 typedef enum {
 	IR_OC_FUNC_BEGIN,
 	IR_OC_FUNC_END,
+	IR_OC_IMM,
+	IR_OC_PUSH,
+	IR_OC_POP,
+	IR_OC_ADD,
+	IR_OC_SUB,
 	IR_OC_JMP_FUNC_END,
 	IR_OC_LABEL,
 	IR_OC_JMP,
@@ -30,6 +36,7 @@ typedef struct {
 	union {
 		SymTblEnt *ptr;
 		SymTblEnt stack;
+		sv_t *sv;
 	} arg1;
 	union {
 		SymTblEnt *ptr;
