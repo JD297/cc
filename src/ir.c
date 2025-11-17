@@ -465,9 +465,15 @@ int ir_additive_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 		list_insert(ctx->code, list_end(ctx->code), push);
 
 		ParseTreeNode_C *left = this_node->elements[0];
-        
-        if (ir_multiplicative_expression(ctx, left) != 0) {
-        	return -1;
+		
+		if (left->type == PTT_C_ADDITIVE_EXPRESSION) {
+			if (ir_additive_expression(ctx, left) != 0) {
+				return -1;
+			}
+		} else {
+		    if (ir_multiplicative_expression(ctx, left) != 0) {
+		    	return -1;
+		    }
         }
 		
         IRCode *pop = malloc(sizeof(IRCode));
