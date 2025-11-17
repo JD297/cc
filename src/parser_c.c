@@ -884,11 +884,9 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Parser_C_CTX *ctx)
 
         switch (this_node_token.type) {
             case T_LOGICAL_OR: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_LOGICAL_OR_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_LOGICAL_OR_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -988,11 +986,9 @@ ParseTreeNode_C *parser_c_parse_logical_and_expression(Parser_C_CTX *ctx)
 
         switch (this_node_token.type) {
             case T_LOGICAL_AND: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_LOGICAL_AND_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_LOGICAL_AND_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1061,11 +1057,9 @@ ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Parser_C_CTX *ctx)
 
         switch (this_node_token.type) {
             case T_BITWISE_OR: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_INCLUSIVE_OR_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_INCLUSIVE_OR_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1134,11 +1128,9 @@ ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Parser_C_CTX *ctx)
 
         switch (this_node_token.type) {
             case T_BITWISE_XOR: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_EXCLUSIVE_OR_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_EXCLUSIVE_OR_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1207,11 +1199,9 @@ ParseTreeNode_C *parser_c_parse_and_expression(Parser_C_CTX *ctx)
 
         switch (this_node_token.type) {
             case PTT_C_AND_EXPRESSION: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_AND_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_AND_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1282,11 +1272,9 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Parser_C_CTX *ctx)
         switch (this_node_token.type) {
             case T_EQUAL_TO:
             case T_NOT_EQUAL_TO: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_EQUALITY_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_EQUALITY_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1361,11 +1349,9 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Parser_C_CTX *ctx)
             case T_GREATER_THAN:
             case T_LESS_THAN_OR_EQUAL_TO:
             case T_GREATER_THAN_OR_EQUAL_TO: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_RELATIONAL_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_RELATIONAL_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1436,11 +1422,9 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Parser_C_CTX *ctx)
         switch (this_node_token.type) {
             case T_BITWISE_LEFTSHIFT:
             case T_BITWISE_RIGHTSHIFT: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_SHIFT_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_SHIFT_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1513,11 +1497,9 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Parser_C_CTX *ctx)
         switch (this_node_token.type) {
             case T_PLUS:
             case T_MINUS: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_ADDITIVE_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_ADDITIVE_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
@@ -1590,11 +1572,9 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Parser_C_CTX *ctx)
             case T_MULTIPLY:
             case T_DIVIDE:
             case T_MODULUS: {
-                this_node->token = this_node_token;
-
                 left_node = this_node;
 
-                this_node = parse_tree_node_c_create(PTT_C_MULTIPLICATIVE_EXPRESSION, NULL);
+                this_node = parse_tree_node_c_create(PTT_C_MULTIPLICATIVE_EXPRESSION, &this_node_token);
 
                 parse_tree_node_c_add(this_node, left_node);
 
