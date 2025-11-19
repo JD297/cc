@@ -274,7 +274,7 @@ char *produce_target_extension(char *input_file, const char *target_extension)
 			return NULL;
 		}
 
-		if (preprocessor_output != NULL) {
+		if (fileno(preprocessor_output) != 1) {
 			fclose(preprocessor_output);
 		}
 
