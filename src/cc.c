@@ -274,10 +274,6 @@ char *produce_target_extension(char *input_file, const char *target_extension)
 			return NULL;
 		}
 
-		if (fileno(preprocessor_output) != 1) {
-			fclose(preprocessor_output);
-		}
-
 		fclose(compiler_output);
 
 		if (strcmp(".s", target_extension) == 0) {

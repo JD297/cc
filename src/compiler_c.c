@@ -24,12 +24,12 @@ int compiler_c_run(Compiler_C *compiler)
 	off_t filesize = ftello(compiler->input);
 	char *src = (char *)mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
 
+	fclose(compiler->input);
+
 	if (src == MAP_FAILED) {
 		warn("error");
 		return -1;
 	}
-
-    fclose(compiler->input);
 
     Lexer_C lexer = {
         .buf = src,
