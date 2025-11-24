@@ -1,4 +1,2 @@
 build/*
 !build/.gitkeep
-
-src/token_type_skipable_lookup.h

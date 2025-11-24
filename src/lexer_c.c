@@ -2,6 +2,7 @@
 #include "token_type_c.h"
 #include "token_c.h"
 #include <jd297/sv.h>
+#include <jd297/lmap_sv.h>
 
 #include <assert.h>
 
@@ -19,6 +20,8 @@ static char lexer_c_peek(Lexer_C *lexer, size_t n);
 static int lexer_c_match(Lexer_C *lexer, char expected);
 
 static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type);
+
+static int lexer_c_isalnum(Lexer_C *lexer);
 
 void lexer_c_create(Lexer_C *lexer, const char *pathname, const char *source)
 {
@@ -72,7 +75,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			break;
 		case '#':
 			// TODO parse the line statement to manipulate the lexer->loc
-			lexer_c_set_token(lexer, token, T_PREPROCESSOR);
+			assert(0 && "TODO implement preprocessor");
 			break;
 		case '=':
 			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_EQUAL_TO : T_ASSIGNMENT);
@@ -95,6 +98,12 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
     	case '&':
         	lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_BITWISE_AND_ASSIGN : lexer_c_match(lexer, '&') == 0 ? T_LOGICAL_AND : T_BITWISE_AND);
         	break;
+    	case '+':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_PLUS_ASSIGN : lexer_c_match(lexer, '+') == 0 ? T_INCREMENT : T_PLUS);
+			break;
+		case '-':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_MINUS_ASSIGN : lexer_c_match(lexer, '-') == 0 ? T_DECREMENT : lexer_c_match(lexer, '>') == 0 ? T_ARROW : T_MINUS);
+			break;
 		case '<':
 			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_LESS_THAN_OR_EQUAL_TO : lexer_c_match(lexer, '<') == 0 ? lexer_c_match(lexer, '<') == 0 ? T_BITWISE_LEFTSHIFT_ASSIGN : T_BITWISE_LEFTSHIFT : T_LESS_THAN);
 			break;
@@ -170,7 +179,17 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
         case 's': case 't': case 'u': case 'v': case 'w': case 'x':
         case 'y': case 'z': 
         case '_': {
-        	assert(0 && "IDENTIFIER / KEYWORDS");
+        	while (lexer_c_isalnum(lexer) != 0) {
+        		lexer_c_advance(lexer);
+        	}
+        	
+        	lexer_c_set_token(lexer, token, T_IDENTIFIER);
+        	
+        	TokenType_C_LookupEntry *entry = lmap_sv_get(&token_type_c_lookup_keywords, &token->view);
+
+        	if (entry != NULL) {
+        		token->type = entry->type;
+        	}    	
         } break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9': {
@@ -218,7 +237,7 @@ static char lexer_c_advance(Lexer_C *lexer)
 {
 	++lexer->loc.col;
 
-	return *(lexer->current++); // TODO test this
+	return *(lexer->current++);
 }
 
 static char lexer_c_peek(Lexer_C *lexer, size_t n)
@@ -242,4 +261,25 @@ static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C 
 	token->type = type;
 	token->view.value = lexer->start;
 	token->view.len = lexer->current - lexer->start;
+}
+
+static int lexer_c_isalnum(Lexer_C *lexer)
+{
+	if (*lexer->current >= 'A' && *lexer->current <= 'Z') {
+		return 1;
+	}
+	
+	if (*lexer->current >= 'a' && *lexer->current <= 'z') {
+		return 1;
+	}
+
+	if (*lexer->current >= '0' && *lexer->current <= '9') {
+		return 1;
+	}
+
+	if (*lexer->current == '_') {
+		return 1;
+	}
+
+	return 0;
 }
