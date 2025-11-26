@@ -75,6 +75,8 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			break;
 		case '#':
 			// TODO parse the line statement to manipulate the lexer->loc
+			// TODO set preprocessor mode else normal mode ??
+			// TODO if in preprocessor mode return whitespace as tokens (exspecielly newlines, remember there are also escaped new lines in cpp mode) ??
 			assert(0 && "TODO implement preprocessor");
 			break;
 		case '=':
@@ -168,8 +170,12 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			lexer_c_set_token(lexer, token, T_DOT);
 		} break;
 	
+		case 'L':
+			if (lexer_c_peek(lexer, 0) == '\'') {
+				goto L_CHARACTER_CONSTANT;
+			}
 		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-        case 'G': case 'H': case 'I': case 'J': case 'K': case 'L':
+        case 'G': case 'H': case 'I': case 'J': case 'K': 
         case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
         case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
         case 'Y': case 'Z':
@@ -193,11 +199,136 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
         } break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9': {
-			// TOOD +- can follow a number to
 			// TODO . can be at first
+			// TODO integer or float constant type not just T_NUMBER
 			assert(0 && "NUMBER");
 			break;
 		}
+		L_CHARACTER_CONSTANT:
+			lexer_c_advance(lexer);
+		case '\'': {
+			const char *end;
+
+			for (end = lexer->current; *end != '\''; ++end) {
+				if (*end == '\n' || *end == '\0') {
+					printf("%s:%zu:%zu: error: missing terminating ' character\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+					
+					lexer->start = lexer->current = end;
+		
+					return lexer_c_next(lexer, token);
+				}
+			}
+
+			switch (lexer_c_advance(lexer)) {
+				case '\'': {
+					printf("%s:%zu:%zu: error: empty character constant\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+
+					lexer->start = lexer->current;
+			
+					return lexer_c_next(lexer, token);
+				}
+				case '\\': {
+					switch (lexer_c_advance(lexer)) {
+						case 'n': case 't': case 'v': case 'b':
+						case 'r': case 'f': case 'a': case '\\':
+						case '?': case '\'': case '\"': {
+							if (lexer_c_advance(lexer) != '\'') {
+								printf("%s:%zu:%zu: error: multi-character character constant\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+						
+								lexer->start = lexer->current = end + 1;
+						
+								return lexer_c_next(lexer, token);
+							}
+						} break;
+						case 'x': {
+							for (size_t i = 0; ; i++) {
+								switch (lexer_c_advance(lexer)) {
+									case '0': case '1': case '2': case '3': case '4':
+									case '5': case '6': case '7': case '8': case '9':
+									case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+									case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+										if (i >= 2) {
+											printf("%s:%zu:%zu: error: hex escape sequence out of range\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+
+											lexer->start = lexer->current = end + 1;
+											
+											return lexer_c_next(lexer, token);
+										}
+
+										continue;
+									default: {
+										printf("%s:%zu:%zu: error: \\x used with no following hex digits\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+							
+										lexer->start = lexer->current = end + 1;
+								
+										return lexer_c_next(lexer, token);
+									}
+									case '\'':
+										if (i == 0) {
+											printf("%s:%zu:%zu: error: \\x used with no following hex digits\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+
+											lexer->start = lexer->current = end + 1;
+											
+											return lexer_c_next(lexer, token);
+										}
+										
+										break;
+								}
+								
+								break;
+							}
+						} break;
+						case '0': case '1': case '2': case '3':
+						case '4': case '5': case '6': case '7': {
+							for (size_t i = 0; ; i++) {
+								switch (lexer_c_advance(lexer)) {
+									case '0': case '1': case '2': case '3':
+									case '4': case '5': case '6': case '7':
+										if (i >= 2) {
+											printf("%s:%zu:%zu: error: octal escape sequence out of range\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+
+											lexer->start = lexer->current = end + 1;
+											
+											return lexer_c_next(lexer, token);
+										}
+
+										continue;
+									default: {
+										printf("%s:%zu:%zu: error: octal escape sequence used with no following octal digits\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+							
+										lexer->start = lexer->current = end + 1;
+								
+										return lexer_c_next(lexer, token);
+									}
+									case '\'':
+										break;
+								}
+								
+								break;
+							}
+						} break;
+						default: {
+							printf("%s:%zu:%zu: error: unknown escape sequence\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+						
+							lexer->start = lexer->current = end + 1;
+					
+							return lexer_c_next(lexer, token);
+						}
+					}
+				} break;
+				default: {
+					if (lexer_c_advance(lexer) != '\'') {
+						printf("%s:%zu:%zu: error: multi-character character constant\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+						
+						lexer->start = lexer->current = end + 1;
+				
+						return lexer_c_next(lexer, token);
+					}
+				} break;
+			}
+			
+			lexer_c_set_token(lexer, token, T_CHARACTER);
+		} break;
 		case '\n': {
 			++lexer->loc.line;
 			lexer->loc.col = 0;
@@ -215,7 +346,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			lexer_c_set_token(lexer, token, T_EOF);
 		} break;
 		default: {
-			printf("%s:%zu:%zu: unexpected character: \""SV_FMT"\"\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col, 1, lexer->start);
+			printf("%s:%zu:%zu: error: unexpected character: \""SV_FMT"\"\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col, 1, lexer->start);
 			
 			lexer->start = lexer->current;
 		
