@@ -6,6 +6,7 @@
 
 #include <assert.h>
 
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -155,21 +156,23 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 		} break;
 		
 		case '.': {
-			if (lexer_c_peek(lexer, 0) == '.' && lexer_c_peek(lexer, 1) == '.') {
-				lexer->current += 2;
-				/* TODO maybe we could do a variadic match(n, '.', '.') ?? */
-				lexer_c_set_token(lexer, token, T_DOT_DOT_DOT);
+			switch (lexer_c_peek(lexer, 0)) {
+				case '0': case '1': case '2': case '3': case '4':
+				case '5': case '6': case '7': case '8': case '9':
+					goto L_FLOATING_CONSTANT;
+				case '.': {
+					if (lexer_c_peek(lexer, 1) == '.') {
+						lexer->current += 2;
 
-				break;
+						lexer_c_set_token(lexer, token, T_DOT_DOT_DOT);
+
+						break;
+					}
+				}
+				default:
+					lexer_c_set_token(lexer, token, T_DOT);
 			}
-			
-			// TODO check for a number:
-				// true: advance and fallthorugh to NUMBER
-				// false: set_token and break
-		
-			lexer_c_set_token(lexer, token, T_DOT);
 		} break;
-	
 		case 'L':
 			if (lexer_c_peek(lexer, 0) == '\'') {
 				goto L_CHARACTER_CONSTANT;
@@ -199,11 +202,46 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
         } break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9': {
-			// TODO . can be at first
-			// TODO integer or float constant type not just T_NUMBER
-			assert(0 && "NUMBER");
-			break;
-		}
+			char *endptr;
+			unsigned long int lu;
+			
+			errno = 0;
+			lu = strtoul(lexer->start, &endptr, 0);
+			
+			// TODO errno ERANGE
+			// TODO error: integer literal is too large to be represented in any integer type
+			
+			// TODO u U + l L => advance
+			// TODO error: invalid suffix 'ZZ' on integer constant
+
+			switch (*endptr) {
+				case 'f': case 'F':
+				case 'e': case 'E':
+				case '.':
+					goto L_FLOATING_CONSTANT;
+			}
+			
+			lexer->current = endptr;
+			token->literal.lu = lu;
+			lexer_c_set_token(lexer, token, T_INTEGER_CONSTANT);
+		} break;
+		L_FLOATING_CONSTANT: {
+			char *endptr;
+			long double Lf;
+			
+			errno = 0;
+			Lf = strtold(lexer->start, &endptr);
+			
+			// TODO errno ERANGE
+			//  warning: magnitude of floating-point constant too large for type 'double'
+			
+			// TODO F f | l L => advance
+			// TODO error: invalid suffix 'ZZ' on floating constant
+
+			lexer->current = endptr; // TODO advance location | check everywhere because it was probably forgoten sometimes !!
+			token->literal.Lf = Lf;
+			lexer_c_set_token(lexer, token, T_FLOATING_CONSTANT);
+		} break;
 		L_CHARACTER_CONSTANT:
 			lexer_c_advance(lexer);
 		case '\'': {
@@ -327,7 +365,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 				} break;
 			}
 			
-			lexer_c_set_token(lexer, token, T_CHARACTER);
+			lexer_c_set_token(lexer, token, T_CHARACTER_CONSTANT);
 		} break;
 		case '\n': {
 			++lexer->loc.line;

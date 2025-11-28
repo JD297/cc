@@ -124,9 +124,10 @@ typedef enum TokenType_C {
     T_WHITESPACE,
 
     /* TOKENS */
-    T_NUMBER,
+    T_INTEGER_CONSTANT,
+    T_FLOATING_CONSTANT,
     T_STRING,
-    T_CHARACTER,
+    T_CHARACTER_CONSTANT,
     T_IDENTIFIER,
 
     T_EOF,
