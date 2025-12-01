@@ -173,10 +173,15 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 					lexer_c_set_token(lexer, token, T_DOT);
 			}
 		} break;
-		case 'L':
+		case 'L': {
 			if (lexer_c_peek(lexer, 0) == '\'') {
 				goto L_CHARACTER_CONSTANT;
 			}
+
+			if (lexer_c_peek(lexer, 0) == '\"') {
+				goto L_STRING_LITERAL;
+			}
+		}
 		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
         case 'G': case 'H': case 'I': case 'J': case 'K': 
         case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
@@ -366,6 +371,27 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			}
 			
 			lexer_c_set_token(lexer, token, T_CHARACTER_CONSTANT);
+		} break;
+		L_STRING_LITERAL:
+			lexer_c_advance(lexer);
+		case '\"': {
+			char c;
+
+			while ((c = lexer_c_advance(lexer)) != '\"') {
+				if (c == '\\') {
+					c = lexer_c_advance(lexer);
+				}
+
+				if (c == '\n' || c == '\0') {
+					printf("%s:%zu:%zu: error: missing terminating \" character\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+					
+					lexer->start = lexer->current;
+		
+					return lexer_c_next(lexer, token);
+				}
+			}
+
+			lexer_c_set_token(lexer, token, T_STRING);
 		} break;
 		case '\n': {
 			++lexer->loc.line;

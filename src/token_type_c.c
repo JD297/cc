@@ -97,10 +97,10 @@ const char *token_type_c_pattern(const TokenType_C type)
 {
     switch (type) {
         //case T_IDENTIFIER: return "^[_a-zA-Z][_a-zA-Z0-9]*";
-        case T_STRING: return "^\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"";
+        //case T_STRING: return "^\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"";
         case T_MACRO_INCLUDE_FILE: return "^<[^>]+>";
         //case T_CHARACTER: return "^'[^']{1}'";
-        case T_NUMBER: return "^(0[xX][0-9a-fA-F]+|[-+]?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?)";
+        //case T_NUMBER: return "^(0[xX][0-9a-fA-F]+|[-+]?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?)";
         //case T_COMMENT_LINE: return "^//[^\n]*";
         //case T_COMMENT_MULTILINE: return "^/\\*([^*]|[[:space:]]|(\\*+([^*/]|[[:space:]])))*\\*+/";
         //case T_OPEN_BRACKET: return "^^\\[";
