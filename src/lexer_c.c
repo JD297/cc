@@ -250,6 +250,13 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 		L_CHARACTER_CONSTANT:
 			lexer_c_advance(lexer);
 		case '\'': {
+			enum {
+				C_LIT_CHAR,
+				C_LIT_ESC,
+				C_LIT_HEX,
+				C_LIT_OCT
+			} type = C_LIT_CHAR;
+		
 			const char *end;
 
 			for (end = lexer->current; *end != '\''; ++end) {
@@ -282,6 +289,8 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 						
 								return lexer_c_next(lexer, token);
 							}
+							
+							type = C_LIT_ESC;
 						} break;
 						case 'x': {
 							for (size_t i = 0; ; i++) {
@@ -317,7 +326,9 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 										
 										break;
 								}
-								
+
+								type = C_LIT_HEX;
+
 								break;
 							}
 						} break;
@@ -346,7 +357,9 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 									case '\'':
 										break;
 								}
-								
+
+								type = C_LIT_OCT;
+
 								break;
 							}
 						} break;
@@ -370,6 +383,38 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 				} break;
 			}
 			
+			switch (type) {
+				case C_LIT_CHAR: {
+					token->literal.d = *(lexer->current - 2);
+				} break;
+				case C_LIT_ESC: {
+					switch (*(lexer->current - 2)) {
+						case 'n':  token->literal.d = '\n'; break;
+						case 't':  token->literal.d = '\t'; break;
+						case 'v':  token->literal.d = '\v'; break;
+						case 'b':  token->literal.d = '\b'; break;
+						case 'r':  token->literal.d = '\r'; break;
+						case 'f':  token->literal.d = '\f'; break;
+						case 'a':  token->literal.d = '\a'; break;
+						case '\\': token->literal.d = '\\'; break;
+						case '?':  token->literal.d = '\?'; break;
+						case '\'': token->literal.d = '\''; break;
+						case '\"': token->literal.d = '\"'; break;
+					}
+				} break;
+				case C_LIT_HEX: {
+					char *endptr;
+
+					token->literal.lu = strtoul(lexer->start + 3, &endptr, 16);
+				} break;
+				case C_LIT_OCT: {
+					char *endptr;
+
+					token->literal.lu = strtoul(lexer->start + 2, &endptr, 8);
+				} break;
+				default: assert(0 && "NOT REACHABLE");
+			}
+
 			lexer_c_set_token(lexer, token, T_CHARACTER_CONSTANT);
 		} break;
 		L_STRING_LITERAL:

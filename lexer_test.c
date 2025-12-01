@@ -8,7 +8,7 @@
 
 int main(void)
 {
-	const char *input = "int i = 1.089e-3;";
+	const char *input = "\'A\' \'\\x10\' \'\\777\' \'\\n\' 900 0xF0 0777";
 
 	Lexer_C lexer;
 	Token_C token;
