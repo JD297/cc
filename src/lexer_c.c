@@ -24,7 +24,7 @@ static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C 
 
 static int lexer_c_isalnum(Lexer_C *lexer);
 
-void lexer_c_create(Lexer_C *lexer, const char *pathname, const char *source)
+void lexer_c_create(Lexer_C *lexer, sv_t pathname, const char *source, Lexer_Mode_C mode)
 {
 	*lexer = (Lexer_C) {
 		.start = source,
@@ -33,11 +33,12 @@ void lexer_c_create(Lexer_C *lexer, const char *pathname, const char *source)
 			.pathname = pathname,
 			.line = 1,
 			.col = 0
-		}
+		},
+		.mode = mode
 	};
 }
 
-int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? easy equalty checks
+TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 {
 	switch (lexer_c_advance(lexer))
 	{
@@ -74,12 +75,59 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 		case '?':
 			lexer_c_set_token(lexer, token, T_TERNARY);
 			break;
-		case '#':
-			// TODO parse the line statement to manipulate the lexer->loc
-			// TODO set preprocessor mode else normal mode ??
-			// TODO if in preprocessor mode return whitespace as tokens (exspecielly newlines, remember there are also escaped new lines in cpp mode) ??
-			assert(0 && "TODO implement preprocessor");
-			break;
+		case '#': {
+			if (lexer->mode == LEXER_MODE_PREPROCESSOR) {
+				assert(0 && "TODO: SKIP WS, try parse macro identifier");
+			}
+			
+			lexer->mode = LEXER_MODE_PREPROCESSOR;
+
+			lexer->start = lexer->current;
+
+			if (lexer_c_next(lexer, token) != T_INTEGER_CONSTANT) {
+				assert(0 && "TODO: error: invalid preprocessing directive");
+			}
+			
+			size_t line = token->literal.lu;
+
+			if (lexer_c_next(lexer, token) != T_STRING) {
+				if (token->type != T_WS_NL) {
+					/*
+					 * TODO SKIP EOL / EOF
+					 * TODO lexer->mode = LEXER_MODE_NORMAL;
+					 * TODO return lexer_c_next(lexer, token);
+					 */
+					assert(0 && "TODO: error: invalid filename for line marker directive");
+				}
+				
+				assert(0 && "TODO: warning: this style of line directive is a GNU extension");
+			}
+			
+			sv_t pathname = token->literal.sv;
+
+			while (1) {
+				lexer_c_next(lexer, token);
+				
+				if (token->type == T_WS_NL) {
+					break;
+				}
+				
+				if (token->type == T_EOF) {
+					lexer->mode = LEXER_MODE_NORMAL;
+					lexer_c_set_token(lexer, token, T_EOF);
+					break;
+				}
+			}
+
+			lexer->mode = LEXER_MODE_NORMAL;
+
+			lexer->loc.pathname = pathname;
+			
+			lexer->loc.line = line;
+			lexer->loc.col = 0;
+
+			return lexer_c_next(lexer, token);
+		} break;
 		case '=':
 			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_EQUAL_TO : T_ASSIGNMENT);
 			break;
@@ -114,7 +162,6 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_GREATER_THAN_OR_EQUAL_TO : lexer_c_match(lexer, '>') == 0 ? lexer_c_match(lexer, '>') == 0 ? T_BITWISE_RIGHTSHIFT_ASSIGN : T_BITWISE_RIGHTSHIFT : T_GREATER_THAN);
 			break;
 		case '/': {
-
 			if (lexer_c_match(lexer, '/') == 0) {
 				while (lexer_c_peek(lexer, 0) != '\n' && !lexer_c_is_at_end(lexer)) {
 					lexer_c_advance(lexer);
@@ -124,7 +171,6 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			}
 
 			if (lexer_c_match(lexer, '*') == 0) {
-				
 				while (1) {
 					if (lexer_c_peek(lexer, 0) == '*' && lexer_c_peek(lexer, 1) == '/') {
 						lexer_c_advance(lexer);
@@ -136,7 +182,11 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 					}
 
 					if (lexer_c_is_at_end(lexer)) {
-						assert(0 && "NOT MULTILNE COMMENT NOT TERMINATED TODO:");	
+						printf(SV_FMT":%zu:%zu: error: unterminated /* comment\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+
+						lexer->start = lexer->current;
+						lexer_c_set_token(lexer, token, T_EOF);
+						return T_EOF;
 					}
 					
 					if (lexer_c_peek(lexer, 0) == '\n') {
@@ -261,7 +311,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 
 			for (end = lexer->current; *end != '\''; ++end) {
 				if (*end == '\n' || *end == '\0') {
-					printf("%s:%zu:%zu: error: missing terminating ' character\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+					printf(SV_FMT":%zu:%zu: error: missing terminating ' character\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 					
 					lexer->start = lexer->current = end;
 		
@@ -271,7 +321,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 
 			switch (lexer_c_advance(lexer)) {
 				case '\'': {
-					printf("%s:%zu:%zu: error: empty character constant\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+					printf(SV_FMT":%zu:%zu: error: empty character constant\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 
 					lexer->start = lexer->current;
 			
@@ -283,7 +333,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 						case 'r': case 'f': case 'a': case '\\':
 						case '?': case '\'': case '\"': {
 							if (lexer_c_advance(lexer) != '\'') {
-								printf("%s:%zu:%zu: error: multi-character character constant\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+								printf(SV_FMT":%zu:%zu: error: multi-character character constant\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 						
 								lexer->start = lexer->current = end + 1;
 						
@@ -300,7 +350,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 									case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 									case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
 										if (i >= 2) {
-											printf("%s:%zu:%zu: error: hex escape sequence out of range\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+											printf(SV_FMT":%zu:%zu: error: hex escape sequence out of range\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 
 											lexer->start = lexer->current = end + 1;
 											
@@ -309,7 +359,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 
 										continue;
 									default: {
-										printf("%s:%zu:%zu: error: \\x used with no following hex digits\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+										printf(SV_FMT":%zu:%zu: error: \\x used with no following hex digits\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 							
 										lexer->start = lexer->current = end + 1;
 								
@@ -317,7 +367,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 									}
 									case '\'':
 										if (i == 0) {
-											printf("%s:%zu:%zu: error: \\x used with no following hex digits\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+											printf(SV_FMT":%zu:%zu: error: \\x used with no following hex digits\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 
 											lexer->start = lexer->current = end + 1;
 											
@@ -339,7 +389,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 									case '0': case '1': case '2': case '3':
 									case '4': case '5': case '6': case '7':
 										if (i >= 2) {
-											printf("%s:%zu:%zu: error: octal escape sequence out of range\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+											printf(SV_FMT":%zu:%zu: error: octal escape sequence out of range\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 
 											lexer->start = lexer->current = end + 1;
 											
@@ -348,7 +398,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 
 										continue;
 									default: {
-										printf("%s:%zu:%zu: error: octal escape sequence used with no following octal digits\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+										printf(SV_FMT":%zu:%zu: error: octal escape sequence used with no following octal digits\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 							
 										lexer->start = lexer->current = end + 1;
 								
@@ -364,7 +414,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 							}
 						} break;
 						default: {
-							printf("%s:%zu:%zu: error: unknown escape sequence\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+							printf(SV_FMT":%zu:%zu: error: unknown escape sequence\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 						
 							lexer->start = lexer->current = end + 1;
 					
@@ -374,7 +424,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 				} break;
 				default: {
 					if (lexer_c_advance(lexer) != '\'') {
-						printf("%s:%zu:%zu: error: multi-character character constant\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+						printf(SV_FMT":%zu:%zu: error: multi-character character constant\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 						
 						lexer->start = lexer->current = end + 1;
 				
@@ -428,7 +478,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 				}
 
 				if (c == '\n' || c == '\0') {
-					printf("%s:%zu:%zu: error: missing terminating \" character\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col);
+					printf(SV_FMT":%zu:%zu: error: missing terminating \" character\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 					
 					lexer->start = lexer->current;
 		
@@ -437,10 +487,20 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			}
 
 			lexer_c_set_token(lexer, token, T_STRING);
+			
+			token->literal.sv = (sv_t) {
+				.value = token->view.value + 1,
+				.len = token->view.len - 2
+			};
 		} break;
 		case '\n': {
 			++lexer->loc.line;
 			lexer->loc.col = 0;
+
+			if (lexer->mode == LEXER_MODE_PREPROCESSOR) {
+				lexer_c_set_token(lexer, token, T_WS_NL);
+				break;
+			}			
 
 			lexer->start = lexer->current;
 
@@ -455,7 +515,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 			lexer_c_set_token(lexer, token, T_EOF);
 		} break;
 		default: {
-			printf("%s:%zu:%zu: error: unexpected character: \""SV_FMT"\"\n", lexer->loc.pathname, lexer->loc.line, lexer->loc.col, 1, lexer->start);
+			printf(SV_FMT":%zu:%zu: error: unexpected character: \""SV_FMT"\"\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col, 1, lexer->start);
 			
 			lexer->start = lexer->current;
 		
@@ -465,7 +525,7 @@ int lexer_c_next(Lexer_C *lexer, Token_C *token) // return type TokenType ?? eas
 
 	lexer->start = lexer->current;
 
-    return 0;
+    return token->type;
 }
 
 static int lexer_c_is_at_end(Lexer_C *lexer)

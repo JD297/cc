@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include "lexer_c.h"
 #include "token_c.h"
@@ -6,18 +9,25 @@
 
 #include <jd297/sv.h>
 
-int main(void)
+int main(int argc, char **argv)
 {
-	const char *input = "/*# 42 \"<inline-cpp>\"\n\'A\' \'\\x10\' \'\\777\' \'\\n\' 900 0xF0 0777";
+	if (argc == 1) {
+		return 1;
+	}
+	
+	int fd = open(argv[1], O_RDONLY);
+	
+	struct stat sb;
+	stat(argv[1], &sb);
+	
+	char *input = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE | MAP_FILE, fd, 0);
 
 	Lexer_C lexer;
 	Token_C token;
 
-	printf("input: \"%s\"\n", input);
-
 	token_type_c_create_lookups();
 
-	lexer_c_create(&lexer, sv_from_cstr("<inline>"), input, LEXER_MODE_NORMAL);
+	lexer_c_create(&lexer, sv_from_cstr(argv[1]), input, LEXER_MODE_NORMAL);
 
 	do {
 		lexer_c_next(&lexer, &token);
@@ -34,6 +44,8 @@ int main(void)
 		
 		printf("\n");
 	} while (token.type != T_EOF);
+
+	munmap(input, sb.st_size);
 
 	return 0;
 }

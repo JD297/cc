@@ -33,7 +33,11 @@ all: $(BUILDDIR)/$(TARGET) $(BUILDDIR)/cc_ir_test
 
 lex: lexer_test.c $(BUILDDIR)/lexer_c.o $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/vector.o $(BUILDDIR)/token_type_c.o
 	$(CC) $(CFLAGS) -o $@ lexer_test.c $(BUILDDIR)/lexer_c.o $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/vector.o $(BUILDDIR)/token_type_c.o
-	./lex
+	./$@ /home/jan/src/cfuzz/large.c
+	
+lex_large: lexer_test_large.c $(BUILDDIR)/lexer_c.o $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/vector.o $(BUILDDIR)/token_type_c.o
+	$(CC) $(CFLAGS) -o $@ lexer_test_large.c $(BUILDDIR)/lexer_c.o $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/vector.o $(BUILDDIR)/token_type_c.o
+	./$@
 
 $(BUILDDIR)/cc_ir_test: $(OBJFILES) $(BUILDDIR)/cc_ir_test.o
 	$(CC) -o $@ $(OBJFILES) $(BUILDDIR)/cc_ir_test.o $(LDFLAGS)

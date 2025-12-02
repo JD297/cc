@@ -122,6 +122,7 @@ typedef enum TokenType_C {
 
     /* WHITESPACE */
     T_WHITESPACE,
+    T_WS_NL,
 
     /* TOKENS */
     T_INTEGER_CONSTANT,

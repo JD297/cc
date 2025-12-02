@@ -19,6 +19,7 @@ typedef struct {
     	float f;
     	double lf;
     	long double Lf;
+    	sv_t sv;
     } literal;
 } Token_C;
 
