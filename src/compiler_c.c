@@ -31,15 +31,8 @@ int compiler_c_run(Compiler_C *compiler)
 		return -1;
 	}
 
-    Lexer_C lexer = {
-        .buf = src,
-        .pbuf = src,
-        .loc = {
-            .pathname = "",
-            .row = 1,
-            .col = 1
-        }
-    };
+    Lexer_C lexer;
+	lexer_c_create(&lexer, sv_from_cstr(""), src, LEXER_MODE_NORMAL);
     
     SymTbl *symtbl_root = symtbl_create(NULL, NULL);
 

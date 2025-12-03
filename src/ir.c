@@ -644,7 +644,7 @@ int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         switch (this_node->token.type) {
-			case T_NUMBER: {
+			case T_INTEGER_CONSTANT: {
 				
 				IRCode *imm = malloc(sizeof(IRCode));
 				*imm = (IRCode) {
@@ -656,12 +656,12 @@ int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 				return 0;
 			} break;
-			case T_CHARACTER: {
-				assert(0 && "TODO not implemented: T_CHARACTER");
+			case T_FLOATING_CONSTANT: {
+				assert(0 && "TODO not implemented: T_FLOATING_CONSTANT");
 			} break;
-			/*case PTT_C_FLOATING_CONSTANT: { // TODO also T_NUMBER ??
-				assert(0 && "TODO not implemented: PTT_C_FLOATING_CONSTANT");
-			} break;*/
+			case T_CHARACTER_CONSTANT: {
+				assert(0 && "TODO not implemented: T_CHARACTER_CONSTANT");
+			} break;
 			case T_IDENTIFIER: {
 				assert(0 && "TODO not implemented: PTT_C_ENUMERATION_CONSTANT");
 			} break;

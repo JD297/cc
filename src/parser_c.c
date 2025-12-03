@@ -114,13 +114,15 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C_CTX *ctx)
     ParseTreeNode_C *declaration_specifier;
     ParseTreeNode_C *init_declarator;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_list_required(ctx, this_node, declaration_specifier, error);
 
     parser_c_parse_list_opt(ctx, this_node, init_declarator);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_SEMICOLON) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
         goto error;
     }
 
@@ -196,9 +198,11 @@ ParseTreeNode_C *parser_c_parse_compound_statement(Parser_C_CTX *ctx)
     ParseTreeNode_C *declaration;
     ParseTreeNode_C *statement;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_BRACE) {
         goto error;
     }
     
@@ -212,7 +216,7 @@ ParseTreeNode_C *parser_c_parse_compound_statement(Parser_C_CTX *ctx)
     
     parser_c_parse_list_opt(ctx, this_node, statement);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACE) {
         goto error;
     }
 
@@ -233,11 +237,7 @@ ParseTreeNode_C *parser_c_parse_storage_class_specifier(Parser_C_CTX *ctx)
 
     Token_C token_storage_class_specifier;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_storage_class_specifier) == -1) {
-        goto error;
-    }
-
-    switch (token_storage_class_specifier.type) {
+    switch (lexer_c_next(ctx->lexer, &token_storage_class_specifier)) {
         case T_AUTO:
         case T_REGISTER:
         case T_STATIC:
@@ -245,13 +245,11 @@ ParseTreeNode_C *parser_c_parse_storage_class_specifier(Parser_C_CTX *ctx)
         case T_TYPEDEF: {
             return parse_tree_node_c_create(PTT_C_STORAGE_CLASS_SPECIFIER, &token_storage_class_specifier);
         }
-        default: break;
-    }
+        default: {
+		    *ctx->lexer = lexer_saved;
 
-    error: {
-        *ctx->lexer = lexer_saved;
-
-        return NULL;
+		    return NULL;
+		}
     }
 }
 
@@ -263,11 +261,7 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C_CTX *ctx)
 
     Token_C token_type_specifier;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_type_specifier) == -1) {
-        goto error;
-    }
-
-    switch (token_type_specifier.type) {
+    switch (lexer_c_next(ctx->lexer, &token_type_specifier)) {
         case T_VOID:
         case T_CHAR:
         case T_SHORT:
@@ -296,13 +290,11 @@ ParseTreeNode_C *parser_c_parse_type_specifier(Parser_C_CTX *ctx)
 
     parser_c_parse_opt(ctx, this_node, typedef_name, ret); // TODO add symtbl ??
 
-    error: {
-        *ctx->lexer = lexer_saved;
+    *ctx->lexer = lexer_saved;
 
-        parse_tree_node_c_destroy(this_node);
+    parse_tree_node_c_destroy(this_node);
 
-        return NULL;
-    }
+    return NULL;
 
     ret: {
         return this_node;
@@ -314,12 +306,8 @@ ParseTreeNode_C *parser_c_parse_type_qualifier(Parser_C_CTX *ctx)
     Lexer_C lexer_saved = *ctx->lexer;
 
     Token_C token_type_qualifier;
-    
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_type_qualifier) == -1) {
-        return NULL;
-    }
 
-    switch (token_type_qualifier.type) {
+    switch (lexer_c_next(ctx->lexer, &token_type_qualifier)) {
         case T_CONST:
         case T_VOLATILE: {
             return parse_tree_node_c_create(PTT_C_TYPE_QUALIFIER, &token_type_qualifier);
@@ -340,26 +328,28 @@ ParseTreeNode_C *parser_c_parse_struct_or_union_specifier(Parser_C_CTX *ctx)
     ParseTreeNode_C *identifier;
     ParseTreeNode_C *struct_declaration;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_required(ctx, this_node, struct_or_union, error);
 
     parser_c_parse_opt(ctx, this_node, identifier, has_identifier);
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_BRACE) {
         goto error;
     }
 
     parser_c_parse_list_required(ctx, this_node, struct_declaration, error);
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACE) {
         goto error;
     }
 
     has_identifier: {
         Lexer_C lexer_saved_brace = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_BRACE) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_BRACE) {
             *ctx->lexer = lexer_saved_brace;
 
             goto ret;
@@ -367,7 +357,7 @@ ParseTreeNode_C *parser_c_parse_struct_or_union_specifier(Parser_C_CTX *ctx)
         
         parser_c_parse_list_required(ctx, this_node, struct_declaration, error);
     
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACE) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACE) {
             goto error;
         }
     }
@@ -390,15 +380,13 @@ ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C_CTX *ctx)
     ParseTreeNode_C *identifier;
     ParseTreeNode_C *enumerator;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
     
     Token_C token_enum;
-    
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_enum) == -1) {
-        return NULL;
-    }
-    
-    if (token_enum.type == T_STRUCT) {
+
+    if (lexer_c_next(ctx->lexer, &token_enum) != T_ENUM) {
         *ctx->lexer = lexer_saved;
 
         return NULL;
@@ -408,13 +396,13 @@ ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C_CTX *ctx)
 
     parser_c_parse_opt(ctx, this_node, identifier, has_identifier);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_BRACE) {
         goto error;
     }
     
     parser_c_parse_list_required(ctx, this_node, enumerator, error);
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACE) {
         goto error;
     }
     
@@ -423,7 +411,7 @@ ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C_CTX *ctx)
     has_identifier: {
         Lexer_C lexer_saved_brace = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_BRACE) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_BRACE) {
             *ctx->lexer = lexer_saved_brace;
 
             goto ret;
@@ -431,7 +419,7 @@ ParseTreeNode_C *parser_c_parse_enum_specifier(Parser_C_CTX *ctx)
         
         parser_c_parse_list_required(ctx, this_node, enumerator, error);
     
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACE) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACE) {
             goto error;
         }
     }
@@ -474,11 +462,7 @@ ParseTreeNode_C *parser_c_parse_struct_or_union(Parser_C_CTX *ctx)
 
     Token_C token_struct_or_union;
     
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_struct_or_union) == -1) {
-        return NULL;
-    }
-
-    switch (token_struct_or_union.type) {
+    switch (lexer_c_next(ctx->lexer, &token_struct_or_union)) {
         case T_STRUCT:
         case T_UNION: {
             return parse_tree_node_c_create(PTT_C_STRUCT_OR_UNION, &token_struct_or_union);
@@ -497,11 +481,7 @@ ParseTreeNode_C *parser_c_parse_identifier(Parser_C_CTX *ctx)
 
     Token_C token_identifier;
     
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_identifier) == -1) {
-        return NULL;
-    }
-
-    if (token_identifier.type == T_IDENTIFIER) {
+    if (lexer_c_next(ctx->lexer, &token_identifier) == T_IDENTIFIER) {
         return parse_tree_node_c_create(PTT_C_IDENTIFIER, &token_identifier);
     }
 
@@ -514,20 +494,24 @@ ParseTreeNode_C *parser_c_parse_struct_declaration(Parser_C_CTX *ctx)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATION, NULL);
 
+	Token_C tmp;
+
     ParseTreeNode_C *specifier_qualifier;
     ParseTreeNode_C *struct_declarator;
+
+	Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_list_required(ctx, this_node, specifier_qualifier, error);
 
     parser_c_parse_list_required(ctx, this_node, struct_declarator, error);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_SEMICOLON) == 0) {
-        goto error;
+    if (lexer_c_next(ctx->lexer, &tmp) == T_SEMICOLON) {
+        return this_node;
     }
 
-    return this_node;
-
     error: {
+    	*ctx->lexer = lexer_saved;
+
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
@@ -558,6 +542,8 @@ ParseTreeNode_C *parser_c_parse_struct_declarator_list(Parser_C_CTX *ctx)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATOR_LIST, NULL);
 
+	Token_C tmp;
+
     ParseTreeNode_C *struct_declarator;
     
     Lexer_C lexer_saved = *ctx->lexer;
@@ -567,7 +553,7 @@ ParseTreeNode_C *parser_c_parse_struct_declarator_list(Parser_C_CTX *ctx)
         
         Lexer_C lexer_saved_comma = *ctx->lexer;
         
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COMMA) == 1) {
+        if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
             goto next_struct_declarator;
         }
         
@@ -595,6 +581,8 @@ ParseTreeNode_C *parser_c_parse_struct_declarator(Parser_C_CTX *ctx)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_STRUCT_DECLARATOR, NULL);
 
+	Token_C tmp;
+
     ParseTreeNode_C *declarator;
     ParseTreeNode_C *constant_expression;
     
@@ -602,7 +590,7 @@ ParseTreeNode_C *parser_c_parse_struct_declarator(Parser_C_CTX *ctx)
     
     parser_c_parse_opt(ctx, this_node, declarator, has_declarator);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COLON) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_COLON) {
         goto error;
     }
     
@@ -613,7 +601,7 @@ ParseTreeNode_C *parser_c_parse_struct_declarator(Parser_C_CTX *ctx)
     has_declarator: {
         Lexer_C lexer_saved_colon = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COLON) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_COLON) {
             *ctx->lexer = lexer_saved_colon;
 
             goto ret;
@@ -656,12 +644,14 @@ ParseTreeNode_C *parser_c_parse_pointer(Parser_C_CTX *ctx)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_POINTER, NULL);
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     ParseTreeNode_C *type_qualifier;
     ParseTreeNode_C *pointer;
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_MULTIPLY) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_MULTIPLY) {
         goto error;
     }
     
@@ -686,6 +676,8 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C_CTX *ctx)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DIRECT_DECLARATOR, NULL);
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     ParseTreeNode_C *identifier;
@@ -695,13 +687,13 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C_CTX *ctx)
     
     parser_c_parse_opt(ctx, this_node, identifier, after_direct_declarator);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_PARENT) {
         goto error;
     }
     
     parser_c_parse_required(ctx, this_node, declarator, error);
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
         goto error;
     }
 
@@ -710,11 +702,7 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C_CTX *ctx)
 
         Token_C token_after_direct_declarator;
         
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &token_after_direct_declarator) == -1) {
-            goto error;
-        }
-
-        switch(token_after_direct_declarator.type) {
+        switch(lexer_c_next(ctx->lexer, &token_after_direct_declarator)) {
             case T_OPEN_PARENT: {
                 parser_c_parse_required(ctx, this_node, parameter_type_list, next_after_direct_declarator_check_identifier_list);
                 
@@ -724,7 +712,7 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C_CTX *ctx)
                     parser_c_parse_list_opt(ctx, this_node, identifier);
 
                     next_after_direct_declarator_parent: {
-                        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+                        if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
                             goto error;
                         }
                     }
@@ -737,7 +725,7 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C_CTX *ctx)
                 
                 next_after_direct_declarator_bracket:
 
-                if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACKET) == 0) {
+                if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACKET) {
                     goto error;
                 }
                 
@@ -772,16 +760,18 @@ ParseTreeNode_C *parser_c_parse_parameter_type_list(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *parameter_list;
     
+    Token_C tmp;
+    
     Lexer_C lexer_saved = *ctx->lexer;
     
     parser_c_parse_required(ctx, this_node, parameter_list, error); // TODO add symtbl
 
     Lexer_C lexer_saved_comma = *ctx->lexer;
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COMMA) == 1) {
+    if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
         Token_C token_dot_dot_dot;
     
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, &token_dot_dot_dot, T_DOT_DOT_DOT) == 0) {
+        if (lexer_c_next(ctx->lexer, &token_dot_dot_dot) != T_DOT_DOT_DOT) {
             goto error;
         }
         
@@ -809,13 +799,15 @@ ParseTreeNode_C *parser_c_parse_conditional_expression(Parser_C_CTX *ctx)
     ParseTreeNode_C *expression;
     ParseTreeNode_C *conditional_expression;
     
+    Token_C tmp;
+    
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_required(ctx, this_node, logical_or_expression, error);
 
     Lexer_C lexer_saved_ternary = *ctx->lexer;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_TERNARY) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_TERNARY) {
         *ctx->lexer = lexer_saved_ternary;
 
         goto ret;
@@ -823,7 +815,7 @@ ParseTreeNode_C *parser_c_parse_conditional_expression(Parser_C_CTX *ctx)
 
     parser_c_parse_required(ctx, this_node, expression, error);
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_TERNARY) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_TERNARY) {
         goto error;
     }
     
@@ -858,11 +850,7 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Parser_C_CTX *ctx)
     
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_LOGICAL_OR: {
             parser_c_parse_required(ctx, this_node, logical_and_expression, error);
 
@@ -878,11 +866,7 @@ ParseTreeNode_C *parser_c_parse_logical_or_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_LOGICAL_OR: {
                 left_node = this_node;
 
@@ -919,6 +903,8 @@ ParseTreeNode_C *parser_c_parse_expression(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *assignment_expression;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     next_assignment_expression: {
@@ -926,7 +912,7 @@ ParseTreeNode_C *parser_c_parse_expression(Parser_C_CTX *ctx)
 
         Lexer_C lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COMMA) == 1) {
+        if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
             goto next_assignment_expression;
         }
         
@@ -960,11 +946,7 @@ ParseTreeNode_C *parser_c_parse_logical_and_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_LOGICAL_AND: {
             parser_c_parse_required(ctx, this_node, inclusive_or_expression, error);
 
@@ -980,11 +962,7 @@ ParseTreeNode_C *parser_c_parse_logical_and_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_LOGICAL_AND: {
                 left_node = this_node;
 
@@ -1031,11 +1009,7 @@ ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_BITWISE_OR: {
             parser_c_parse_required(ctx, this_node, exclusive_or_expression, error);
 
@@ -1051,11 +1025,7 @@ ParseTreeNode_C *parser_c_parse_inclusive_or_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_BITWISE_OR: {
                 left_node = this_node;
 
@@ -1102,11 +1072,7 @@ ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_BITWISE_XOR: {
             parser_c_parse_required(ctx, this_node, and_expression, error);
 
@@ -1122,11 +1088,7 @@ ParseTreeNode_C *parser_c_parse_exclusive_or_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_BITWISE_XOR: {
                 left_node = this_node;
 
@@ -1173,11 +1135,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case PTT_C_AND_EXPRESSION: {
             parser_c_parse_required(ctx, this_node, equality_expression, error);
 
@@ -1193,11 +1151,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case PTT_C_AND_EXPRESSION: {
                 left_node = this_node;
 
@@ -1244,11 +1198,7 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_EQUAL_TO:
         case T_NOT_EQUAL_TO: {
             parser_c_parse_required(ctx, this_node, relational_expression, error);
@@ -1265,11 +1215,7 @@ ParseTreeNode_C *parser_c_parse_equality_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_EQUAL_TO:
             case T_NOT_EQUAL_TO: {
                 left_node = this_node;
@@ -1317,11 +1263,7 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_LESS_THAN:
         case T_GREATER_THAN:
         case T_LESS_THAN_OR_EQUAL_TO:
@@ -1340,11 +1282,7 @@ ParseTreeNode_C *parser_c_parse_relational_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_LESS_THAN:
             case T_GREATER_THAN:
             case T_LESS_THAN_OR_EQUAL_TO:
@@ -1394,11 +1332,7 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_BITWISE_LEFTSHIFT:
         case T_BITWISE_RIGHTSHIFT: {
             parser_c_parse_required(ctx, this_node, additive_expression, error);
@@ -1415,11 +1349,7 @@ ParseTreeNode_C *parser_c_parse_shift_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;    
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_BITWISE_LEFTSHIFT:
             case T_BITWISE_RIGHTSHIFT: {
                 left_node = this_node;
@@ -1467,11 +1397,7 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Parser_C_CTX *ctx)
     
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_PLUS:
         case T_MINUS: {
             parser_c_parse_required(ctx, this_node, multiplicative_expression, error);
@@ -1488,13 +1414,7 @@ ParseTreeNode_C *parser_c_parse_additive_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            *ctx->lexer = lexer_saved_token;
-
-            goto error;
-        }
-
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_PLUS:
             case T_MINUS: {
                 left_node = this_node;
@@ -1542,11 +1462,7 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Parser_C_CTX *ctx)
 
     Token_C this_node_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-        goto error;
-    }
-    
-    switch (this_node_token.type) {
+    switch (lexer_c_next(ctx->lexer, &this_node_token)) {
         case T_MULTIPLY:
         case T_DIVIDE:
         case T_MODULUS: {
@@ -1564,11 +1480,7 @@ ParseTreeNode_C *parser_c_parse_multiplicative_expression(Parser_C_CTX *ctx)
     while (1) {
         lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            goto error;
-        }
-    
-        switch (this_node_token.type) {
+        switch (lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_MULTIPLY:
             case T_DIVIDE:
             case T_MODULUS: {
@@ -1609,17 +1521,19 @@ ParseTreeNode_C *parser_c_parse_cast_expression(Parser_C_CTX *ctx)
     ParseTreeNode_C *type_name;
     ParseTreeNode_C *cast_expression;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_opt(ctx, this_node, unary_expression, ret);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_PARENT) {
         goto error;
     }
 
     parser_c_parse_required(ctx, this_node, type_name, error);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
         goto error;
     }
     
@@ -1660,11 +1574,7 @@ ParseTreeNode_C *parser_c_parse_unary_expression(Parser_C_CTX *ctx)
     
     Token_C token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token) == -1) {
-        goto error;
-    }
-
-    switch(token.type) {
+    switch(lexer_c_next(ctx->lexer, &token)) {
         case T_INCREMENT:
         case T_DECREMENT: {
             parser_c_parse_required(ctx, this_node, unary_expression, error);
@@ -1735,19 +1645,14 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C_CTX *ctx)
     ParseTreeNode_C *left_node;
     
     Token_C this_node_token;
+    Token_C tmp;
 
     parser_c_parse_required(ctx, this_node, primary_expression, error);
 
     while (1) {
         Lexer_C lexer_saved_token = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            *ctx->lexer = lexer_saved_token;
-
-            goto ret;
-        }
-
-        switch(this_node_token.type) {
+        switch(lexer_c_next(ctx->lexer, &this_node_token)) {
             case T_OPEN_BRACKET: {
                 left_node = this_node;
                 
@@ -1757,7 +1662,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C_CTX *ctx)
                 
                 parser_c_parse_required(ctx, this_node, expression, error);
                 
-                if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACKET) == 0) {
+                if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACKET) {
                     goto error;
                 }
             } break;
@@ -1770,7 +1675,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C_CTX *ctx)
                 
                 parser_c_parse_list_opt(ctx, this_node, assignment_expression);
                 
-                if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+                if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
                     goto error;
                 }
             } break;
@@ -1819,11 +1724,7 @@ ParseTreeNode_C *parser_c_parse_unary_operator(Parser_C_CTX *ctx)
 
     Token_C token_unary_operator;
     
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_unary_operator) == -1) {
-        return NULL;
-    }
-
-    switch (token_unary_operator.type) {
+    switch (lexer_c_next(ctx->lexer, &token_unary_operator)) {
         case T_BITWISE_AND:
         case T_MULTIPLY:
         case T_PLUS:
@@ -1849,6 +1750,8 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C_CTX *ctx)
     ParseTreeNode_C *string;
     ParseTreeNode_C *expression;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_opt(ctx, this_node, identifier, ret); // TODO symtbl check exists??
@@ -1857,13 +1760,13 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C_CTX *ctx)
 
     parser_c_parse_opt(ctx, this_node, string, ret);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_PARENT) {
         goto error;
     }
 
     parser_c_parse_required(ctx, this_node, expression, error);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
         goto error;
     }
 
@@ -1918,13 +1821,10 @@ ParseTreeNode_C *parser_c_parse_constant(Parser_C_CTX *ctx)
 
     Token_C token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token) == -1) {
-        return NULL;
-    }
-    
-    switch(token.type) {
-        case T_CHARACTER:
-        case T_NUMBER:
+    switch(lexer_c_next(ctx->lexer, &token)) {
+    	case T_INTEGER_CONSTANT:
+    	case T_FLOATING_CONSTANT:
+        case T_CHARACTER_CONSTANT:
         case T_STRING: {
             return parse_tree_node_c_create(PTT_C_CONSTANT, &token);
         } break;
@@ -1940,7 +1840,7 @@ ParseTreeNode_C *parser_c_parse_string(Parser_C_CTX *ctx)
 {
     Token_C token_string;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, &token_string, T_STRING) == 0) {
+    if (lexer_c_next(ctx->lexer, &token_string) != T_STRING) {
         return NULL;
     }
 
@@ -1953,11 +1853,7 @@ ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C_CTX *ctx)
 
     Token_C token_assignment_operator;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_assignment_operator) == -1) {
-        goto error;
-    }
-
-    switch(token_assignment_operator.type) {
+    switch(lexer_c_next(ctx->lexer, &token_assignment_operator)) {
         case T_ASSIGNMENT:
         case T_MULTIPLY_ASSIGN:
         case T_DIVIDE_ASSIGN:
@@ -1971,13 +1867,11 @@ ParseTreeNode_C *parser_c_parse_assignment_operator(Parser_C_CTX *ctx)
         case T_BITWISE_OR_ASSIGN: {
             return parse_tree_node_c_create(PTT_C_ASSIGNMENT_OPERATOR, &token_assignment_operator);
         }
-        default: break;
-    }
+        default: {
+        	*ctx->lexer = lexer_saved;
 
-    error: {
-        *ctx->lexer = lexer_saved;
-
-        return NULL;
+        	return NULL;
+        }
     }
 }
 
@@ -2015,6 +1909,8 @@ ParseTreeNode_C *parser_c_parse_parameter_list(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *parameter_declaration;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved;
     Lexer_C lexer_saved_comma;
 
@@ -2025,7 +1921,7 @@ ParseTreeNode_C *parser_c_parse_parameter_list(Parser_C_CTX *ctx)
 
         lexer_saved_comma = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COMMA) == 1) {
+        if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
             goto next_parameter_declaration_list;
         }
         
@@ -2090,13 +1986,12 @@ ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Parser_C_CTX *ctx)
     ParseTreeNode_C *parameter_type_list;
 
     Token_C this_node_token;
+    Token_C tmp;
 
     while (1) {
         lexer_saved = *ctx->lexer;
     
-        if (lexer_c_next_skip_whitespace(ctx->lexer, &this_node_token) == -1) {
-            break;
-        }
+        lexer_c_next(ctx->lexer, &this_node_token);
         
         if (this_node_token.type == T_OPEN_PARENT) {
             if (this_node->num == 0) {
@@ -2107,7 +2002,7 @@ ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Parser_C_CTX *ctx)
             
             next_token: ;
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
                 break;
             }
             
@@ -2121,7 +2016,7 @@ ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Parser_C_CTX *ctx)
             
             next: ;
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACKET) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACKET) {
                 break;
             }
             
@@ -2158,6 +2053,8 @@ ParseTreeNode_C *parser_c_parse_enumerator_list(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *enumerator;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     next_enumerator_list: {
@@ -2165,7 +2062,7 @@ ParseTreeNode_C *parser_c_parse_enumerator_list(Parser_C_CTX *ctx)
 
         Lexer_C lexer_saved_comma = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COMMA) == 1) {
+        if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
             goto next_enumerator_list;
         }
         
@@ -2193,13 +2090,15 @@ ParseTreeNode_C *parser_c_parse_enumerator(Parser_C_CTX *ctx)
     ParseTreeNode_C *identifier;
     ParseTreeNode_C *constant_expression;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_required(ctx, this_node, identifier, error);
 
     Lexer_C lexer_saved_assignment = *ctx->lexer;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_ASSIGNMENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_ASSIGNMENT) {
         *ctx->lexer = lexer_saved_assignment;
 
         goto ret;
@@ -2227,13 +2126,15 @@ ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C_CTX *ctx)
     ParseTreeNode_C *declarator;
     ParseTreeNode_C *initializer;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_required(ctx, this_node, declarator, error);
 
     Lexer_C lexer_saved_token = *ctx->lexer;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_ASSIGNMENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_ASSIGNMENT) {
         *ctx->lexer = lexer_saved_token;
 
         goto ret;
@@ -2261,11 +2162,13 @@ ParseTreeNode_C *parser_c_parse_initializer(Parser_C_CTX *ctx)
     ParseTreeNode_C *assignment_expression;
     ParseTreeNode_C *initializer_list;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_opt(ctx, this_node, assignment_expression, ret);
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_BRACE) {
         goto error;
     }
 
@@ -2273,11 +2176,11 @@ ParseTreeNode_C *parser_c_parse_initializer(Parser_C_CTX *ctx)
 
     Lexer_C lexer_saved_comma = *ctx->lexer;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COMMA) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_COMMA) {
         *ctx->lexer = lexer_saved_comma;
     }
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_BRACE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_BRACE) {
         goto error;
     }
 
@@ -2300,6 +2203,8 @@ ParseTreeNode_C *parser_c_parse_initializer_list(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *initializer;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
     next_initializer_list: {
@@ -2307,7 +2212,7 @@ ParseTreeNode_C *parser_c_parse_initializer_list(Parser_C_CTX *ctx)
 
         Lexer_C lexer_saved_comma = *ctx->lexer;
 
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COMMA) == 1) {
+        if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
             goto next_initializer_list;
         }
         
@@ -2365,34 +2270,28 @@ ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C_CTX *ctx)
     ParseTreeNode_C *statement;
     ParseTreeNode_C *constant_expression;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;    
 
     parser_c_parse_opt(ctx, this_node, identifier, rest);
 
     Token_C token;
     
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token) == -1) {
-        goto error;
-    }
-
-    if (token.type == T_DEFAULT) {
-        this_node->token = token;
-    
-        goto rest;
-    }
-    
-    if (token.type == T_CASE) {
-        this_node->token = token;
-        
-        parser_c_parse_required(ctx, this_node, constant_expression, error);
-    
-        goto rest;
-    }
-    
-    goto error;
+    switch (lexer_c_next(ctx->lexer, &token)) {
+		case T_DEFAULT: {
+			this_node->token = token;
+		} break;
+		case T_CASE: {
+			this_node->token = token;
+		    
+		    parser_c_parse_required(ctx, this_node, constant_expression, error);
+		} break;
+		default: goto error;
+	}
 
     rest: {
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_COLON) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_COLON) {
             goto error;
         }
 
@@ -2416,12 +2315,14 @@ ParseTreeNode_C *parser_c_parse_expression_statement(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *expression;
     
+    Token_C tmp;
+    
     Lexer_C lexer_saved = *ctx->lexer;
 
     parser_c_parse_opt(ctx, this_node, expression, next);
 
     next: {
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_SEMICOLON) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
             goto error;
         }
     }
@@ -2447,12 +2348,9 @@ ParseTreeNode_C *parser_c_parse_selection_statement(Parser_C_CTX *ctx)
     Lexer_C lexer_saved = *ctx->lexer;
 
     Token_C token;
+    Token_C tmp;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token) == -1) {
-        goto error;
-    }
-
-    switch (token.type) {
+    switch (lexer_c_next(ctx->lexer, &token)) {
         case T_IF:
         case T_SWITCH: {
             this_node->token = token;
@@ -2460,13 +2358,13 @@ ParseTreeNode_C *parser_c_parse_selection_statement(Parser_C_CTX *ctx)
         default: goto error;
     }
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_PARENT) {
         goto error;
     }
     
     parser_c_parse_required(ctx, this_node, expression, error);
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
         goto error;
     }
     
@@ -2478,7 +2376,7 @@ ParseTreeNode_C *parser_c_parse_selection_statement(Parser_C_CTX *ctx)
 
     Lexer_C lexer_saved_else = *ctx->lexer;
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_ELSE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_ELSE) {
         *ctx->lexer = lexer_saved_else;
     
         goto ret;
@@ -2501,56 +2399,60 @@ ParseTreeNode_C *parser_c_parse_selection_statement(Parser_C_CTX *ctx)
 
 ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C_CTX *ctx)
 {
+	ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ITERATION_STATEMENT, NULL);
+
     ParseTreeNode_C *expression;
     ParseTreeNode_C *statement;
+
+	Token_C tmp;
 
     Lexer_C lexer_saved = *ctx->lexer;
 
     Token_C iteration_statement_token;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &iteration_statement_token) == -1) {
-        return NULL;
-    }
-
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ITERATION_STATEMENT, &iteration_statement_token);
-
-    switch(iteration_statement_token.type) {
+    switch(lexer_c_next(ctx->lexer, &iteration_statement_token)) {
         case T_WHILE: {
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_PARENT) == 0) {
+			this_node->token = iteration_statement_token;
+
+            if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_PARENT) {
                 goto error;
             }
 
             parser_c_parse_required(ctx, this_node, expression, error);
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
                 goto error;
             }
 
             parser_c_parse_required(ctx, this_node, statement, error);
         } break;
         case T_DO: {
+            this_node->token = iteration_statement_token;
+
             parser_c_parse_required(ctx, this_node, statement, error);
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_WHILE) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_WHILE) {
                 goto error;
             }
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_PARENT) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_PARENT) {
                 goto error;
             }
 
             parser_c_parse_required(ctx, this_node, expression, error);
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
                 goto error;
             }
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_SEMICOLON) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
                 goto error;
             }
         } break;
         case T_FOR: {
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_OPEN_PARENT) == 0) {
+            this_node->token = iteration_statement_token;
+
+            if (lexer_c_next(ctx->lexer, &tmp) != T_OPEN_PARENT) {
                 goto error;
             }
 
@@ -2558,7 +2460,7 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C_CTX *ctx)
 
             next_for_1:
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_SEMICOLON) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
                 goto error;
             }
 
@@ -2566,7 +2468,7 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C_CTX *ctx)
 
             next_for_2:
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_SEMICOLON) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
                 goto error;
             }
 
@@ -2574,7 +2476,7 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C_CTX *ctx)
 
             next_for_3:
 
-            if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_CLOSING_PARENT) == 0) {
+            if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
                 goto error;
             }
 
@@ -2604,12 +2506,9 @@ ParseTreeNode_C *parser_c_parse_jump_statement(Parser_C_CTX *ctx)
     Lexer_C lexer_saved = *ctx->lexer;
     
     Token_C jump_statement_token;
+    Token_C tmp;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &jump_statement_token) == -1) {
-        goto error;
-    }
-
-    switch(jump_statement_token.type) {
+    switch(lexer_c_next(ctx->lexer, &jump_statement_token)) {
         case T_GOTO: {
             parser_c_parse_required(ctx, this_node, identifier, next_token_semicolon);
         } break;
@@ -2623,8 +2522,8 @@ ParseTreeNode_C *parser_c_parse_jump_statement(Parser_C_CTX *ctx)
     
     next_token_semicolon:
     
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_SEMICOLON) == 0) {
-    	lexer_c_log_at(L_ERROR, ctx->lexer, &jump_statement_token, "expected ';' after return statement");
+    if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
+    	// lexer_c_log_at(L_ERROR, ctx->lexer, &jump_statement_token, "expected ';' after return statement");
         goto error;
     }
     
@@ -2650,6 +2549,8 @@ ParseTreeNode_C *parser_c_parse_preprocessor_conditional(Parser_C_CTX *ctx)
     ParseTreeNode_C *preprocessor_elif_parts;
     ParseTreeNode_C *preprocessor_else_part;
 
+	Token_C tmp;
+
     parser_c_parse_required(ctx, this_node, preprocessor_if_line, error);
 
     parser_c_parse_required(ctx, this_node, preprocessor_text, error);
@@ -2659,7 +2560,7 @@ ParseTreeNode_C *parser_c_parse_preprocessor_conditional(Parser_C_CTX *ctx)
     parser_c_parse_opt(ctx, this_node, preprocessor_else_part, next_endif);
 
     next_endif: {
-        if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_MACRO_ENDIF) == 0) {
+        if (lexer_c_next(ctx->lexer, &tmp) != T_MACRO_ENDIF) { // TODO switch to NORMAL mode ??
             goto error;
         }
     }
@@ -2675,6 +2576,8 @@ ParseTreeNode_C *parser_c_parse_preprocessor_conditional(Parser_C_CTX *ctx)
 
 ParseTreeNode_C *parser_c_parse_preprocessor_if_line(Parser_C_CTX *ctx)
 {
+	ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_IF_LINE, NULL);
+
     ParseTreeNode_C *constant_expression;
     ParseTreeNode_C *identifier;
 
@@ -2682,13 +2585,7 @@ ParseTreeNode_C *parser_c_parse_preprocessor_if_line(Parser_C_CTX *ctx)
 
     Token_C token_if;
 
-    if (lexer_c_next_skip_whitespace(ctx->lexer, &token_if) == -1) {
-        return NULL;
-    }
-    
-    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_IF_LINE, NULL);
-
-    switch (token_if.type) {
+    switch (lexer_c_next(ctx->lexer, &token_if)) {
         case T_MACRO_IF: {
             parser_c_parse_required(ctx, this_node, constant_expression, error);
         } break;
@@ -2746,9 +2643,11 @@ ParseTreeNode_C *parser_c_parse_preprocessor_elif_line(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *constant_expression;
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_MACRO_ELIF) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_MACRO_ELIF) {
         goto error;
     }
 
@@ -2789,9 +2688,11 @@ ParseTreeNode_C *parser_c_parse_preprocessor_else_line(Parser_C_CTX *ctx)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_PREPROCESSOR_ELSE_LINE, NULL);
 
+	Token_C tmp;
+
     Lexer_C lexer_saved = *ctx->lexer;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(ctx->lexer, NULL, T_MACRO_ELSE) == 0) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_MACRO_ELSE) {
         goto error;
     }
 
@@ -2818,13 +2719,7 @@ ParseTreeNode_C *parser_c_parse_preprocessor_text(Parser_C_CTX *ctx)
 
         Token_C token_text;
 
-        if (lexer_c_next(ctx->lexer, &token_text) == -1) {
-            *ctx->lexer = lexer_saved;
-
-            break;
-        }
-
-        switch (token_text.type) {
+        switch (lexer_c_next(ctx->lexer, &token_text)) {
             case T_MACRO_IF:
             case T_MACRO_IFDEF:
             case T_MACRO_IFNDEF:

@@ -1,16 +1,12 @@
-#include <regex.h>
-
 #ifndef JD297_CC_TOKEN_TYPE_C_H
 #define JD297_CC_TOKEN_TYPE_C_H
 
-typedef enum TokenType_C {
-	// TODO maybe introduce T_ZERO which matches nothing but is there for 0 init ??
-	// becauce parse_tree_node_c -> parse_tree_node_c_create calloc
-    T_MACRO_INCLUDE_FILE,
+#include <jd297/sv.h>
+#include <jd297/lmap_sv.h>
 
-    /* COMMENTS */
-    T_COMMENT_LINE,
-    T_COMMENT_MULTILINE,
+typedef enum TokenType_C {
+	T_UNKNOWN = 0, /* default type value for Token_C */
+    T_MACRO_INCLUDE_FILE,
 
     /* ASSIGNMENT */
     T_PLUS_ASSIGN,
@@ -75,15 +71,11 @@ typedef enum TokenType_C {
     T_TERNARY,
 
     /* NORMAL KEYWORDS */
-    T_ALIGNAS,
-    T_ALIGNOF,
     T_AUTO,
-    T_BOOL,
     T_BREAK,
     T_CASE,
     T_CHAR,
     T_CONST,
-    T_CONSTEXPR,
     T_CONTINUE,
     T_DEFAULT,
     T_DO,
@@ -91,7 +83,6 @@ typedef enum TokenType_C {
     T_ELSE,
     T_ENUM,
     T_EXTERN,
-    T_FALSE,
     T_FLOAT,
     T_FOR,
     T_GOTO,
@@ -99,7 +90,6 @@ typedef enum TokenType_C {
     T_INLINE,
     T_INT,
     T_LONG,
-    T_NULLPTR,
     T_REGISTER,
     T_RESTRICT,
     T_RETURN,
@@ -107,14 +97,9 @@ typedef enum TokenType_C {
     T_SIGNED,
     T_SIZEOF,
     T_STATIC,
-    T_STATIC_ASSERT,
     T_STRUCT,
     T_SWITCH,
-    T_THREAD_LOCAL,
-    T_TRUE,
     T_TYPEDEF,
-    T_TYPEOF,
-    T_TYPEOF_UNQUAL,
     T_UNION,
     T_UNSIGNED,
     T_VOID,
@@ -125,8 +110,6 @@ typedef enum TokenType_C {
     T_MACRO_IFDEF,
     T_MACRO_IFNDEF,
     T_MACRO_IF,
-    T_MACRO_ELIFDEF,
-    T_MACRO_ELIFNDEF,
     T_MACRO_ELIF,
     T_MACRO_ELSE,
     T_MACRO_ENDIF,
@@ -136,42 +119,31 @@ typedef enum TokenType_C {
     T_MACRO_LINE,
     T_MACRO_ERROR,
     T_MACRO_PRAGMA,
-    T_MACRO_DEFINDED,
-    T_MACRO_HAS_INCLUDE,
-    T_MACRO_ASM,
 
     /* WHITESPACE */
     T_WHITESPACE,
+    T_WS_NL,
 
     /* TOKENS */
-    T_NUMBER,
+    T_INTEGER_CONSTANT,
+    T_FLOATING_CONSTANT,
     T_STRING,
-    T_CHARACTER,
+    T_CHARACTER_CONSTANT,
     T_IDENTIFIER,
 
     T_EOF,
-    T_MACRO_TOKEN_SEQUENZE,
-
-    TOKEN_TYPE_C_LENGTH
+    T_MACRO_TOKEN_SEQUENZE
 } TokenType_C;
 
-#ifdef TOKEN_TYPE_SKIPABLE_LOOKUP_GENERATOR
+typedef struct {
+	sv_t value;
+	TokenType_C type;
+} TokenType_C_LookupEntry;
 
-#define TOKEN_TYPE_SKIPABLE_SIZE 3
+extern lmap_sv_t token_type_c_lookup_keywords;
 
-const TokenType_C token_type_skipable[TOKEN_TYPE_SKIPABLE_SIZE] = {
-    T_WHITESPACE,
-    T_COMMENT_LINE,
-    T_COMMENT_MULTILINE
-};
-#endif
+extern lmap_sv_t token_type_c_lookup_preprocessor;
 
-extern const int token_type_skipable_lookup[TOKEN_TYPE_C_LENGTH];
-
-extern regex_t **token_type_c_regex;
-
-extern int token_type_c_regex_create(void);
-
-extern void token_type_c_regex_destroy(void);
+extern int token_type_c_create_lookups(void);
 
 #endif

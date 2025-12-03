@@ -397,12 +397,11 @@ int main(int argc, char **argv)
 	vec_push_back(&lib_dirs, "/usr/lib");
 	vec_push_back(&lib_dirs, "/lib");
 
-	// precompile regex patterns for lexer
-    if (token_type_c_regex_create() == -1) {
+    if (token_type_c_create_lookups() == -1) {
         return EXIT_FAILURE;
     }
 
-    atexit(token_type_c_regex_destroy);
+    // TODO atexit(token_type_c_destroy_lookups);
     
     if (Eflag == 1) {
     	FILE *output = stdout;

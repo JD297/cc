@@ -1,139 +1,589 @@
 #include "lexer_c.h"
 #include "token_type_c.h"
 #include "token_c.h"
-#include "jd297/logger.h"
+#include <jd297/sv.h>
+#include <jd297/lmap_sv.h>
 
-#include <regex.h>
+#include <assert.h>
+
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int lexer_c_next(Lexer_C *lexer, Token_C *token)
+static int lexer_c_is_at_end(Lexer_C *lexer);
+
+static char lexer_c_advance(Lexer_C *lexer);
+
+static char lexer_c_peek(Lexer_C *lexer, size_t n);
+
+static int lexer_c_match(Lexer_C *lexer, char expected);
+
+static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type);
+
+static int lexer_c_isalnum(Lexer_C *lexer);
+
+void lexer_c_create(Lexer_C *lexer, sv_t pathname, const char *source, Lexer_Mode_C mode)
 {
-    for (TokenType_C type = 0; type < TOKEN_TYPE_C_LENGTH; type++) {
-        if (type == T_EOF && *(lexer->pbuf) != '\0') {
-            continue;
-        }
-
-        regmatch_t match;
-
-        if (regexec(token_type_c_regex[type], lexer->pbuf, 1, &match, 0) != 0) {
-            continue;
-        }
-
-        const char* start = lexer->pbuf;
-
-        lexer->pbuf += match.rm_eo;
-
-        if (token != NULL) {
-            token->type = type;
-            token->view.value = start;
-            token->view.len = match.rm_eo;
-        }
-
-        if (type == T_WHITESPACE && *start == '\n') {
-            lexer->loc.row++;
-            lexer->loc.col = 1;
-        } else if (type == T_MACRO_LINE) {
-            if (lexer_c_parse_line(lexer) == -1) {
-                return -1;
-            }
-
-            return lexer_c_next(lexer, token);
-        } else {
-            lexer->loc.col += match.rm_eo;
-        }
-
-        return 0;
-    }
-
-    // lexer->pbuf += 1; // ?? this should prevent to progress on failures
-
-	return -1;
+	*lexer = (Lexer_C) {
+		.start = source,
+		.current = source,
+		.loc = (Lexer_Location_C) {
+			.pathname = pathname,
+			.line = 1,
+			.col = 0
+		},
+		.mode = mode
+	};
 }
 
-int lexer_c_next_skip_whitespace(Lexer_C *lexer, Token_C *token)
+TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 {
-    do {
-        if (lexer_c_next(lexer, token) == -1) {
-            return -1;
-        }
-    } while (token_type_skipable_lookup[token->type] == 1);
+	switch (lexer_c_advance(lexer))
+	{
+        case '(':
+			lexer_c_set_token(lexer, token, T_OPEN_PARENT);
+			break;
+		case ')':
+			lexer_c_set_token(lexer, token, T_CLOSING_PARENT);
+			break;
+		case '[':
+			lexer_c_set_token(lexer, token, T_OPEN_BRACKET);
+			break;
+		case ']':
+			lexer_c_set_token(lexer, token, T_CLOSING_BRACKET);
+			break;
+		case '{':
+			lexer_c_set_token(lexer, token, T_OPEN_BRACE);
+			break;
+		case '}':
+			lexer_c_set_token(lexer, token, T_CLOSING_BRACE);
+			break;
+		case '~':
+			lexer_c_set_token(lexer, token, T_TILDE);
+			break;
+		case ',':
+			lexer_c_set_token(lexer, token, T_COMMA);
+			break;
+		case ':':
+			lexer_c_set_token(lexer, token, T_COLON);
+			break;
+		case ';':
+			lexer_c_set_token(lexer, token, T_SEMICOLON);
+			break;
+		case '?':
+			lexer_c_set_token(lexer, token, T_TERNARY);
+			break;
+		case '#': {
+			if (lexer->mode == LEXER_MODE_PREPROCESSOR) {
+				assert(0 && "TODO: SKIP WS, try parse macro identifier");
+			}
 
-    return 0;
-}
+			lexer->start = lexer->current;
 
-int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, Token_C *token, TokenType_C type)
-{
-    Token_C token_stack;
-    
-    if (token == NULL) {
-        token = &token_stack;
-    }
+			if (lexer_c_next(lexer, token) != T_INTEGER_CONSTANT) {
+				assert(0 && "TODO: error: invalid preprocessing directive");
+			}
+			
+			size_t line = token->literal.lu;
 
-    if (lexer_c_next_skip_whitespace(lexer, token) == -1) {
-        return 0;
-    }
+			if (lexer_c_next(lexer, token) != T_STRING) {
+				if (token->type != T_WS_NL) {
+					/*
+					 * TODO SKIP EOL / EOF
+					 * TODO lexer->mode = LEXER_MODE_NORMAL;
+					 * TODO return lexer_c_next(lexer, token);
+					 */
+					assert(0 && "TODO: error: invalid filename for line marker directive");
+				}
+				
+				assert(0 && "TODO: warning: this style of line directive is a GNU extension");
+			}
+			
+			sv_t pathname = token->literal.sv;
 
-    return token->type == type;
-}
+			lexer->mode = LEXER_MODE_PREPROCESSOR;
 
-int lexer_c_parse_line(Lexer_C *lexer)
-{
-    Token_C token_number;
- 
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_number, T_NUMBER) == 0) {
-        lexer_c_log_at(L_ERROR, lexer, &token_number, "after #line is not a positive integer");
+			while (1) {
+				lexer_c_next(lexer, token);
+				
+				if (token->type == T_WS_NL) {
+					break;
+				}
+				
+				if (token->type == T_EOF) {
+					lexer->mode = LEXER_MODE_NORMAL;
+					lexer_c_set_token(lexer, token, T_EOF);
+					break;
+				}
+			}
 
-        return -1;
-    }
+			lexer->mode = LEXER_MODE_NORMAL;
 
-    lexer->loc.col = 1;
+			lexer->loc.pathname = pathname;
+			
+			lexer->loc.line = line;
+			lexer->loc.col = 0;
 
-	// TODO atoi function with sv_t param
-    char *row_str = malloc(sizeof(char) * (token_number.view.len + 1));
-    strncpy(row_str, token_number.view.value, token_number.view.len);
+			return lexer_c_next(lexer, token);
+		} break;
+		case '=':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_EQUAL_TO : T_ASSIGNMENT);
+			break;
+		case '*':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_MULTIPLY_ASSIGN : T_MULTIPLY);
+			break;
+		case '%':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_MODULUS_ASSIGN : T_MODULUS);
+			break;
+		case '^':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_BITWISE_XOR_ASSIGN : T_BITWISE_XOR);
+			break;
+		case '!':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_NOT_EQUAL_TO : T_LOGICAL_NOT);
+			break;	
+		case '|':
+        	lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_BITWISE_OR_ASSIGN : lexer_c_match(lexer, '|') == 0 ? T_LOGICAL_OR : T_BITWISE_OR);
+        	break;
+    	case '&':
+        	lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_BITWISE_AND_ASSIGN : lexer_c_match(lexer, '&') == 0 ? T_LOGICAL_AND : T_BITWISE_AND);
+        	break;
+    	case '+':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_PLUS_ASSIGN : lexer_c_match(lexer, '+') == 0 ? T_INCREMENT : T_PLUS);
+			break;
+		case '-':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_MINUS_ASSIGN : lexer_c_match(lexer, '-') == 0 ? T_DECREMENT : lexer_c_match(lexer, '>') == 0 ? T_ARROW : T_MINUS);
+			break;
+		case '<':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_LESS_THAN_OR_EQUAL_TO : lexer_c_match(lexer, '<') == 0 ? lexer_c_match(lexer, '<') == 0 ? T_BITWISE_LEFTSHIFT_ASSIGN : T_BITWISE_LEFTSHIFT : T_LESS_THAN);
+			break;
+		case '>':
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_GREATER_THAN_OR_EQUAL_TO : lexer_c_match(lexer, '>') == 0 ? lexer_c_match(lexer, '>') == 0 ? T_BITWISE_RIGHTSHIFT_ASSIGN : T_BITWISE_RIGHTSHIFT : T_GREATER_THAN);
+			break;
+		case '/': {
+			if (lexer_c_match(lexer, '/') == 0) {
+				while (lexer_c_peek(lexer, 0) != '\n' && !lexer_c_is_at_end(lexer)) {
+					lexer_c_advance(lexer);
+				}
 
-    lexer->loc.row = (size_t)atoi(row_str);
+				return lexer_c_next(lexer, token);
+			}
 
-    Lexer_C lexer_saved = *lexer;
+			if (lexer_c_match(lexer, '*') == 0) {
+				while (1) {
+					if (lexer_c_peek(lexer, 0) == '*' && lexer_c_peek(lexer, 1) == '/') {
+						lexer_c_advance(lexer);
+						lexer_c_advance(lexer);
 
-    Token_C token_filename;
+						lexer->start = lexer->current;
+						
+						return lexer_c_next(lexer, token);
+					}
 
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &token_filename, T_STRING) == 0) {
-        *lexer = lexer_saved;
-        
-        return 0;
-    }
+					if (lexer_c_is_at_end(lexer)) {
+						printf(SV_FMT":%zu:%zu: error: unterminated /* comment\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 
-	// TODO Lexer_Location_C pathname should be sv_t
-    char *token_filename_str = malloc(sizeof(char) * (token_filename.view.len + 1));
-    strncpy(token_filename_str, token_filename.view.value + 1, token_filename.view.len - 2);
-    token_filename_str[token_filename.view.len - 2] = '\0';
+						lexer->start = lexer->current;
+						lexer_c_set_token(lexer, token, T_EOF);
+						return T_EOF;
+					}
+					
+					if (lexer_c_peek(lexer, 0) == '\n') {
+						++lexer->loc.line;
+						lexer->loc.col = 0;
 
-    lexer->loc.pathname = token_filename_str;
+						lexer->current++;
 
-    return 0;
-}
+						continue;
+					}
+					
+					lexer_c_advance(lexer);
+				}
+			}
+			
+			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_DIVIDE_ASSIGN : T_DIVIDE);
+		} break;
+		
+		case '.': {
+			switch (lexer_c_peek(lexer, 0)) {
+				case '0': case '1': case '2': case '3': case '4':
+				case '5': case '6': case '7': case '8': case '9':
+					goto L_FLOATING_CONSTANT;
+				case '.': {
+					if (lexer_c_peek(lexer, 1) == '.') {
+						lexer->current += 2;
 
-void lexer_c_log_at(int level, Lexer_C *lexer, Token_C *token, const char *format, ...)
-{
-	va_list ap;
-	va_start(ap, format);
+						lexer_c_set_token(lexer, token, T_DOT_DOT_DOT);
 
-	flog_at(stderr, level, lexer->loc.pathname, lexer->loc.row, lexer->loc.col, format, ap);
+						break;
+					}
+				}
+				default:
+					lexer_c_set_token(lexer, token, T_DOT);
+			}
+		} break;
+		case 'L': {
+			if (lexer_c_peek(lexer, 0) == '\'') {
+				goto L_CHARACTER_CONSTANT;
+			}
 
-	va_end(ap);
+			if (lexer_c_peek(lexer, 0) == '\"') {
+				goto L_STRING_LITERAL;
+			}
+		}
+		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+        case 'G': case 'H': case 'I': case 'J': case 'K': 
+        case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
+        case 'S': case 'T': case 'U': case 'V': case 'W': case 'X':
+        case 'Y': case 'Z':
+        case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+        case 'g': case 'h': case 'i': case 'j': case 'k': case 'l':
+        case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
+        case 's': case 't': case 'u': case 'v': case 'w': case 'x':
+        case 'y': case 'z': 
+        case '_': {
+        	while (lexer_c_isalnum(lexer) != 0) {
+        		lexer_c_advance(lexer);
+        	}
+        	
+        	lexer_c_set_token(lexer, token, T_IDENTIFIER);
+        	
+        	TokenType_C_LookupEntry *entry = lmap_sv_get(&token_type_c_lookup_keywords, &token->view);
 
-	const char *lbegin = lexer->pbuf - lexer->loc.col + 1;
-	const char *lend = strstr(lexer->pbuf, "\n");
+        	if (entry != NULL) {
+        		token->type = entry->type;
+        	}    	
+        } break;
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9': {
+			char *endptr;
+			unsigned long int lu;
+			
+			errno = 0;
+			lu = strtoul(lexer->start, &endptr, 0);
+			
+			// TODO errno ERANGE
+			// TODO error: integer literal is too large to be represented in any integer type
+			
+			// TODO u U + l L => advance
+			// TODO error: invalid suffix 'ZZ' on integer constant
 
-	if (lend == NULL) {
-		flog_line(stderr, lexer->loc.row, "%s", lbegin);
-	} else {
-		flog_line(stderr, lexer->loc.row, "%.*s", (int)(lend - lbegin), lbegin);
+			switch (*endptr) {
+				case 'f': case 'F':
+				case 'e': case 'E':
+				case '.':
+					goto L_FLOATING_CONSTANT;
+			}
+			
+			lexer->current = endptr;
+			token->literal.lu = lu;
+			lexer_c_set_token(lexer, token, T_INTEGER_CONSTANT);
+		} break;
+		L_FLOATING_CONSTANT: {
+			char *endptr;
+			long double Lf;
+			
+			errno = 0;
+			Lf = strtold(lexer->start, &endptr);
+			
+			// TODO errno ERANGE
+			//  warning: magnitude of floating-point constant too large for type 'double'
+			
+			// TODO F f | l L => advance
+			// TODO error: invalid suffix 'ZZ' on floating constant
+
+			lexer->current = endptr; // TODO advance location | check everywhere because it was probably forgoten sometimes !!
+			token->literal.Lf = Lf;
+			lexer_c_set_token(lexer, token, T_FLOATING_CONSTANT);
+		} break;
+		L_CHARACTER_CONSTANT:
+			lexer_c_advance(lexer);
+		case '\'': {
+			enum {
+				C_LIT_CHAR,
+				C_LIT_ESC,
+				C_LIT_HEX,
+				C_LIT_OCT
+			} type = C_LIT_CHAR;
+		
+			const char *end;
+
+			for (end = lexer->current; *end != '\''; ++end) {
+				if (*end == '\n' || *end == '\0') {
+					printf(SV_FMT":%zu:%zu: error: missing terminating ' character\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+					
+					lexer->start = lexer->current = end;
+		
+					return lexer_c_next(lexer, token);
+				}
+			}
+
+			switch (lexer_c_advance(lexer)) {
+				case '\'': {
+					printf(SV_FMT":%zu:%zu: error: empty character constant\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+
+					lexer->start = lexer->current;
+			
+					return lexer_c_next(lexer, token);
+				}
+				case '\\': {
+					switch (lexer_c_advance(lexer)) {
+						case 'n': case 't': case 'v': case 'b':
+						case 'r': case 'f': case 'a': case '\\':
+						case '?': case '\'': case '\"': {
+							if (lexer_c_advance(lexer) != '\'') {
+								printf(SV_FMT":%zu:%zu: error: multi-character character constant\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+						
+								lexer->start = lexer->current = end + 1;
+						
+								return lexer_c_next(lexer, token);
+							}
+							
+							type = C_LIT_ESC;
+						} break;
+						case 'x': {
+							for (size_t i = 0; ; i++) {
+								switch (lexer_c_advance(lexer)) {
+									case '0': case '1': case '2': case '3': case '4':
+									case '5': case '6': case '7': case '8': case '9':
+									case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+									case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+										if (i >= 2) {
+											printf(SV_FMT":%zu:%zu: error: hex escape sequence out of range\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+
+											lexer->start = lexer->current = end + 1;
+											
+											return lexer_c_next(lexer, token);
+										}
+
+										continue;
+									default: {
+										printf(SV_FMT":%zu:%zu: error: \\x used with no following hex digits\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+							
+										lexer->start = lexer->current = end + 1;
+								
+										return lexer_c_next(lexer, token);
+									}
+									case '\'':
+										if (i == 0) {
+											printf(SV_FMT":%zu:%zu: error: \\x used with no following hex digits\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+
+											lexer->start = lexer->current = end + 1;
+											
+											return lexer_c_next(lexer, token);
+										}
+										
+										break;
+								}
+
+								type = C_LIT_HEX;
+
+								break;
+							}
+						} break;
+						case '0': case '1': case '2': case '3':
+						case '4': case '5': case '6': case '7': {
+							for (size_t i = 0; ; i++) {
+								switch (lexer_c_advance(lexer)) {
+									case '0': case '1': case '2': case '3':
+									case '4': case '5': case '6': case '7':
+										if (i >= 2) {
+											printf(SV_FMT":%zu:%zu: error: octal escape sequence out of range\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+
+											lexer->start = lexer->current = end + 1;
+											
+											return lexer_c_next(lexer, token);
+										}
+
+										continue;
+									default: {
+										printf(SV_FMT":%zu:%zu: error: octal escape sequence used with no following octal digits\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+							
+										lexer->start = lexer->current = end + 1;
+								
+										return lexer_c_next(lexer, token);
+									}
+									case '\'':
+										break;
+								}
+
+								type = C_LIT_OCT;
+
+								break;
+							}
+						} break;
+						default: {
+							printf(SV_FMT":%zu:%zu: error: unknown escape sequence\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+						
+							lexer->start = lexer->current = end + 1;
+					
+							return lexer_c_next(lexer, token);
+						}
+					}
+				} break;
+				default: {
+					if (lexer_c_advance(lexer) != '\'') {
+						printf(SV_FMT":%zu:%zu: error: multi-character character constant\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+						
+						lexer->start = lexer->current = end + 1;
+				
+						return lexer_c_next(lexer, token);
+					}
+				} break;
+			}
+			
+			switch (type) {
+				case C_LIT_CHAR: {
+					token->literal.d = *(lexer->current - 2);
+				} break;
+				case C_LIT_ESC: {
+					switch (*(lexer->current - 2)) {
+						case 'n':  token->literal.d = '\n'; break;
+						case 't':  token->literal.d = '\t'; break;
+						case 'v':  token->literal.d = '\v'; break;
+						case 'b':  token->literal.d = '\b'; break;
+						case 'r':  token->literal.d = '\r'; break;
+						case 'f':  token->literal.d = '\f'; break;
+						case 'a':  token->literal.d = '\a'; break;
+						case '\\': token->literal.d = '\\'; break;
+						case '?':  token->literal.d = '\?'; break;
+						case '\'': token->literal.d = '\''; break;
+						case '\"': token->literal.d = '\"'; break;
+					}
+				} break;
+				case C_LIT_HEX: {
+					char *endptr;
+
+					token->literal.lu = strtoul(lexer->start + 3, &endptr, 16);
+				} break;
+				case C_LIT_OCT: {
+					char *endptr;
+
+					token->literal.lu = strtoul(lexer->start + 2, &endptr, 8);
+				} break;
+				default: assert(0 && "NOT REACHABLE");
+			}
+
+			lexer_c_set_token(lexer, token, T_CHARACTER_CONSTANT);
+		} break;
+		L_STRING_LITERAL:
+			lexer_c_advance(lexer);
+		case '\"': {
+			char c;
+
+			while ((c = lexer_c_advance(lexer)) != '\"') {
+				if (c == '\\') {
+					c = lexer_c_advance(lexer);
+				}
+
+				if (c == '\n' || c == '\0') {
+					printf(SV_FMT":%zu:%zu: error: missing terminating \" character\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
+					
+					lexer->start = lexer->current;
+		
+					return lexer_c_next(lexer, token);
+				}
+			}
+
+			lexer_c_set_token(lexer, token, T_STRING);
+			
+			token->literal.sv = (sv_t) {
+				.value = token->view.value + 1,
+				.len = token->view.len - 2
+			};
+		} break;
+		case '\n': {
+			++lexer->loc.line;
+			lexer->loc.col = 0;
+
+			if (lexer->mode == LEXER_MODE_PREPROCESSOR) {
+				lexer_c_set_token(lexer, token, T_WS_NL);
+				break;
+			}			
+
+			lexer->start = lexer->current;
+
+			return lexer_c_next(lexer, token);
+		} break;
+		case ' ': case '\r': case '\t': case '\f': case '\v': {
+			if (lexer->mode == LEXER_MODE_PREPROCESSOR) {
+				lexer_c_set_token(lexer, token, T_WHITESPACE);
+				break;
+			}
+
+			lexer->start = lexer->current;
+
+			return lexer_c_next(lexer, token);
+		} break;
+		case '\0': {
+			lexer_c_set_token(lexer, token, T_EOF);
+		} break;
+		default: {
+			printf(SV_FMT":%zu:%zu: error: unexpected character: \""SV_FMT"\"\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col, 1, lexer->start);
+			
+			lexer->start = lexer->current;
+			lexer_c_set_token(lexer, token, T_UNKNOWN);
+		} break;
 	}
 
-	flog_ptr(stderr, lbegin, token->view.value, token->view.len); // TODO use sv_t
+	lexer->start = lexer->current;
+
+    return token->type;
+}
+
+static int lexer_c_is_at_end(Lexer_C *lexer)
+{
+	return *lexer->current == '\0';
+}
+
+static char lexer_c_advance(Lexer_C *lexer)
+{
+	++lexer->loc.col;
+
+	return *(lexer->current++);
+}
+
+static char lexer_c_peek(Lexer_C *lexer, size_t n)
+{
+	return *(lexer->current + n);
+}
+
+static int lexer_c_match(Lexer_C *lexer, char expected)
+{
+	if (*lexer->current != expected) {
+		return -1;
+	}
+
+	lexer->current++;
+
+	return 0;
+}
+
+static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type)
+{
+	token->type = type;
+	token->view.value = lexer->start;
+	token->view.len = lexer->current - lexer->start;
+}
+
+static int lexer_c_isalnum(Lexer_C *lexer)
+{
+	if (*lexer->current >= 'A' && *lexer->current <= 'Z') {
+		return 1;
+	}
+	
+	if (*lexer->current >= 'a' && *lexer->current <= 'z') {
+		return 1;
+	}
+
+	if (*lexer->current >= '0' && *lexer->current <= '9') {
+		return 1;
+	}
+
+	if (*lexer->current == '_') {
+		return 1;
+	}
+
+	return 0;
 }

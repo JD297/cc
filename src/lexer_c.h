@@ -1,31 +1,35 @@
 #include "token_c.h"
 
+#include <jd297/sv.h>
+#include <jd297/lmap_sv.h>
+
 #include <stddef.h>
 
 #ifndef JD297_CC_LEXER_C_H
 #define JD297_CC_LEXER_C_H
 
+typedef enum {
+	LEXER_MODE_NORMAL,
+	LEXER_MODE_PREPROCESSOR
+} Lexer_Mode_C;
+
 typedef struct Lexer_Location_C {
-    const char *pathname;
-    size_t row;
+    sv_t pathname;
+    size_t line;
     size_t col;
 } Lexer_Location_C;
 
 typedef struct Lexer_C {
-    const char *buf;
-    const char *pbuf;
-    
-    Lexer_Location_C loc;
+    const char *start;
+    const char *current;
+
+    Lexer_Location_C loc; // TODO add loc_old / loc_start for logging
+
+    Lexer_Mode_C mode;
 } Lexer_C;
 
-extern int lexer_c_next(Lexer_C *lexer, Token_C *token);
+extern void lexer_c_create(Lexer_C *lexer, sv_t pathname, const char *source, Lexer_Mode_C mode);
 
-extern int lexer_c_next_skip_whitespace(Lexer_C *lexer, Token_C *token);
-
-extern int lexer_c_next_skip_whitespace_token_is_type(Lexer_C *lexer, Token_C *token, TokenType_C type);
-
-extern int lexer_c_parse_line(Lexer_C *lexer);
-
-extern void lexer_c_log_at(int level, Lexer_C *lexer, Token_C *token, const char *format, ...);
+extern TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token);
 
 #endif

@@ -58,21 +58,15 @@ int preprocessor_c_parse_file(Preprocessor_C *preprocessor, const char* pathname
 		return -1;
 	}
 
-	Lexer_C lexer = {
-		.buf = src,
-		.pbuf = src,
-		.loc = {
-			.pathname = pathname,
-			.row = 1,
-			.col = 1
-		}
-	};
+	Lexer_C lexer;
+	
+	lexer_c_create(&lexer, sv_from_cstr(pathname), src, LEXER_MODE_NORMAL);
 
-    fprintf(preprocessor->output, "#line 0 \"%s\"\n", pathname);
+    fprintf(preprocessor->output, "# 1 \"%s\"\n", pathname);
 
     int parse_next_result;
 
-    parse_next_result = preprocessor_c_parse_lexer(preprocessor, &lexer, src + strlen(src));
+    parse_next_result = preprocessor_c_parse_lexer(preprocessor, &lexer, src + sb.st_size);
 
     munmap(src, sb.st_size);
 
@@ -83,7 +77,9 @@ int preprocessor_c_parse_lexer(Preprocessor_C *preprocessor, Lexer_C *lexer, con
 {
     int parse_next_result;
 
-    while(lexer->pbuf != end && (parse_next_result = preprocessor_c_parse_next(preprocessor, lexer)) == 0);
+    do {
+		parse_next_result = preprocessor_c_parse_next(preprocessor, lexer);
+	} while (lexer->current <= end && parse_next_result == 0);
 
     return parse_next_result;
 }
@@ -94,12 +90,11 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
 
     Token_C token;
 
-    if (lexer_c_next(lexer, &token) == -1) {
-        fprintf(preprocessor->output, "%c", *lexer->pbuf);
-        lexer->pbuf += 1;
+	lexer->mode = LEXER_MODE_PREPROCESSOR;
 
-        return 0;
-    }
+	lexer_c_next(lexer, &token);
+
+	lexer->mode = LEXER_MODE_NORMAL;
 
     switch (token.type) {
         case T_MACRO_INCLUDE: {
@@ -124,16 +119,11 @@ int preprocessor_c_parse_next(Preprocessor_C *preprocessor, Lexer_C *lexer)
         case T_MACRO_ERROR: {
             return preprocessor_c_parse_error(preprocessor, lexer, &token);
         }
-        case T_COMMENT_LINE:
-        case T_COMMENT_MULTILINE: return 0;
-
-        case T_MACRO_ELIFDEF:
-        case T_MACRO_ELIFNDEF:
         case T_MACRO_ELIF:
         case T_MACRO_ELSE:
         case T_MACRO_ENDIF: {
         	// TODO sv_t lexer_c_log_at / use token
-            lexer_c_log_at(L_ERROR, lexer, &token, "%.*s without #if", (int)(token.view.len), token.view.value);
+            // TODO lexer_c_log_at(L_ERROR, lexer, &token, "%.*s without #if", (int)(token.view.len), token.view.value);
 
             return -1;
         }
@@ -159,13 +149,15 @@ int preprocessor_c_parse_default(Preprocessor_C *preprocessor, Lexer_C *lexer, T
 
 int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *include_file_token, char *include_file_path/*[PATH_MAX]*/)
 {
+	(void)lexer;
+
     const char *pathname = include_file_token->view.value;
     const size_t pathname_len = include_file_token->view.len - 2; // to get the len between "..." or <...>
 
     const int mode = (*pathname == '"');
 
     if (pathname_len == 0) {
-        lexer_c_log_at(L_ERROR, lexer, include_file_token, "empty filename in #include");
+        // TODO: lexer_c_log_at(L_ERROR, lexer, include_file_token, "empty filename in #include");
 
         return -1;
     }
@@ -203,7 +195,7 @@ int preprocessor_c_find_include_file(Preprocessor_C *preprocessor, Lexer_C *lexe
         return 0;
     }
 
-    lexer_c_log_at(L_ERROR, lexer, include_file_token, "%s: %s", include_file_path + strlen(include_file_path) - pathname_len, strerror(ENOENT));
+    // TODO: lexer_c_log_at(L_ERROR, lexer, include_file_token, "%s: %s", include_file_path + strlen(include_file_path) - pathname_len, strerror(ENOENT));
 
     return -1;
 }
@@ -214,17 +206,14 @@ int preprocessor_c_parse_include(Preprocessor_C *preprocessor, Lexer_C *lexer, T
 
     Token_C include_file;
 
-    if (lexer_c_next_skip_whitespace(lexer, &include_file) == -1) {
-        lexer_c_log_at(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
-
-        return -1;
-    }
-
-    if (include_file.type != T_MACRO_INCLUDE_FILE && include_file.type != T_STRING) {
-        lexer_c_log_at(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
-
-        return -1;
-    }
+    switch (lexer_c_next(lexer, &include_file)) {
+		case T_MACRO_INCLUDE_FILE:
+		case T_STRING:
+			break;
+		default:
+			// TODO: lexer_c_log_at(L_ERROR, lexer, &include_file, "#include expects \"FILENAME\" or <FILENAME>");
+			return -1;
+	}
 
     char include_file_path[PATH_MAX];
 
@@ -246,15 +235,18 @@ int preprocessor_c_parse_identifier(Preprocessor_C *preprocessor, Lexer_C *lexer
     return 0;
 }
 
+// TODO is broken!
 int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
     (void)token;
 
+	assert(0 && "TODO preprocessor_c_parse_define not implemented!");
+
     Token_C identifier;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
-        lexer_c_log_at(L_ERROR, lexer, &identifier, "macro names must be identifiers");
+    if (lexer_c_next(lexer, &identifier) != T_IDENTIFIER) {
+        // TODO: lexer_c_log_at(L_ERROR, lexer, &identifier, "macro names must be identifiers");
 
         return -1;
     }
@@ -263,8 +255,11 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
 
     // TODO ?? not needed
     // TODO i think now we should parse first the "^#\\s*" token and then a real directive like define, undef
-    if (lexer_c_next(lexer, &next_token) == -1 || next_token.type != T_WHITESPACE) {
-        lexer_c_log_at(L_ERROR, lexer, &next_token, "missing whitespace after the macro name");
+    // TODO wtf??
+    // TODO when using WHITESPACE we need LEXER CPP MODE
+    // TODO a "(" is also allowed, so this is probably pointless anyway
+    if (lexer_c_next(lexer, &next_token) != T_WHITESPACE) {
+        // TODO: lexer_c_log_at(L_ERROR, lexer, &next_token, "missing whitespace after the macro name");
 
         return -1;
     }
@@ -282,7 +277,7 @@ int preprocessor_c_parse_define(Preprocessor_C *preprocessor, Lexer_C *lexer, To
 
     Token_C macro_sequenze;
     
-    if (lexer_c_next(lexer, &macro_sequenze) == -1 || macro_sequenze.type != T_MACRO_TOKEN_SEQUENZE) {
+    if (lexer_c_next(lexer, &macro_sequenze) != T_MACRO_TOKEN_SEQUENZE) {
         *lexer = lexer_saved;
 
         return 0;
@@ -305,9 +300,10 @@ int preprocessor_c_parse_undef(Preprocessor_C *preprocessor, Lexer_C *lexer, Tok
 
     Token_C identifier;
 
-    if (lexer_c_next_skip_whitespace_token_is_type(lexer, &identifier, T_IDENTIFIER) == 0) {
-        lexer_c_log_at(L_ERROR, lexer, &identifier, "macro names must be identifiers");
+    if (lexer_c_next(lexer, &identifier) != T_IDENTIFIER) {
+        // TODO: lexer_c_log_at(L_ERROR, lexer, &identifier, "macro names must be identifiers");
 
+		// TODO recovery strategy to next line
         *lexer = lexer_saved_begin;
         return -1;
     }
@@ -339,7 +335,7 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 
     // TODO ?? how to error
     if (conditional == NULL) {
-        lexer_c_log_at(L_ERROR, lexer, token, "conditional directive is not valid");
+        // TODO: lexer_c_log_at(L_ERROR, lexer, token, "conditional directive is not valid");
 
         return -1;
     }
@@ -367,12 +363,15 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
             if ((lmap_has(preprocessor->defines, identifier_name) == 1) ^ (negate == 1)) {
                 Token_C text = conditional->elements[1]->token;
 
-                Lexer_C lexer_text = {
+                /*Lexer_C lexer_text = {
                     .buf = text.view.value,
                     .pbuf = text.view.value,
                     .loc = lexer->loc
-                };
-				// TODO sv_t param
+                };*/
+                Lexer_C lexer_text;
+                lexer_c_create(&lexer_text, lexer->loc.pathname, text.view.value, LEXER_MODE_NORMAL);
+                // TODO set location of Token_C text!
+				// TODO sv_t param ??
                 parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.view.value + text.view.len);
                 
                 goto ret;
@@ -393,11 +392,14 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 
     Token_C text = conditional->elements[3]->elements[1]->token;
 
-    Lexer_C lexer_text = {
+    /*Lexer_C lexer_text = {
         .buf = text.view.value,
         .pbuf = text.view.value,
         .loc = lexer->loc
-    };
+    };*/
+    Lexer_C lexer_text;
+    lexer_c_create(&lexer_text, lexer->loc.pathname, text.view.value, LEXER_MODE_NORMAL);
+	// TODO set location of Token_C text!
 
     parse_result = preprocessor_c_parse_lexer(preprocessor, &lexer_text, text.view.value + text.view.len);
 
@@ -411,8 +413,10 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 int preprocessor_c_parse_error(Preprocessor_C *preprocessor, Lexer_C *lexer, Token_C *token)
 {
     (void)preprocessor;
+    (void)lexer;
+    (void)token;
 
-    lexer_c_log_at(L_ERROR, lexer, token, SV_FMT, SV_PARAMS(&token->view));
+    // TODO: lexer_c_log_at(L_ERROR, lexer, token, SV_FMT, SV_PARAMS(&token->view));
 
     return -1;
 }

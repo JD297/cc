@@ -10,6 +10,17 @@
 typedef struct {
     TokenType_C type;
     sv_t view;
+    
+    union {
+    	int d;
+    	unsigned int u;
+    	long int ld;
+    	unsigned long int lu;
+    	float f;
+    	double lf;
+    	long double Lf;
+    	sv_t sv;
+    } literal;
 } Token_C;
 
 #endif
