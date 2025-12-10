@@ -16,6 +16,6 @@ extern toolchain_linker_setup_args_func_t toolchain_linker_setup_args_func;
 
 extern void toolchain_linker_openbsd_setup_args(ToolchainLinkerArgs *args);
 
-extern void toolchain_linker_linux_setup_args(ToolchainLinkerArgs *args);
+extern void toolchain_linker_gnu_linux_setup_args(ToolchainLinkerArgs *args);
 
 #endif
