@@ -11,6 +11,7 @@
 #include <jd297/lmap.h>
 #include <jd297/vector.h>
 
+#include "toolchain.h"
 #include "preprocessor_c.h"
 #include "compiler_c.h"
 #include "codegen.h"
@@ -481,25 +482,11 @@ int main(int argc, char **argv)
 	if (outfile == NULL) {
 		outfile = "a.out";
 	}
+	
+	char *outfile_saved = outfile; // TODO GLOBAL VAR HACK RESOLVE
+	outfile = NULL;                // TODO GLOBAL VAR HACK RESOLVE
 
-	vector_t ld_args = { 0 };
-
-	vec_push_back(&ld_args, "ld");
-
-	// TODO HARD works on OBSD but not on linux
-	// TODO only shard linking is supported
-	vec_push_back(&ld_args, "--dynamic-linker=/usr/libexec/ld.so");
-
-	vec_push_back(&ld_args, "-o");
-	vec_push_back(&ld_args, outfile);
-
-	outfile = NULL; // TODO HACK
-
-	// TODO HARD works on OBSD but not on linux
-	// TODO maybe differences between clang and gcc (compiler lib??)
-	// TODO check for flags with nostdlib etc.
-	vec_push_back(&ld_args, "/usr/lib/crt0.o");
-	vec_push_back(&ld_args, "/usr/lib/crtbegin.o");
+	vector_t input_files = { 0 };
 
 	for (int i = optind; i < argc; i++) {
 		char *input_file = argv[i];
@@ -515,28 +502,32 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		vec_push_back(&ld_args, linker_file);
+		vec_push_back(&input_files, linker_file);
 	}
+	
+	outfile = outfile_saved; // TODO GLOBAL VAR HACK RESOLVE
 
-	for (char **it = (char **)vec_begin(&lib_dirs); it < (char **)vec_end(&lib_dirs); it++) {
-		vec_push_back(&ld_args, "-L");
-		vec_push_back(&ld_args, *it);
-	}
+	vector_t ld_args = { 0 };
 
-	vec_push_back(&ld_args, "-l");
-	vec_push_back(&ld_args, "c");
-
-	vec_push_back(&ld_args, "/usr/lib/crtend.o");
-	vec_push_back(&ld_args, NULL);
-
+	ToolchainLinkerArgs toolchain_linker_args = {
+		.ld_args = &ld_args,
+		.input_files = &input_files,
+		.lib_dirs = &lib_dirs,
+		.outfile = outfile
+	};
+	
+	toolchain_linker_setup_args_func_t toolchain_linker_setup_args_func = toolchain_linker_openbsd_setup_args; // TODO HARD
+	
+	toolchain_linker_setup_args_func(&toolchain_linker_args);
 
 	int wstatus;
 
-	if (waitpid(cc_fork_execvp(&ld_args), &wstatus, 0) == -1) { // TODO free ld_args on error
+	if (waitpid(cc_fork_execvp(&ld_args), &wstatus, 0) == -1) { // TODO free ld_args and input_files on error
 		err(EXIT_FAILURE, NULL);
 	}
 
 	vec_free(&ld_args);
+	vec_free(&input_files);
 
 	return WEXITSTATUS(wstatus);
 }

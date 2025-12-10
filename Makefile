@@ -17,7 +17,8 @@ OBJFILES      = $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o 
                 $(BUILDDIR)/list.o $(BUILDDIR)/optimizer.o $(BUILDDIR)/ir.o \
                 $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o \
                 $(BUILDDIR)/codegen.o \
-                $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/symtbl.o
+                $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/symtbl.o \
+                $(BUILDDIR)/toolchain_openbsd.o
 
 HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/lexer_c.h $(SRCDIR)/parser_c.h \
@@ -27,7 +28,7 @@ HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h \
                 $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h \
                 $(SRCDIR)/jd297/sv.h $(SRCDIR)/jd297/lmap_sv.h \
-                $(SRCDIR)/symtbl.h
+                $(SRCDIR)/symtbl.h $(SRCDIR)/toolchain.h
 
 all: $(BUILDDIR)/$(TARGET) $(BUILDDIR)/cc_ir_test
 
@@ -96,6 +97,9 @@ $(BUILDDIR)/symtbl.o: $(HEADERS) $(SRCDIR)/symtbl.c
 
 $(BUILDDIR)/lmap_sv.o: $(HEADERS) $(SRCDIR)/lmap_sv.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lmap_sv.c
+
+$(BUILDDIR)/toolchain_openbsd.o: $(HEADERS) $(SRCDIR)/toolchain_openbsd.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/toolchain_openbsd.c
 
 clean:
 	rm -f $(BUILDDIR)/*
