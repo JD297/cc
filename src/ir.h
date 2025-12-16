@@ -20,6 +20,8 @@ typedef enum {
 	IR_OC_IMM,
 	IR_OC_PUSH,
 	IR_OC_POP,
+	IR_OC_SAL,
+	IR_OC_SAR,
 	IR_OC_ADD,
 	IR_OC_SUB,
 	IR_OC_MUL,

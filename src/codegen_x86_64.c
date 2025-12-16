@@ -12,6 +12,8 @@ extern int codegen_x86_64_func_end(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_imm(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_push(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_pop(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_sal(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_sar(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_add(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_sub(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_mul(IR_CTX *ctx, FILE *output, IRCode *code);
@@ -48,6 +50,16 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 			} break;
 			case IR_OC_POP: {
 				if (codegen_x86_64_pop(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_SAL: {
+				if (codegen_x86_64_sal(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_SAR: {
+				if (codegen_x86_64_sar(ctx, output, code) != 0) {
 					return -1;
 				}
 			} break;
@@ -178,6 +190,30 @@ int codegen_x86_64_pop(IR_CTX *ctx, FILE *output, IRCode *code)
 	// TODO use register label instead of always rbx
 	(void) code;
 	fprintf(output, "\tpopq\t%%rbx\n");
+
+	return 0;
+}
+
+int codegen_x86_64_sal(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax << cl
+	(void) code;
+	fprintf(output, "\tmovq\t%%rbx, %%rcx\n");
+	fprintf(output, "\tsalq\t%%cl, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_sar(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax >> cl
+	(void) code;
+	fprintf(output, "\tmovq\t%%rbx, %%rcx\n");
+	fprintf(output, "\tsarq\t%%cl, %%rax\n");
 
 	return 0;
 }

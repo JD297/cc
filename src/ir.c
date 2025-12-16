@@ -551,17 +551,72 @@ int ir_relational_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_shift_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+		if (this_node->num == 1) {
+			ParseTreeNode_C *node = this_node->elements[0];
+
+			return ir_additive_expression(ctx, node);
+		}
+
+        ParseTreeNode_C *right = this_node->elements[1];
         
-        if (this_node->token.type == T_BITWISE_LEFTSHIFT) {
-        	assert(0 && "TODO not implemented: with T_BITWISE_LEFTSHIFT");
+        if (ir_additive_expression(ctx, right) != 0) {
+        	return -1;
         }
-        
-        if (this_node->token.type == T_BITWISE_RIGHTSHIFT) {
-        	assert(0 && "TODO not implemented: with T_BITWISE_RIGHTSHIFT");
+		
+		IRCode *push = malloc(sizeof(IRCode));
+		*push = (IRCode) {
+			.op = IR_OC_PUSH,
+			// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), push);
+
+		ParseTreeNode_C *left = this_node->elements[0];
+		
+		if (left->type == PTT_C_SHIFT_EXPRESSION) {
+			if (ir_shift_expression(ctx, left) != 0) {
+				return -1;
+			}
+		} else {
+		    if (ir_additive_expression(ctx, left) != 0) {
+		    	return -1;
+		    }
         }
-        
-        return ir_additive_expression(ctx, node);
+		
+        IRCode *pop = malloc(sizeof(IRCode));
+		*pop = (IRCode) {
+			.op = IR_OC_POP,
+			// .result.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), pop);
+
+        switch (this_node->token.type) {
+        	case T_BITWISE_LEFTSHIFT: {
+        		IRCode *sal = malloc(sizeof(IRCode));
+				*sal = (IRCode) {
+					.op = IR_OC_SAL,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), sal);
+
+        		return 0;
+    		}
+        	case T_BITWISE_RIGHTSHIFT: {
+	        	IRCode *sar = malloc(sizeof(IRCode));
+				*sar = (IRCode) {
+					.op = IR_OC_SAR,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), sar);
+				
+        		return 0;
+        	}
+        	default:
+        		assert(0 && "not reachable");
+        }
 }
 
 int ir_additive_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
