@@ -25,6 +25,7 @@ typedef enum {
 	IR_OC_MUL,
 	IR_OC_DIV,
 	IR_OC_MOD,
+	IR_OC_OR,
 	IR_OC_JMP_FUNC_END,
 	IR_OC_LABEL,
 	IR_OC_JMP,
