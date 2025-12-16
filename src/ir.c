@@ -520,21 +520,74 @@ int ir_multiplicative_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 			return ir_cast_expression(ctx, node);
 		}
-        
+
+        ParseTreeNode_C *right = this_node->elements[1];
+
+        if (ir_cast_expression(ctx, right) != 0) {
+        	return -1;
+        }
+
+		IRCode *push = malloc(sizeof(IRCode));
+		*push = (IRCode) {
+			.op = IR_OC_PUSH,
+			// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), push);
+
+		ParseTreeNode_C *left = this_node->elements[0];
+		
+		if (left->type == PTT_C_MULTIPLICATIVE_EXPRESSION) {
+			if (ir_multiplicative_expression(ctx, left) != 0) {
+				return -1;
+			}
+		} else {
+		    if (ir_cast_expression(ctx, left) != 0) {
+		    	return -1;
+		    }
+        }
+
+		IRCode *pop = malloc(sizeof(IRCode));
+		*pop = (IRCode) {
+			.op = IR_OC_POP,
+			// .result.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), pop);
+
         switch (this_node->token.type) {
         	case T_MULTIPLY: {
-        		assert(0 && "TODO not implemented: with T_MULTIPLY");
-        	
+        		IRCode *mul = malloc(sizeof(IRCode));
+				*mul = (IRCode) {
+					.op = IR_OC_MUL,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), mul);
+
         		return 0;
         	}
         	case T_DIVIDE: {
-        		assert(0 && "TODO not implemented: with T_DIVIDE");
-        	
+        		IRCode *div = malloc(sizeof(IRCode));
+				*div = (IRCode) {
+					.op = IR_OC_DIV,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), div);
+
         		return 0;
         	}
         	case T_MODULUS: {
-        		assert(0 && "TODO not implemented: with T_MODULUS");
-        	
+        		IRCode *mod = malloc(sizeof(IRCode));
+				*mod = (IRCode) {
+					.op = IR_OC_MOD,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), mod);
+
         		return 0;
         	}
         	default:
