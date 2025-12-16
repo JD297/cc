@@ -403,7 +403,26 @@ int main(int argc, char **argv)
     }
 
     // TODO atexit(token_type_c_destroy_lookups);
-    
+
+    if (toolchain_create_lookups() == -1) {
+        return EXIT_FAILURE;
+    }
+
+    // TODO atexit(toolchain_destroy_lookups);
+
+    Toolchain toolchain;
+
+	ToolchainArgs toolchain_args = {
+		.lib_dirs = &lib_dirs,
+		.outfile = outfile
+	};
+
+	if (toolchain_create(&toolchain, &toolchain_args) == -1) {
+		return EXIT_FAILURE;
+	}
+
+	// TODO atexit(toolchain_destroy);
+
     if (Eflag == 1) {
     	FILE *output = stdout;
 
@@ -479,14 +498,7 @@ int main(int argc, char **argv)
 		return code;
 	}
 
-	if (outfile == NULL) {
-		outfile = "a.out";
-	}
-	
-	char *outfile_saved = outfile; // TODO GLOBAL VAR HACK RESOLVE
-	outfile = NULL;                // TODO GLOBAL VAR HACK RESOLVE
-
-	vector_t input_files = { 0 };
+	outfile = NULL; // TODO GLOVAL VAR HACK RESOLVE
 
 	for (int i = optind; i < argc; i++) {
 		char *input_file = argv[i];
@@ -502,32 +514,19 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		vec_push_back(&input_files, linker_file);
+		// TODO maybe: toolchain_add_input_file(&toolchain, linker_file);
+		// or
+		// TODO maybe: toolchain_add_linker_input_file(&toolchain, linker_file);
+		vec_push_back(&toolchain.input_files, linker_file);
 	}
 	
-	outfile = outfile_saved; // TODO GLOBAL VAR HACK RESOLVE
-
-	vector_t ld_args = { 0 };
-
-	ToolchainLinkerArgs toolchain_linker_args = {
-		.ld_args = &ld_args,
-		.input_files = &input_files,
-		.lib_dirs = &lib_dirs,
-		.outfile = outfile
-	};
-	
-	toolchain_linker_setup_args_func_t toolchain_linker_setup_args_func = toolchain_linker_openbsd_setup_args; // TODO HARD
-	
-	toolchain_linker_setup_args_func(&toolchain_linker_args);
+	toolchain.linker_setup_args_func(&toolchain);
 
 	int wstatus;
 
-	if (waitpid(cc_fork_execvp(&ld_args), &wstatus, 0) == -1) { // TODO free ld_args and input_files on error
+	if (waitpid(cc_fork_execvp(&toolchain.ld_args), &wstatus, 0) == -1) {
 		err(EXIT_FAILURE, NULL);
 	}
-
-	vec_free(&ld_args);
-	vec_free(&input_files);
 
 	return WEXITSTATUS(wstatus);
 }

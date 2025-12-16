@@ -2,20 +2,49 @@
 #define JD297_CC_TOOLCHAIN_H
 
 #include <jd297/vector.h>
+#include <jd297/lmap.h>
+
+typedef enum {
+	Toolchain_OpenBSD,
+	Toolchain_Linux
+} ToolchainOS;
 
 typedef struct {
-	vector_t *ld_args;
-	vector_t *input_files;
+	const char *key;
+	ToolchainOS value;
+} ToolchainFunctionLookupEntry;
+
+extern lmap_t toolchain_lookup_functions;
+
+extern int toolchain_create_lookups(void);
+
+// TODO extern int toolchain_destroy_lookups(void);
+
+typedef struct {
 	vector_t *lib_dirs;
 	char *outfile;
-} ToolchainLinkerArgs;
+	// TODO ...
+} ToolchainArgs;
 
-typedef void (*toolchain_linker_setup_args_func_t)(ToolchainLinkerArgs *args);
+typedef struct Toolchain Toolchain;
 
-extern toolchain_linker_setup_args_func_t toolchain_linker_setup_args_func;
+typedef void (*toolchain_linker_setup_args_func_t)(Toolchain *toolchain);
 
-extern void toolchain_linker_openbsd_setup_args(ToolchainLinkerArgs *args);
+struct Toolchain {
+	vector_t ld_args;
+	vector_t input_files;
+	
+	ToolchainArgs *args;
 
-extern void toolchain_linker_gnu_linux_setup_args(ToolchainLinkerArgs *args);
+	toolchain_linker_setup_args_func_t linker_setup_args_func;
+};
+
+extern int toolchain_create(Toolchain *toolchain, ToolchainArgs *args);
+
+// TODO extern int toolchain_destroy(Toolchain *toolchain);
+
+extern void toolchain_linker_openbsd_setup_args(Toolchain *toolchain);
+
+extern void toolchain_linker_gnu_linux_setup_args(Toolchain *toolchain);
 
 #endif

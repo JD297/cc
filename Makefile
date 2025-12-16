@@ -18,6 +18,7 @@ OBJFILES      = $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o 
                 $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o \
                 $(BUILDDIR)/codegen.o \
                 $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/symtbl.o \
+                $(BUILDDIR)/toolchain.o \
                 $(BUILDDIR)/toolchain_openbsd.o $(BUILDDIR)/toolchain_gnu_linux.o
 
 HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
@@ -97,6 +98,9 @@ $(BUILDDIR)/symtbl.o: $(HEADERS) $(SRCDIR)/symtbl.c
 
 $(BUILDDIR)/lmap_sv.o: $(HEADERS) $(SRCDIR)/lmap_sv.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lmap_sv.c
+
+$(BUILDDIR)/toolchain.o: $(HEADERS) $(SRCDIR)/toolchain.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/toolchain.c
 
 $(BUILDDIR)/toolchain_openbsd.o: $(HEADERS) $(SRCDIR)/toolchain_openbsd.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/toolchain_openbsd.c
