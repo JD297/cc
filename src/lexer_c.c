@@ -502,9 +502,15 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 				break;
 			}			
 
-			lexer->start = lexer->current;
+			while (1) switch (lexer_c_peek(lexer, 0)) {
+				case '\n':
+					lexer_c_advance(lexer);
+					break;
+				default:
+					lexer->start = lexer->current;
 
-			return lexer_c_next(lexer, token);
+					return lexer_c_next(lexer, token);
+			}
 		} break;
 		case ' ': case '\r': case '\t': case '\f': case '\v': {
 			if (lexer->mode == LEXER_MODE_PREPROCESSOR) {
@@ -512,9 +518,15 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 				break;
 			}
 
-			lexer->start = lexer->current;
+			while (1) switch (lexer_c_peek(lexer, 0)) {
+				case ' ': case '\r': case '\t': case '\f': case '\v':
+					lexer_c_advance(lexer);
+					break;
+				default:
+					lexer->start = lexer->current;
 
-			return lexer_c_next(lexer, token);
+					return lexer_c_next(lexer, token);
+			}
 		} break;
 		case '\0': {
 			lexer_c_set_token(lexer, token, T_EOF);
