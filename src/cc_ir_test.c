@@ -33,6 +33,10 @@ int main(void)
 	SymTblEnt r1 = (SymTblEnt) {.type = REG, .use = REGISTER};
 	SymTblEnt r2 = (SymTblEnt) {.type = REG, .use = REGISTER};
 	
+	// TODO unused
+	(void)r1;
+	(void)r2;
+	
 	sv_t id_main = {
 		.value = "main",
 		.len = 4
