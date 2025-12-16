@@ -1136,7 +1136,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Parser_C_CTX *ctx)
     Token_C this_node_token;
 
     switch (lexer_c_next(ctx->lexer, &this_node_token)) {
-        case PTT_C_AND_EXPRESSION: {
+        case T_BITWISE_AND: {
             parser_c_parse_required(ctx, this_node, equality_expression, error);
 
             this_node->token = this_node_token;
@@ -1152,7 +1152,7 @@ ParseTreeNode_C *parser_c_parse_and_expression(Parser_C_CTX *ctx)
         lexer_saved_token = *ctx->lexer;
 
         switch (lexer_c_next(ctx->lexer, &this_node_token)) {
-            case PTT_C_AND_EXPRESSION: {
+            case T_BITWISE_AND: {
                 left_node = this_node;
 
                 this_node = parse_tree_node_c_create(PTT_C_AND_EXPRESSION, &this_node_token);
