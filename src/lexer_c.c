@@ -40,6 +40,8 @@ void lexer_c_create(Lexer_C *lexer, sv_t pathname, const char *source, Lexer_Mod
 
 TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 {
+	lexer_c_next_again:
+
 	switch (lexer_c_advance(lexer))
 	{
         case '(':
@@ -93,7 +95,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 					/*
 					 * TODO SKIP EOL / EOF
 					 * TODO lexer->mode = LEXER_MODE_NORMAL;
-					 * TODO return lexer_c_next(lexer, token);
+					 * TODO goto lexer_c_next_again;
 					 */
 					assert(0 && "TODO: error: invalid filename for line marker directive");
 				}
@@ -126,7 +128,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 			lexer->loc.line = line;
 			lexer->loc.col = 0;
 
-			return lexer_c_next(lexer, token);
+			goto lexer_c_next_again;
 		} break;
 		case '=':
 			lexer_c_set_token(lexer, token, lexer_c_match(lexer, '=') == 0 ? T_EQUAL_TO : T_ASSIGNMENT);
@@ -167,7 +169,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 					lexer_c_advance(lexer);
 				}
 
-				return lexer_c_next(lexer, token);
+				goto lexer_c_next_again;
 			}
 
 			if (lexer_c_match(lexer, '*') == 0) {
@@ -177,8 +179,8 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 						lexer_c_advance(lexer);
 
 						lexer->start = lexer->current;
-						
-						return lexer_c_next(lexer, token);
+
+						goto lexer_c_next_again;
 					}
 
 					if (lexer_c_is_at_end(lexer)) {
@@ -314,8 +316,8 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 					printf(SV_FMT":%zu:%zu: error: missing terminating ' character\n", SV_PARAMS(&lexer->loc.pathname), lexer->loc.line, lexer->loc.col);
 					
 					lexer->start = lexer->current = end;
-		
-					return lexer_c_next(lexer, token);
+
+					goto lexer_c_next_again;
 				}
 			}
 
@@ -325,7 +327,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 
 					lexer->start = lexer->current;
 			
-					return lexer_c_next(lexer, token);
+					goto lexer_c_next_again;
 				}
 				case '\\': {
 					switch (lexer_c_advance(lexer)) {
@@ -337,7 +339,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 						
 								lexer->start = lexer->current = end + 1;
 						
-								return lexer_c_next(lexer, token);
+								goto lexer_c_next_again;
 							}
 							
 							type = C_LIT_ESC;
@@ -354,7 +356,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 
 											lexer->start = lexer->current = end + 1;
 											
-											return lexer_c_next(lexer, token);
+											goto lexer_c_next_again;
 										}
 
 										continue;
@@ -363,7 +365,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 							
 										lexer->start = lexer->current = end + 1;
 								
-										return lexer_c_next(lexer, token);
+										goto lexer_c_next_again;
 									}
 									case '\'':
 										if (i == 0) {
@@ -371,7 +373,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 
 											lexer->start = lexer->current = end + 1;
 											
-											return lexer_c_next(lexer, token);
+											goto lexer_c_next_again;
 										}
 										
 										break;
@@ -393,7 +395,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 
 											lexer->start = lexer->current = end + 1;
 											
-											return lexer_c_next(lexer, token);
+											goto lexer_c_next_again;
 										}
 
 										continue;
@@ -402,7 +404,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 							
 										lexer->start = lexer->current = end + 1;
 								
-										return lexer_c_next(lexer, token);
+										goto lexer_c_next_again;
 									}
 									case '\'':
 										break;
@@ -418,7 +420,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 						
 							lexer->start = lexer->current = end + 1;
 					
-							return lexer_c_next(lexer, token);
+							goto lexer_c_next_again;
 						}
 					}
 				} break;
@@ -428,7 +430,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 						
 						lexer->start = lexer->current = end + 1;
 				
-						return lexer_c_next(lexer, token);
+						goto lexer_c_next_again;
 					}
 				} break;
 			}
@@ -482,7 +484,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 					
 					lexer->start = lexer->current;
 		
-					return lexer_c_next(lexer, token);
+					goto lexer_c_next_again;
 				}
 			}
 
@@ -502,15 +504,9 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 				break;
 			}			
 
-			while (1) switch (lexer_c_peek(lexer, 0)) {
-				case '\n':
-					lexer_c_advance(lexer);
-					break;
-				default:
-					lexer->start = lexer->current;
+			lexer->start = lexer->current;
 
-					return lexer_c_next(lexer, token);
-			}
+			goto lexer_c_next_again;
 		} break;
 		case ' ': case '\r': case '\t': case '\f': case '\v': {
 			if (lexer->mode == LEXER_MODE_PREPROCESSOR) {
@@ -518,15 +514,9 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 				break;
 			}
 
-			while (1) switch (lexer_c_peek(lexer, 0)) {
-				case ' ': case '\r': case '\t': case '\f': case '\v':
-					lexer_c_advance(lexer);
-					break;
-				default:
-					lexer->start = lexer->current;
+			lexer->start = lexer->current;
 
-					return lexer_c_next(lexer, token);
-			}
+			goto lexer_c_next_again;
 		} break;
 		case '\0': {
 			lexer_c_set_token(lexer, token, T_EOF);
