@@ -187,9 +187,9 @@ int codegen_x86_64_pop(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register label instead of always rbx
+	// TODO use register label instead of always rcx
 	(void) code;
-	fprintf(output, "\tpopq\t%%rbx\n");
+	fprintf(output, "\tpopq\t%%rcx\n");
 
 	return 0;
 }
@@ -200,7 +200,6 @@ int codegen_x86_64_sal(IR_CTX *ctx, FILE *output, IRCode *code)
 
 	// TODO use register labels instead of always rax = rax << cl
 	(void) code;
-	fprintf(output, "\tmovq\t%%rbx, %%rcx\n");
 	fprintf(output, "\tsalq\t%%cl, %%rax\n");
 
 	return 0;
@@ -212,7 +211,6 @@ int codegen_x86_64_sar(IR_CTX *ctx, FILE *output, IRCode *code)
 
 	// TODO use register labels instead of always rax = rax >> cl
 	(void) code;
-	fprintf(output, "\tmovq\t%%rbx, %%rcx\n");
 	fprintf(output, "\tsarq\t%%cl, %%rax\n");
 
 	return 0;
@@ -222,9 +220,9 @@ int codegen_x86_64_add(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register labels instead of always rax = rax + rbx
+	// TODO use register labels instead of always rax = rax + rcx
 	(void) code;
-	fprintf(output, "\taddq\t%%rbx, %%rax\n");
+	fprintf(output, "\taddq\t%%rcx, %%rax\n");
 
 	return 0;
 }
@@ -233,9 +231,9 @@ int codegen_x86_64_sub(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register labels instead of always rax = rax + rbx
+	// TODO use register labels instead of always rax = rax + rcx
 	(void) code;
-	fprintf(output, "\tsubq\t%%rbx, %%rax\n");
+	fprintf(output, "\tsubq\t%%rcx, %%rax\n");
 
 	return 0;
 }
@@ -244,9 +242,9 @@ int codegen_x86_64_mul(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register labels instead of always rax = rax * rbx
+	// TODO use register labels instead of always rax = rax * rcx
 	(void) code;
-	fprintf(output, "\timulq\t%%rbx\n");
+	fprintf(output, "\timulq\t%%rcx\n");
 
 	return 0;
 }
@@ -255,17 +253,17 @@ int codegen_x86_64_div(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register labels instead of always rax = rax / rbx
+	// TODO use register labels instead of always rax = rax / rcx
 	(void) code;
 	fprintf(output, "\txor\t%%rdx, %%rdx\n");
-	fprintf(output, "\tidivq\t%%rbx\n");
+	fprintf(output, "\tidivq\t%%rcx\n");
 
 	return 0;
 }
 
 int codegen_x86_64_mod(IR_CTX *ctx, FILE *output, IRCode *code)
 {
-	// TODO use register labels instead of always rax = rax % rbx
+	// TODO use register labels instead of always rax = rax % rcx
 	// TODO ?? maybe mod is the same as div only that the result of the
 	// TODO mod is in rdx
 	codegen_x86_64_div(ctx, output, code);
@@ -279,9 +277,9 @@ int codegen_x86_64_or(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register labels instead of always rax = rax | rbx
+	// TODO use register labels instead of always rax = rax | rcx
 	(void) code;
-	fprintf(output, "\torq\t%%rbx, %%rax\n");
+	fprintf(output, "\torq\t%%rcx, %%rax\n");
 
 	return 0;
 }
@@ -290,9 +288,9 @@ int codegen_x86_64_xor(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register labels instead of always rax = rax ^ rbx
+	// TODO use register labels instead of always rax = rax ^ rcx
 	(void) code;
-	fprintf(output, "\txorq\t%%rbx, %%rax\n");
+	fprintf(output, "\txorq\t%%rcx, %%rax\n");
 
 	return 0;
 }
@@ -301,9 +299,9 @@ int codegen_x86_64_and(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	// TODO use register labels instead of always rax = rax & rbx
+	// TODO use register labels instead of always rax = rax & rcx
 	(void) code;
-	fprintf(output, "\tandq\t%%rbx, %%rax\n");
+	fprintf(output, "\tandq\t%%rcx, %%rax\n");
 
 	return 0;
 }
