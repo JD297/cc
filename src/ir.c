@@ -409,13 +409,54 @@ int ir_inclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_exclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+        if (this_node->num == 1) {
+			ParseTreeNode_C *node = this_node->elements[0];
+
+			return ir_and_expression(ctx, node);
+		}
+		
+		ParseTreeNode_C *right = this_node->elements[1];
         
-        if (node->token.type == T_BITWISE_XOR) {
-        	assert(0 && "TODO not implemented: with T_BITWISE_XOR");
+        if (ir_and_expression(ctx, right) != 0) {
+        	return -1;
         }
-        
-        return ir_and_expression(ctx, node);
+		
+		IRCode *push = malloc(sizeof(IRCode));
+		*push = (IRCode) {
+			.op = IR_OC_PUSH,
+			// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), push);
+
+		ParseTreeNode_C *left = this_node->elements[0];
+		
+		if (left->type == PTT_C_EXCLUSIVE_OR_EXPRESSION) {
+			if (ir_exclusive_or_expression(ctx, left) != 0) {
+				return -1;
+			}
+		} else {
+		    if (ir_and_expression(ctx, left) != 0) {
+		    	return -1;
+		    }
+        }
+		
+        IRCode *pop = malloc(sizeof(IRCode));
+		*pop = (IRCode) {
+			.op = IR_OC_POP,
+			// .result.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), pop);
+		
+		IRCode *xor = malloc(sizeof(IRCode));
+		*xor = (IRCode) {
+			.op = IR_OC_XOR,
+			// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+			// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+			// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), xor);
+		
+		return 0;
 }
 
 int ir_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)

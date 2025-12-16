@@ -18,6 +18,7 @@ extern int codegen_x86_64_mul(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_div(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_mod(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_or(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_xor(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_and(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code);
@@ -77,6 +78,11 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 			} break;
 			case IR_OC_OR: {
 				if (codegen_x86_64_or(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_XOR: {
+				if (codegen_x86_64_xor(ctx, output, code) != 0) {
 					return -1;
 				}
 			} break;
@@ -240,6 +246,17 @@ int codegen_x86_64_or(IR_CTX *ctx, FILE *output, IRCode *code)
 	// TODO use register labels instead of always rax = rax | rbx
 	(void) code;
 	fprintf(output, "\torq\t%%rbx, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_xor(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax ^ rbx
+	(void) code;
+	fprintf(output, "\txorq\t%%rbx, %%rax\n");
 
 	return 0;
 }
