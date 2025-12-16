@@ -39,13 +39,13 @@ typedef struct {
 
 extern void lmap_free(lmap_t *map);
 
-extern int lmap_has(lmap_t *map, char *k);
+extern int lmap_has(lmap_t *map, const char *k);
 
-extern void *lmap_get(lmap_t *map, char *k);
+extern void *lmap_get(lmap_t *map, const char *k);
 
-extern int lmap_add(lmap_t *map, char *k, void *v);
+extern int lmap_add(lmap_t *map, const char *k, void *v);
 
-extern void lmap_remove(lmap_t *map, char *k);
+extern void lmap_remove(lmap_t *map, const char *k);
 
 #endif
 
@@ -58,11 +58,11 @@ extern void lmap_remove(lmap_t *map, char *k);
 #include <jd297/vector.h>
 
 typedef struct {
-    char *k;
+    const char *k;
     void *v;
 } lmap_node_t;
 
-lmap_node_t *lmap_node_t_create(char *k, void *v)
+lmap_node_t *lmap_node_t_create(const char *k, void *v)
 {
     lmap_node_t *node = (lmap_node_t *)malloc(sizeof(lmap_node_t));
 
@@ -86,7 +86,7 @@ void lmap_free(lmap_t *map)
     vec_free(&map->pairs);
 }
 
-int lmap_has(lmap_t *map, char *k)
+int lmap_has(lmap_t *map, const char *k)
 {
     for (lmap_node_t **it = lmap_begin(map); it < lmap_end(map); ++it) {
         if (lmap_node_cmp(*it, k) == 0) {
@@ -97,7 +97,7 @@ int lmap_has(lmap_t *map, char *k)
     return 0;
 }
 
-void *lmap_get(lmap_t *map, char *k)
+void *lmap_get(lmap_t *map, const char *k)
 {
     for (lmap_node_t **it = lmap_begin(map); it < lmap_end(map); ++it) {
         if (lmap_node_cmp(*it, k) == 0) {
@@ -108,7 +108,7 @@ void *lmap_get(lmap_t *map, char *k)
     return NULL;
 }
 
-int lmap_add(lmap_t *map, char *k, void *v)
+int lmap_add(lmap_t *map, const char *k, void *v)
 {
     for (lmap_node_t **it = lmap_begin(map); it < lmap_end(map); ++it) {
         if (*it == NULL) {
@@ -128,7 +128,7 @@ int lmap_add(lmap_t *map, char *k, void *v)
     return vec_push_back(&map->pairs, lmap_node_t_create(k, v));
 }
 
-void lmap_remove(lmap_t *map, char *k)
+void lmap_remove(lmap_t *map, const char *k)
 {
     for (lmap_node_t **it = lmap_begin(map); it < lmap_end(map); ++it) {
         if (lmap_node_cmp(*it, k) == 0) {
