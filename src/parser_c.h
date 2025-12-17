@@ -92,6 +92,7 @@ extern ParseTreeNode_C *parser_c_parse_parameter_declaration(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_direct_abstract_declarator(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_enumerator_list(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_enumerator(Parser_C_CTX *ctx);
+extern ParseTreeNode_C *parser_c_parse_init_declarator_list(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_init_declarator(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_initializer(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_initializer_list(Parser_C_CTX *ctx);

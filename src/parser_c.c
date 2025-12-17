@@ -112,7 +112,7 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C_CTX *ctx)
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_DECLARATION, NULL);
 
     ParseTreeNode_C *declaration_specifier;
-    ParseTreeNode_C *init_declarator;
+    ParseTreeNode_C *init_declarator_list;
 
 	Token_C tmp;
 
@@ -120,9 +120,10 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C_CTX *ctx)
 
     parser_c_parse_list_required(ctx, this_node, declaration_specifier, error);
 
-    parser_c_parse_list_opt(ctx, this_node, init_declarator);
+    parser_c_parse_opt(ctx, this_node, init_declarator_list, next);
 
-    if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
+	next:
+	if (lexer_c_next(ctx->lexer, &tmp) != T_SEMICOLON) {
         goto error;
     }
 
@@ -2109,6 +2110,45 @@ ParseTreeNode_C *parser_c_parse_enumerator(Parser_C_CTX *ctx)
     ret: {
         return this_node;
     }
+
+    error: {
+        *ctx->lexer = lexer_saved;
+
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_init_declarator_list(Parser_C_CTX *ctx)
+{
+    ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_INIT_DECLARATOR_LIST, NULL);
+
+    ParseTreeNode_C *init_declarator;
+    
+    Token_C tmp;
+    
+    Lexer_C lexer_saved = *ctx->lexer;
+    
+    next_init_declarator: {
+        parser_c_parse_required(ctx, this_node, init_declarator, check_error); // TODO add symtbl ??
+        
+        Lexer_C lexer_saved_comma = *ctx->lexer;
+        
+        if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
+            goto next_init_declarator;
+        }
+        
+        *ctx->lexer = lexer_saved_comma;
+    }
+    
+    check_error: {
+        if (this_node->num == 0) {
+            goto error;
+        }
+    }
+
+    return this_node;
 
     error: {
         *ctx->lexer = lexer_saved;
