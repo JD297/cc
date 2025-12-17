@@ -33,6 +33,7 @@ extern int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_stack_alloc(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_store(IR_CTX *ctx, FILE *output, IRCode *code);
 
 int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 {
@@ -171,6 +172,11 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 				}
 			} break;
 			case IR_OC_STACK_DEALLOC: break; // asm leave does the job
+			case IR_OC_STORE: {
+				if (codegen_x86_64_store(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
 		
 			default: printf(">>>>>%d\n", code->op); assert(0 && "OP Code not implemented yet");
 		}
@@ -476,6 +482,12 @@ int codegen_x86_64_stack_alloc(IR_CTX *ctx, FILE *output, IRCode *code)
 
 	return 0;
 }
+
+int codegen_x86_64_store(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	fprintf(output, "\tmovq\t%%rax, -%zu(%%rbp)\n", code->result.ptr->addr);
 
 	return 0;
 }
