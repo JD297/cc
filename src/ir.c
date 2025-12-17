@@ -960,7 +960,22 @@ int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 		switch (node->type) {
 			case PTT_C_IDENTIFIER: {
-				assert(0 && "TODO not implemented: PTT_C_IDENTIFIER");
+				// TODO probably incomplete but fine for now...
+				SymTblEnt *ent = symtbl_get(ctx->symtbl, &node->token.view);
+				
+				assert(ent != NULL);
+				
+				IRCode *load = malloc(sizeof(IRCode));
+				
+				assert(load != NULL);
+				
+				*load = (IRCode){
+					.op = IR_OC_LOAD,
+					// .result.ptr = &r1, // TODO set a register probably R1 (return register)
+					.arg1.ptr = ent,
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), load);
 			} break;
 			case PTT_C_CONSTANT: {
 				return ir_constant(ctx, node);
