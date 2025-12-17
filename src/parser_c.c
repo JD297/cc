@@ -1815,15 +1815,25 @@ ParseTreeNode_C *parser_c_parse_assignment_expression(Parser_C_CTX *ctx)
     ParseTreeNode_C *assignment_operator;
     ParseTreeNode_C *assignment_expression;
 
-    parser_c_parse_opt(ctx, this_node, conditional_expression, ret);
-
     Lexer_C lexer_saved = *ctx->lexer;
 
-    parser_c_parse_required(ctx, this_node, unary_expression, error);
+    parser_c_parse_required(ctx, this_node, unary_expression, next_conditional_expression);
 
-    parser_c_parse_required(ctx, this_node, assignment_operator, error);
+    parser_c_parse_required(ctx, this_node, assignment_operator, next_conditional_expression_remove_prev);
 
     parser_c_parse_required(ctx, this_node, assignment_expression, error);
+
+	goto ret;
+
+	next_conditional_expression_remove_prev:
+	parse_tree_node_c_destroy(this_node);
+	this_node = parse_tree_node_c_create(PTT_C_ASSIGNMENT_EXPRESSION, NULL);
+	
+	next_conditional_expression: {
+		*ctx->lexer = lexer_saved;
+		
+		parser_c_parse_required(ctx, this_node, conditional_expression, error);
+	}
 
     ret: {
         return this_node;
