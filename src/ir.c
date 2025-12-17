@@ -583,25 +583,96 @@ int ir_equality_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_relational_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+		if (this_node->num == 1) {
+			ParseTreeNode_C *node = this_node->elements[0];
+
+			return ir_shift_expression(ctx, node);
+		}
+
+        ParseTreeNode_C *right = this_node->elements[1];
         
-        if (node->token.type == T_GREATER_THAN) {
-        	assert(0 && "TODO not implemented: with T_GREATER_THAN");
+        if (ir_shift_expression(ctx, right) != 0) {
+        	return -1;
         }
-        
-        if (node->token.type == T_LESS_THAN) {
-        	assert(0 && "TODO not implemented: with T_LESS_THAN");
+		
+		IRCode *push = malloc(sizeof(IRCode));
+		*push = (IRCode) {
+			.op = IR_OC_PUSH,
+			// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), push);
+
+		ParseTreeNode_C *left = this_node->elements[0];
+		
+		if (left->type == PTT_C_RELATIONAL_EXPRESSION) {
+			if (ir_relational_expression(ctx, left) != 0) {
+				return -1;
+			}
+		} else {
+		    if (ir_shift_expression(ctx, left) != 0) {
+		    	return -1;
+		    }
         }
-        
-        if (node->token.type == T_GREATER_THAN_OR_EQUAL_TO) {
-        	assert(0 && "TODO not implemented: with T_GREATER_THAN_OR_EQUAL_TO");
+		
+        IRCode *pop = malloc(sizeof(IRCode));
+		*pop = (IRCode) {
+			.op = IR_OC_POP,
+			// .result.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), pop);
+
+        switch (this_node->token.type) {
+        	case T_GREATER_THAN: {
+        		IRCode *gt = malloc(sizeof(IRCode));
+				*gt = (IRCode) {
+					.op = IR_OC_GT,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), gt);
+
+        		return 0;
+    		}
+        	case T_LESS_THAN: {
+	        	IRCode *lt = malloc(sizeof(IRCode));
+				*lt = (IRCode) {
+					.op = IR_OC_LT,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), lt);
+				
+        		return 0;
+        	}
+        	case T_GREATER_THAN_OR_EQUAL_TO: {
+	        	IRCode *gte = malloc(sizeof(IRCode));
+				*gte = (IRCode) {
+					.op = IR_OC_GTE,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), gte);
+				
+        		return 0;
+        	}
+        	case T_LESS_THAN_OR_EQUAL_TO: {
+	        	IRCode *lte = malloc(sizeof(IRCode));
+				*lte = (IRCode) {
+					.op = IR_OC_LTE,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), lte);
+				
+        		return 0;
+        	}
+        	default:
+        		assert(0 && "not reachable");
         }
-        
-        if (node->token.type == T_LESS_THAN_OR_EQUAL_TO) {
-        	assert(0 && "TODO not implemented: with T_LESS_THAN_OR_EQUAL_TO");
-        }
-        
-        return ir_shift_expression(ctx, node);
 }
 
 int ir_shift_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)

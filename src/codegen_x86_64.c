@@ -24,6 +24,10 @@ extern int codegen_x86_64_xor(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_and(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_eq(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_neq(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_gt(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_lt(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_gte(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_lte(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code);
@@ -112,6 +116,26 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 			} break;
 			case IR_OC_NEQ: {
 				if (codegen_x86_64_neq(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_GT: {
+				if (codegen_x86_64_gt(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_LT: {
+				if (codegen_x86_64_lt(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_GTE: {
+				if (codegen_x86_64_gte(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_LTE: {
+				if (codegen_x86_64_lte(ctx, output, code) != 0) {
 					return -1;
 				}
 			} break;
@@ -339,6 +363,58 @@ int codegen_x86_64_neq(IR_CTX *ctx, FILE *output, IRCode *code)
 	(void) code;
 	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
 	fprintf(output, "\tsetne\t%%al\n");
+	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_gt(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax > rcx
+	(void) code;
+	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
+	fprintf(output, "\tsetg\t%%al\n");
+	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_lt(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax < rcx
+	(void) code;
+	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
+	fprintf(output, "\tsetl\t%%al\n");
+	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_gte(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax == rcx
+	(void) code;
+	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
+	fprintf(output, "\tsetge\t%%al\n");
+	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_lte(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax == rcx
+	(void) code;
+	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
+	fprintf(output, "\tsetle\t%%al\n");
 	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
 
 	return 0;
