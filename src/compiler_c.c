@@ -66,11 +66,13 @@ int compiler_c_run(Compiler_C *compiler)
 
 	ir_run(&ir_ctx, translation_unit);
 
+	// TODO HARD
+	// TODO GLOBAL VAR HACK needed in optimizer_run
+	codegen_func = codegen_x86_64_run;
+
 	assert(optimizer_run(&ir_ctx) == 0);
 
-	codegen_run_func codegen_run = codegen_x86_64_run;
-
-	assert(codegen_run(&ir_ctx, compiler->output) == 0);
+	assert(codegen_func(&ir_ctx, compiler->output) == 0);
 
 	parse_tree_node_c_destroy(translation_unit);
 	munmap(src, filesize);
