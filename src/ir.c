@@ -1241,12 +1241,11 @@ int ir_labeled_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_expression_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+        if (this_node->num == 0) {
+			return 0;
+		}
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+        return ir_expression(ctx, this_node->elements[0]);
 }
 
 int ir_selection_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
