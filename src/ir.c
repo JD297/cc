@@ -96,12 +96,14 @@ int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *function_definition)
 	return 0;
 }
 
-int ir_declaration(IR_CTX *ctx, ParseTreeNode_C *declaration)
+int ir_declaration(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-	(void) ctx;
-	(void) declaration;
-
-	assert(0 && "TODO ir_declaration not implemented");
+	if (this_node->num != 2) {
+		// TODO: fprintf(stderr, "<file>:<line>:<col>: warning: declaration does not declare anything [-Wmissing-declarations]\n");
+		return 0;
+	}
+	
+	return ir_init_declarator_list(ctx, this_node->elements[1]);
 }
 
 int ir_declaration_specifier(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -1115,24 +1117,64 @@ int ir_enumerator(IR_CTX *ctx, ParseTreeNode_C *this_node)
         return 0;
 }
 
+int ir_init_declarator_list(IR_CTX *ctx, ParseTreeNode_C *this_node)
+{
+	for (size_t i = 0; i < this_node->num; ++i) {
+		if (ir_init_declarator(ctx, this_node->elements[i]) != 0) {
+			return -1;
+		}
+	}
+	
+	return 0;
+}
+
 int ir_init_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+        IRCode *local = malloc(sizeof(IRCode));
+				
+		assert(local != NULL);
+		
+		*local = (IRCode){
+			.op = IR_OC_LOCAL,
+			.result.ptr = this_node->symtblent
+		};
 
-        assert(0 && "TODO not implemented");
+		list_insert(ctx->code, list_end(ctx->code), local);
+        
+        if (this_node->num == 1) {	
+        	return 0;
+        }
+		if (ir_initializer(ctx, this_node->elements[1]) != 0) {
+			return -1;
+		}
+
+		IRCode *store = malloc(sizeof(IRCode));
+				
+		assert(store != NULL);
+		
+		*store = (IRCode){
+			.op = IR_OC_STORE,
+			// .arg1.ptr = &r1, // TODO set a register probably R1 (return register)
+			.result.ptr = this_node->symtblent,
+		};
+
+		list_insert(ctx->code, list_end(ctx->code), store);
 
         return 0;
 }
 
 int ir_initializer(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+        ParseTreeNode_C *node = this_node->elements[0];
 
-        assert(0 && "TODO not implemented");
-
-        return 0;
+		switch (node->type) {
+			case PTT_C_ASSIGNMENT_EXPRESSION:
+				return ir_assignment_expression(ctx, node);
+			case PTT_C_INITIALIZER_LIST:
+				assert(0 && "TODO not implemented ({ initializer_list })");
+			default:
+				assert(0 && "NOT REACHABLE");
+		}
 }
 
 int ir_initializer_list(IR_CTX *ctx, ParseTreeNode_C *this_node)

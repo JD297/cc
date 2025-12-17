@@ -117,6 +117,7 @@ extern int ir_parameter_declaration(IR_CTX *ctx, ParseTreeNode_C *this_node);
 extern int ir_direct_abstract_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
 extern int ir_enumerator_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
 extern int ir_enumerator(IR_CTX *ctx, ParseTreeNode_C *this_node);
+extern int ir_init_declarator_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
 extern int ir_init_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
 extern int ir_initializer(IR_CTX *ctx, ParseTreeNode_C *this_node);
 extern int ir_initializer_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
