@@ -7,20 +7,21 @@
 #ifndef JD297_CC_TOKEN_C_H
 #define JD297_CC_TOKEN_C_H
 
+typedef union {
+	int d;
+	unsigned int u;
+	long int ld;
+	unsigned long int lu;
+	float f;
+	double lf;
+	long double Lf;
+	sv_t sv;
+} literal_t;
+
 typedef struct {
     TokenType_C type;
     sv_t view;
-    
-    union {
-    	int d;
-    	unsigned int u;
-    	long int ld;
-    	unsigned long int lu;
-    	float f;
-    	double lf;
-    	long double Lf;
-    	sv_t sv;
-    } literal;
+    literal_t literal;
 } Token_C;
 
 #endif

@@ -1000,12 +1000,11 @@ int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         switch (this_node->token.type) {
 			case T_INTEGER_CONSTANT: {
-				
 				IRCode *imm = malloc(sizeof(IRCode));
 				*imm = (IRCode) {
-					.op = IR_OC_IMM,
+					.op = IR_OC_IMM_I64,
 					// .result.ptr = &r1, // TODO set a register probably R1 (return register)
-					.arg1.sv = &this_node->token.view
+					.arg1.literal = this_node->token.literal
 				};
 				list_insert(ctx->code, list_end(ctx->code), imm);
 
@@ -1015,7 +1014,15 @@ int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				assert(0 && "TODO not implemented: T_FLOATING_CONSTANT");
 			} break;
 			case T_CHARACTER_CONSTANT: {
-				assert(0 && "TODO not implemented: T_CHARACTER_CONSTANT");
+				IRCode *imm = malloc(sizeof(IRCode));
+				*imm = (IRCode) {
+					.op = IR_OC_IMM_I32,
+					// .result.ptr = &r1, // TODO set a register probably R1 (return register)
+					.arg1.literal = this_node->token.literal
+				};
+				list_insert(ctx->code, list_end(ctx->code), imm);
+
+				return 0;
 			} break;
 			case T_IDENTIFIER: {
 				assert(0 && "TODO not implemented: PTT_C_ENUMERATION_CONSTANT");

@@ -3,6 +3,7 @@
 
 #include "symtbl.h"
 #include "parse_tree_node_c.h"
+#include "token_c.h"
 
 #include <jd297/list.h>
 #include <jd297/lmap_sv.h>
@@ -17,7 +18,8 @@ typedef struct {
 typedef enum {
 	IR_OC_FUNC_BEGIN,
 	IR_OC_FUNC_END,
-	IR_OC_IMM,
+	IR_OC_IMM_I32,
+	IR_OC_IMM_I64,
 	IR_OC_PUSH,
 	IR_OC_POP,
 	IR_OC_SAL,
@@ -50,7 +52,7 @@ typedef struct {
 	union {
 		SymTblEnt *ptr;
 		SymTblEnt stack;
-		sv_t *sv;
+		literal_t literal;
 	} arg1;
 	union {
 		SymTblEnt *ptr;
