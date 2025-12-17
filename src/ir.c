@@ -1198,7 +1198,7 @@ int ir_statement(IR_CTX *ctx, ParseTreeNode_C *statement)
 			}
 		} break;
 		case PTT_C_EXPRESSION_STATEMENT: {
-			if (ir_jump_statement(ctx, node) != 0) {
+			if (ir_expression_statement(ctx, node) != 0) {
 				return -1;
 			}
 		} break;
