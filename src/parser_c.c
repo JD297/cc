@@ -80,7 +80,7 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
 	ParseTreeNode_C *identifier_node = direct_decl->elements[0];
 	
 	if (identifier_node->type != PTT_C_IDENTIFIER) {
-		assert(0 && "Only simple functions with identifieres are supporteds!");
+		assert(0 && "Only simple functions with identifieres are supported!");
 	}
 
 	symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, INT, FUNCTION, NULL); // TODO INT HARD
