@@ -983,17 +983,77 @@ int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         ParseTreeNode_C *node = this_node->elements[0];
 		
+		SymTblEnt *entry_id = NULL;
+		
 		switch (node->type) {
 			case PTT_C_CONDITIONAL_EXPRESSION: {
 				return ir_conditional_expression(ctx, node);
 			} break;
 			case PTT_C_UNARY_EXPRESSION: {
-				assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION");
+				/*switch (node->token->type) {
+					case T_INCREMENT:
+						assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (T_INCREMENT)");
+					case T_DECREMENT:
+						assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (T_DECREMENT)");
+					case T_DECREMENT:
+						assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (T_DECREMENT)");
+				}
+				assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION");*/
+				
+				// TODO only with PTT_C_IDENTIFIER
+				ParseTreeNode_C *expr_node = node->elements[0];
+				
+				if (expr_node->type != PTT_C_POSTFIX_EXPRESSION) {
+					assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (without PTT_C_POSTFIX_EXPRESSION)");
+				}
+				
+				if (expr_node->token.type != T_UNKNOWN) {
+					assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (without T_UNKNOWN)");
+				}
+				
+				if (expr_node->elements[0]->type != PTT_C_PRIMARY_EXPRESSION) {
+					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_PRIMARY_EXPRESSION)");
+				}
+				
+				if (expr_node->elements[0]->elements[0]->type != PTT_C_IDENTIFIER) {
+					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_IDENTIFIER)");
+				}
+				
+				ParseTreeNode_C *identifier = expr_node->elements[0]->elements[0];
+				
+				entry_id = symtbl_get(ctx->symtbl, &identifier->token.view);
+				
+				assert(entry_id != NULL && "SYMTBL entry not found :(!");
 			} break;
 			default: {
 				assert(0 && "NOT REACHABLE");
 			} break;
 		}
+		
+		assert(entry_id != NULL);
+		
+		switch (this_node->elements[1]->token.type) {
+			case T_ASSIGNMENT: break;
+			default: assert(0 && "TODO: not implemented: PTT_C_ASSIGNMENT_OPERATOR (requires IR_OC_LOAD)");
+		}
+
+		if (ir_assignment_expression(ctx, this_node->elements[2]) != 0) {
+			return -1;
+		}
+
+		// TODO only works with identifiers aka a symtbl entry
+		
+		IRCode *store = malloc(sizeof(IRCode));
+				
+		assert(store != NULL);
+		
+		*store = (IRCode){
+			.op = IR_OC_STORE,
+			// .arg1.ptr = &r1, // TODO set a register probably R1 (return register)
+			.result.ptr = entry_id,
+		};
+
+		list_insert(ctx->code, list_end(ctx->code), store);
 
         return 0;
 }
