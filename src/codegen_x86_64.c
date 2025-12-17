@@ -22,6 +22,8 @@ extern int codegen_x86_64_mod(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_or(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_xor(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_and(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_eq(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_neq(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code);
@@ -100,6 +102,16 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 			} break;
 			case IR_OC_AND: {
 				if (codegen_x86_64_and(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_EQ: {
+				if (codegen_x86_64_eq(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_NEQ: {
+				if (codegen_x86_64_neq(ctx, output, code) != 0) {
 					return -1;
 				}
 			} break;
@@ -302,6 +314,32 @@ int codegen_x86_64_and(IR_CTX *ctx, FILE *output, IRCode *code)
 	// TODO use register labels instead of always rax = rax & rcx
 	(void) code;
 	fprintf(output, "\tandq\t%%rcx, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_eq(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax == rcx
+	(void) code;
+	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
+	fprintf(output, "\tsete\t%%al\n");
+	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
+
+	return 0;
+}
+
+int codegen_x86_64_neq(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	// TODO use register labels instead of always rax = rax != rcx
+	(void) code;
+	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
+	fprintf(output, "\tsetne\t%%al\n");
+	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
 
 	return 0;
 }

@@ -513,17 +513,72 @@ int ir_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_equality_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+		if (this_node->num == 1) {
+			ParseTreeNode_C *node = this_node->elements[0];
+
+			return ir_relational_expression(ctx, node);
+		}
+
+        ParseTreeNode_C *right = this_node->elements[1];
         
-        if (node->token.type == T_EQUAL_TO) {
-        	assert(0 && "TODO not implemented: with T_EQUAL_TO");
+        if (ir_relational_expression(ctx, right) != 0) {
+        	return -1;
         }
-        
-        if (node->token.type == T_NOT_EQUAL_TO) {
-        	assert(0 && "TODO not implemented: with T_NOT_EQUAL_TO");
+		
+		IRCode *push = malloc(sizeof(IRCode));
+		*push = (IRCode) {
+			.op = IR_OC_PUSH,
+			// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), push);
+
+		ParseTreeNode_C *left = this_node->elements[0];
+		
+		if (left->type == PTT_C_EQUALITY_EXPRESSION) {
+			if (ir_equality_expression(ctx, left) != 0) {
+				return -1;
+			}
+		} else {
+		    if (ir_relational_expression(ctx, left) != 0) {
+		    	return -1;
+		    }
         }
-        
-        return ir_relational_expression(ctx, node);
+		
+        IRCode *pop = malloc(sizeof(IRCode));
+		*pop = (IRCode) {
+			.op = IR_OC_POP,
+			// .result.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+		};
+		list_insert(ctx->code, list_end(ctx->code), pop);
+
+        switch (this_node->token.type) {
+        	case T_EQUAL_TO: {
+        		IRCode *eq = malloc(sizeof(IRCode));
+				*eq = (IRCode) {
+					.op = IR_OC_EQ,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), eq);
+
+        		return 0;
+    		}
+        	case T_NOT_EQUAL_TO: {
+	        	IRCode *neq = malloc(sizeof(IRCode));
+				*neq = (IRCode) {
+					.op = IR_OC_NEQ,
+					// .result.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+					// .arg2.ptr = &r2 // TODO set a register probably R2 (default accumulate register)
+				};
+				list_insert(ctx->code, list_end(ctx->code), neq);
+				
+        		return 0;
+        	}
+        	default:
+        		assert(0 && "not reachable");
+        }
 }
 
 int ir_relational_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)

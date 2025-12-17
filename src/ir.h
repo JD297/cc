@@ -30,6 +30,8 @@ typedef enum {
 	IR_OC_OR,
 	IR_OC_XOR,
 	IR_OC_AND,
+	IR_OC_EQ,
+	IR_OC_NEQ,
 	IR_OC_JMP_FUNC_END,
 	IR_OC_LABEL,
 	IR_OC_JMP,
