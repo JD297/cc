@@ -14,6 +14,7 @@ typedef struct ParseTreeNode_C {
     size_t num;
 
     SymTbl *symtbl;
+    SymTblEnt *symtblent;
 } ParseTreeNode_C;
 
 extern void *parse_tree_node_c_create(ParseTreeType_C type, Token_C *token);

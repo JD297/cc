@@ -127,8 +127,30 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C_CTX *ctx)
         goto error;
     }
 
-	// TODO add to symtbl
-	// TODO extra typedef and enum
+	// TODO SYMTBL STUFF
+	for (size_t i = 0; i < init_declarator_list->num; ++i) {
+		ParseTreeNode_C *init_declarator =  init_declarator_list->elements[i];
+
+		ParseTreeNode_C *declarator = init_declarator->elements[0];
+
+		// TODO get identifier from declarator
+		ParseTreeNode_C *direct_decl = declarator->elements[0];
+					
+		if (direct_decl->type != PTT_C_DIRECT_DECLARATOR) {
+			assert(0 && "Function Pointers are not supported!");
+		}
+		
+		ParseTreeNode_C *identifier_node = direct_decl->elements[0];
+		
+		if (identifier_node->type != PTT_C_IDENTIFIER) {
+			assert(0 && "Only simple functions with identifieres are supported!");
+		}
+
+		// TODO add to symtbl HARD
+		init_declarator->symtblent = symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, INT, LOCAL, NULL); // TODO INT HARD
+
+		// TODO extra typedef and enum
+	}
 
     return this_node;
 
