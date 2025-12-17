@@ -467,7 +467,15 @@ int codegen_x86_64_stack_alloc(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, "\tsubq\t$%zu, %%rsp\n", code->result.stack.addr);
+	size_t stack_size = code->result.stack.addr;
+	
+	// align to 16byte word boundary
+	stack_size += stack_size % 16;
+
+	fprintf(output, "\tsubq\t$%zu, %%rsp\n", stack_size);
+
+	return 0;
+}
 
 	return 0;
 }

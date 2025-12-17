@@ -44,13 +44,18 @@ int optimizer_stack_allocation(IR_CTX *ctx, list_node_t *begin)
 		
 		switch (code->op) {
 			case IR_OC_LOCAL: {
+				// TODO align to 8byte is there to make it simple
+				ctx->stack_offset += 8; // codegen_get_type_size(code->result.ptr->type);
+			
 				code->result.ptr->addr = ctx->stack_offset;
-
-				ctx->stack_offset += codegen_get_type_size(code->result.ptr->type);
 
 				it = list_erase(ctx->code, it);
 			} break;
 			case IR_OC_FUNC_END: {
+				if (ctx->stack_offset == 0) {
+					return 0;
+				}
+
 				IRCode *stack_dealloc = malloc(sizeof(IRCode));
 
 				assert(stack_dealloc != NULL);
