@@ -916,11 +916,66 @@ int ir_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         ParseTreeNode_C *node = this_node->elements[0];
 
-		if (node->token.type != 0) { // TODO this_node ??
-        	assert(0 && "TODO not implemented: with ANY TOKEN");
-        }
+		switch (node->token.type) {
+			case T_UNKNOWN: return ir_postfix_expression(ctx, node);
+			case T_OPEN_PARENT: {
+				if (node->num == 2) {
+					ParseTreeNode_C *argument_expression_list = node->elements[1];
 
-        return ir_postfix_expression(ctx, node);
+					for (size_t i = 0; i < argument_expression_list->num; ++i) {
+						if (ir_assignment_expression(ctx, argument_expression_list->elements[i]) != 0) {
+							return -1;
+						}
+						
+						IRCode *param = malloc(sizeof(IRCode));
+						
+						assert(param != NULL);
+						
+						*param = (IRCode) {
+							.op = IR_OC_PARAM,
+							.result.num = i
+							// .arg1.ptr = &r1 // TODO set a register probably R1 (return register)
+						};
+						list_insert(ctx->code, list_end(ctx->code), param);
+					}
+				}
+
+				if (node->elements[0]->type != PTT_C_POSTFIX_EXPRESSION) {
+					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_PRIMARY_EXPRESSION) ?? FAST HACK");
+				}
+				
+				if (node->elements[0]->elements[0]->type != PTT_C_PRIMARY_EXPRESSION) {
+					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_PRIMARY_EXPRESSION) ?? FAST HACK");
+				}
+				
+				if (node->elements[0]->elements[0]->elements[0]->type != PTT_C_IDENTIFIER) {
+					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_IDENTIFIER) ?? FAST HACK");
+				}
+				
+				ParseTreeNode_C *identifier = node->elements[0]->elements[0]->elements[0];
+				
+				IRCode *call = malloc(sizeof(IRCode));
+						
+				assert(call != NULL);
+				
+				*call = (IRCode) {
+					.op = IR_OC_CALL,
+					.result.view = &identifier->token.view,
+				};
+				list_insert(ctx->code, list_end(ctx->code), call);
+			} return 0;
+			case T_DOT:
+				assert(0 && "TODO not implemented: T_DOT");
+			case T_ARROW:
+				assert(0 && "TODO not implemented: T_ARROW");
+			case T_INCREMENT:
+				assert(0 && "TODO not implemented: T_INCREMENT");
+			case T_DECREMENT:
+				assert(0 && "TODO not implemented: T_DECREMENT");
+			case T_OPEN_BRACE:
+				assert(0 && "TODO not implemented: T_OPEN_BRACE");
+			default: assert(0 && "NOT REACHABLE");
+		}
 }
 
 int ir_type_name(IR_CTX *ctx, ParseTreeNode_C *this_node)

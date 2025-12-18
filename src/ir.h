@@ -46,7 +46,9 @@ typedef enum {
 	IR_OC_LOAD,
 	IR_OC_STORE,
 	IR_OC_STACK_ALLOC,
-	IR_OC_STACK_DEALLOC
+	IR_OC_STACK_DEALLOC,
+	IR_OC_PARAM,
+	IR_OC_CALL,
 } IROpCode;
 
 typedef struct {
@@ -63,6 +65,8 @@ typedef struct {
 	union {
 		SymTblEnt *ptr;
 		SymTblEnt stack;
+		size_t num;
+		sv_t *view;
 	} result;
 } IRCode;
 

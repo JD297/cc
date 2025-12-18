@@ -35,6 +35,8 @@ extern int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_stack_alloc(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_store(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_load(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_param(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_call(IR_CTX *ctx, FILE *output, IRCode *code);
 
 int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 {
@@ -180,6 +182,16 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 			} break;
 			case IR_OC_LOAD: {
 				if (codegen_x86_64_load(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_PARAM: {
+				if (codegen_x86_64_param(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_CALL: {
+				if (codegen_x86_64_call(ctx, output, code) != 0) {
 					return -1;
 				}
 			} break;
@@ -503,6 +515,45 @@ int codegen_x86_64_load(IR_CTX *ctx, FILE *output, IRCode *code)
 	(void) ctx;
 
 	fprintf(output, "\tmovq\t-%zu(%%rbp), %%rax\n", code->arg1.ptr->addr);
+
+	return 0;
+}
+
+int codegen_x86_64_param(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+	
+	switch (code->result.num) {
+		case 0:
+			fprintf(output, "\tmovq\t%%rax, %%rdi\n");
+			break;
+		case 1:
+			fprintf(output, "\tmovq\t%%rax, %%rsi\n");
+			break;
+		case 2:
+			fprintf(output, "\tmovq\t%%rax, %%rdx\n");
+			break;
+		case 3:
+			fprintf(output, "\tmovq\t%%rax, %%rcx\n"); // TODO rcx is bad
+			break;
+		case 4:
+			fprintf(output, "\tmovq\t%%rax, %%r8\n");
+			break;
+		case 5:
+			fprintf(output, "\tmovq\t%%rax, %%r9\n");
+			break;
+		default:
+			assert(0 && "TODO: not implemented: params on stack in reverse order");
+	}
+
+	return 0;
+}
+
+int codegen_x86_64_call(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	fprintf(output, "\tcallq\t"SV_FMT"@PLT\n", SV_PARAMS(code->result.view));
 
 	return 0;
 }
