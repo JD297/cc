@@ -1660,7 +1660,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C_CTX *ctx)
 
     ParseTreeNode_C *primary_expression;
     ParseTreeNode_C *expression;
-    ParseTreeNode_C *assignment_expression;
+    ParseTreeNode_C *argument_expression_list;
     ParseTreeNode_C *identifier; // TODO check symtbl exists??
 
     Lexer_C lexer_saved = *ctx->lexer;
@@ -1696,7 +1696,7 @@ ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C_CTX *ctx)
 
                 parse_tree_node_c_add(this_node, left_node);
                 
-                parser_c_parse_list_opt(ctx, this_node, assignment_expression);
+                parser_c_parse_list_opt(ctx, this_node, argument_expression_list);
                 
                 if (lexer_c_next(ctx->lexer, &tmp) != T_CLOSING_PARENT) {
                     goto error;
@@ -1803,6 +1803,52 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C_CTX *ctx)
 
     ret: {
         return this_node;
+    }
+}
+
+ParseTreeNode_C *parser_c_parse_argument_expression_list(Parser_C_CTX *ctx)
+{
+	ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_ARGUMENT_EXPRESSION_LIST, NULL);
+
+    ParseTreeNode_C *assignment_expression;
+
+	Token_C tmp;
+
+    Lexer_C lexer_saved;
+    Lexer_C lexer_saved_comma;
+
+    next_assignment_expression_list: {
+        lexer_saved = *ctx->lexer;
+
+        parser_c_parse_required(ctx, this_node, assignment_expression, next_assignment_expression_list_after);
+
+        lexer_saved_comma = *ctx->lexer;
+
+        if (lexer_c_next(ctx->lexer, &tmp) == T_COMMA) {
+            goto next_assignment_expression_list;
+        }
+        
+        lexer_saved = lexer_saved_comma;
+    }
+    
+    next_assignment_expression_list_after: {
+        if (this_node->num == 0) {
+            *ctx->lexer = lexer_saved;
+
+            goto error;
+        }
+
+        *ctx->lexer = lexer_saved_comma;
+    }
+
+    return this_node;
+
+    error: {
+        *ctx->lexer = lexer_saved;
+    
+        parse_tree_node_c_destroy(this_node);
+
+        return NULL;
     }
 }
 

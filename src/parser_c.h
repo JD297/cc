@@ -82,6 +82,7 @@ extern ParseTreeNode_C *parser_c_parse_type_name(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_postfix_expression(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_unary_operator(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C_CTX *ctx);
+extern ParseTreeNode_C *parser_c_parse_argument_expression_list(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_assignment_expression(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_constant(Parser_C_CTX *ctx);
 extern ParseTreeNode_C *parser_c_parse_string(Parser_C_CTX *ctx);
