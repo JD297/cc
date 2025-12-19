@@ -45,6 +45,7 @@ typedef enum {
 	IR_OC_LABEL,
 	IR_OC_JMP,
 	IR_OC_JMP_ZERO,
+	IR_OC_JMP_NOT_ZERO,
 	IR_OC_RET,
 	IR_OC_LOCAL,
 	IR_OC_LOAD,
