@@ -1104,14 +1104,105 @@ int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 		}
 		
 		assert(entry_id != NULL);
-		
-		switch (this_node->elements[1]->token.type) {
-			case T_ASSIGNMENT: break;
-			default: assert(0 && "TODO: not implemented: PTT_C_ASSIGNMENT_OPERATOR (requires IR_OC_LOAD)");
-		}
 
 		if (ir_assignment_expression(ctx, this_node->elements[2]) != 0) {
 			return -1;
+		}
+		
+		IRCode *calc = NULL;
+		
+		switch (this_node->elements[1]->token.type) {
+			case T_ASSIGNMENT: break;
+			case T_MULTIPLY_ASSIGN:
+		    case T_DIVIDE_ASSIGN:
+		    case T_MODULUS_ASSIGN:
+		    case T_PLUS_ASSIGN:
+		    case T_MINUS_ASSIGN:
+		    case T_BITWISE_LEFTSHIFT_ASSIGN:
+		    case T_BITWISE_RIGHTSHIFT_ASSIGN:
+		    case T_BITWISE_AND_ASSIGN:
+		    case T_BITWISE_XOR_ASSIGN:
+		    case T_BITWISE_OR_ASSIGN: {
+				IRCode *push = malloc(sizeof(IRCode));
+				
+				assert(push != NULL);
+
+				*push = (IRCode) {
+					.op = IR_OC_PUSH,
+					.result.ptr = NULL,
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), push);
+
+				IRCode *load = malloc(sizeof(IRCode));
+				
+				assert(load != NULL);
+
+				*load = (IRCode) {
+					.op = IR_OC_LOAD,
+					.result.ptr = NULL,
+					.arg1.ptr = entry_id,
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), load);
+				
+				IRCode *pop = malloc(sizeof(IRCode));
+
+				assert(pop != NULL);
+
+                *pop = (IRCode) {
+                        .op = IR_OC_POP,
+                        .result.ptr = NULL,
+                };
+
+                list_insert(ctx->code, list_end(ctx->code), pop);
+
+				calc = malloc(sizeof(IRCode));
+				
+				assert(calc != NULL);
+
+				*calc = (IRCode) {
+					.result.ptr = NULL,
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), calc);
+			} break;
+			default: assert(0 && "NOT REACHABLE");
+		}
+		
+		switch (this_node->elements[1]->token.type) {
+			case T_ASSIGNMENT: break;
+			case T_MULTIPLY_ASSIGN:
+				calc->op = IR_OC_MUL;
+		    	break;
+		    case T_DIVIDE_ASSIGN:
+		    	calc->op = IR_OC_DIV;
+		    	break;
+		    case T_MODULUS_ASSIGN:
+		    	calc->op = IR_OC_MOD;
+		    	break;
+		    case T_PLUS_ASSIGN:
+		    	calc->op = IR_OC_ADD;
+		    	break;
+		    case T_MINUS_ASSIGN:
+		    	calc->op = IR_OC_SUB;
+		    	break;
+		    case T_BITWISE_LEFTSHIFT_ASSIGN:
+		    	calc->op = IR_OC_SAL;
+		    	break;
+		    case T_BITWISE_RIGHTSHIFT_ASSIGN:
+		    	calc->op = IR_OC_SAR;
+		    	break;
+		    case T_BITWISE_AND_ASSIGN:
+		    	calc->op = IR_OC_AND;
+		    	break;
+		    case T_BITWISE_XOR_ASSIGN:
+		    	calc->op = IR_OC_XOR;
+		    	break;
+		    case T_BITWISE_OR_ASSIGN:
+		    	calc->op = IR_OC_OR;
+		    	break;
+			default: assert(0 && "NOT REACHABLE");
 		}
 
 		// TODO only works with identifiers aka a symtbl entry
@@ -1122,7 +1213,7 @@ int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 		
 		*store = (IRCode){
 			.op = IR_OC_STORE,
-			// .arg1.ptr = &r1, // TODO set a register probably R1 (return register)
+			.arg1.ptr = NULL,
 			.result.ptr = entry_id,
 		};
 
