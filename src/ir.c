@@ -56,6 +56,8 @@ int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *function_definition)
 		.op = IR_OC_FUNC_BEGIN,
 		.result.ptr = symtbl_get(ctx->symtbl, ctx->symtbl->id)
 	};
+	
+	ctx->label_func_end = ctx->label_tmp++;
 
 	list_insert(ctx->code, list_end(ctx->code), func_begin_code);
 
@@ -84,9 +86,10 @@ int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *function_definition)
 
 	assert(func_end_code != NULL);
 
-	*func_end_code = (IRCode){
+	*func_end_code = (IRCode) {
 		.op = IR_OC_FUNC_END,
-		.result.ptr = symtbl_get(ctx->symtbl, ctx->symtbl->id)
+		.result.num = ctx->label_func_end,
+		.type = IR_TYPE_NUM,
 	};
 
 	list_insert(ctx->code, list_end(ctx->code), func_end_code);
@@ -1463,9 +1466,10 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				
 				assert(code != NULL);
 				
-				*code = (IRCode){
-					.op = IR_OC_JMP_FUNC_END,
-					.result.ptr = symtbl_function(ctx->symtbl)
+				*code = (IRCode) {
+					.op = IR_OC_JMP,
+					.result.num = ctx->label_func_end,
+					.type = IR_TYPE_NUM,
 				};
 
 				list_insert(ctx->code, list_end(ctx->code), code);

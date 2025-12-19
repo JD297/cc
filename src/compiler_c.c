@@ -61,7 +61,10 @@ int compiler_c_run(Compiler_C *compiler)
 
 	IR_CTX ir_ctx = {
 		.code = &ir_code,
-		.symtbl = symtbl_root
+		.symtbl = symtbl_root,
+		.stack_offset = 0,
+		.label_tmp = 0,
+		.label_func_end = 0,
 	};
 
 	ir_run(&ir_ctx, translation_unit);

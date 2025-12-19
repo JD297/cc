@@ -159,11 +159,6 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 					return -1;
 				}
 			} break;
-			case IR_OC_JMP_FUNC_END: {
-				if (codegen_x86_64_jmp_func_end(ctx, output, code) != 0) {
-					return -1;
-				}
-			} break;
 			case IR_OC_FUNC_END: {
 				if (codegen_x86_64_func_end(ctx, output, code) != 0) {
 					return -1;
@@ -221,7 +216,7 @@ int codegen_x86_64_func_end(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, ".func_end_" SV_FMT ":\n", SV_PARAMS(code->result.ptr->id));
+	codegen_x86_64_label(ctx, output, code);
 	fprintf(output, "\tleave\n");
 	fprintf(output, "\tret\n");
 
@@ -456,15 +451,6 @@ int codegen_x86_64_lte(IR_CTX *ctx, FILE *output, IRCode *code)
 	fprintf(output, "\tcmpq\t%%rcx, %%rax\n");
 	fprintf(output, "\tsetle\t%%al\n");
 	fprintf(output, "\tmovzbq\t%%al, %%rax\n");
-
-	return 0;
-}
-
-int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code)
-{
-	(void) ctx;
-
-	fprintf(output, "\tjmp .func_end_" SV_FMT "\n", SV_PARAMS(code->result.ptr->id));
 
 	return 0;
 }

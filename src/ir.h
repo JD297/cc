@@ -13,6 +13,8 @@ typedef struct {
 	list_t *code;
 	SymTbl *symtbl;
 	size_t stack_offset;
+	size_t label_tmp;
+	size_t label_func_end;
 } IR_CTX;
 
 typedef enum {
@@ -38,7 +40,6 @@ typedef enum {
 	IR_OC_LT,
 	IR_OC_GTE,
 	IR_OC_LTE,
-	IR_OC_JMP_FUNC_END,
 	IR_OC_LABEL,
 	IR_OC_JMP,
 	IR_OC_RET,
