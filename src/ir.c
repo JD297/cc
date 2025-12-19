@@ -1411,10 +1411,88 @@ int ir_expression_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_selection_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+		const size_t before_label_select_begin = ctx->label_select_begin;
+		const size_t before_label_select_end = ctx->label_select_end;
 
-        assert(0 && "TODO not implemented");
+		ctx->label_select_begin = ctx->label_tmp++;
+		ctx->label_select_end = ctx->label_tmp++;
+
+		switch(this_node->token.type) {
+        	case T_IF: {
+        		if (ir_expression(ctx, this_node->elements[0]) == -1) {
+        			return -1;
+        		}
+        		
+        		IRCode *jmp_else = malloc(sizeof(IRCode));
+				
+				assert(jmp_else != NULL);
+				
+				*jmp_else = (IRCode){
+					.op = IR_OC_JMP_ZERO,
+					.result.num = ctx->label_select_begin,
+					.type = IR_TYPE_NUM
+				};
+				
+				list_insert(ctx->code, list_end(ctx->code), jmp_else);
+
+        		if (ir_statement(ctx, this_node->elements[1]) == -1) {
+        			return -1;
+        		}
+        		
+        		IRCode *jmp_if_end = malloc(sizeof(IRCode));
+				
+				assert(jmp_if_end != NULL);
+				
+				*jmp_if_end = (IRCode){
+					.op = IR_OC_JMP,
+					.result.num = ctx->label_select_end,
+					.type = IR_TYPE_NUM
+				};
+				
+				list_insert(ctx->code, list_end(ctx->code), jmp_if_end);
+        		
+        		IRCode *label_else = malloc(sizeof(IRCode));
+
+				assert(label_else != NULL);
+
+				*label_else = (IRCode){
+					.op = IR_OC_LABEL,
+					.result.num = ctx->label_select_begin,
+					.type = IR_TYPE_NUM
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), label_else);
+
+        		if (this_node->num == 3) {
+        			if (ir_statement(ctx, this_node->elements[2]) == -1) {
+		    			return -1;
+		    		}
+
+        			list_insert(ctx->code, list_end(ctx->code), jmp_if_end);
+    			}
+        	} break;
+        	case T_SWITCH: {
+        		assert(0 && "TODO: not implemented: ir_selection_statement with (switch)");
+        	} break;
+        	default: {
+				assert(0 && "NOT REACHABLE");
+			}
+        }
+
+		IRCode *label_end = malloc(sizeof(IRCode));
+
+		assert(label_end != NULL);
+
+		*label_end = (IRCode){
+			.op = IR_OC_LABEL,
+			.result.num = ctx->label_select_end,
+			.type = IR_TYPE_NUM
+		};
+
+		list_insert(ctx->code, list_end(ctx->code), label_end);
+
+		ctx->label_select_begin = before_label_select_begin;
+		ctx->label_select_end = before_label_select_end;
 
         return 0;
 }

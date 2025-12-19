@@ -17,6 +17,8 @@ typedef struct {
 	size_t label_func_end;
 	size_t label_iter_begin;
 	size_t label_iter_end;
+	size_t label_select_begin;
+	size_t label_select_end;
 } IR_CTX;
 
 typedef enum {
