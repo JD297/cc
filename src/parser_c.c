@@ -2572,7 +2572,9 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C_CTX *ctx)
                 goto error;
             }
 
-            parser_c_parse_opt(ctx, this_node, expression, next_for_1);
+            parser_c_parse_required(ctx, this_node, expression, next_for_1);
+            
+            expression->token.type = T_OPEN_PARENT;
 
             next_for_1:
 
@@ -2580,7 +2582,9 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C_CTX *ctx)
                 goto error;
             }
 
-            parser_c_parse_opt(ctx, this_node, expression, next_for_2);
+            parser_c_parse_required(ctx, this_node, expression, next_for_2);
+
+			expression->token.type = T_SEMICOLON;
 
             next_for_2:
 
@@ -2588,7 +2592,9 @@ ParseTreeNode_C *parser_c_parse_iteration_statement(Parser_C_CTX *ctx)
                 goto error;
             }
 
-            parser_c_parse_opt(ctx, this_node, expression, next_for_3);
+            parser_c_parse_required(ctx, this_node, expression, next_for_3);
+
+			expression->token.type = T_CLOSING_PARENT;
 
             next_for_3:
 

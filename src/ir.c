@@ -1427,20 +1427,20 @@ int ir_iteration_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 		ctx->label_iter_begin = ctx->label_tmp++;
 		ctx->label_iter_end = ctx->label_tmp++;
 
-		IRCode *label_begin = malloc(sizeof(IRCode));
-
-		assert(label_begin != NULL);
-
-		*label_begin = (IRCode){
-			.op = IR_OC_LABEL,
-			.result.num = ctx->label_iter_begin,
-			.type = IR_TYPE_NUM
-		};
-
-		list_insert(ctx->code, list_end(ctx->code), label_begin);
-
         switch(this_node->token.type) {
 			case T_WHILE: {
+				IRCode *label_begin = malloc(sizeof(IRCode));
+
+				assert(label_begin != NULL);
+
+				*label_begin = (IRCode){
+					.op = IR_OC_LABEL,
+					.result.num = ctx->label_iter_begin,
+					.type = IR_TYPE_NUM
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), label_begin);
+
 				ParseTreeNode_C *expression = this_node->elements[0];
 
 				if (ir_expression(ctx, expression) != 0) {
@@ -1478,9 +1478,117 @@ int ir_iteration_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				list_insert(ctx->code, list_end(ctx->code), jmp_begin);
 			} break;
 			case T_FOR: {
-				assert(0 && "TODO not implemented (for)");
+				ParseTreeNode_C *expression_init = NULL;
+				ParseTreeNode_C *expression_cond = NULL;
+				ParseTreeNode_C *expression_last = NULL;
+				ParseTreeNode_C *statement = this_node->elements[this_node->num - 1];
+				
+				for (size_t i = 0; i < this_node->num - 1; ++i) {
+					ParseTreeNode_C *expression = this_node->elements[i];
+					
+					switch (expression->token.type) {
+						case T_OPEN_PARENT:
+							expression_init = expression;
+							break;
+						case T_SEMICOLON:
+							expression_cond = expression;
+							break;
+						case T_CLOSING_PARENT:
+							expression_last = expression;
+							break;
+						default:
+							assert(0 && "NOT REACHABLE");
+					}
+				}
+				
+				if (expression_init != NULL) {
+					if (ir_expression(ctx, expression_init) != 0) {
+						return -1;
+					}
+				}
+
+				const size_t for_label_begin = ctx->label_iter_begin;
+
+				if (expression_last != NULL) {
+					ctx->label_iter_begin = ctx->label_tmp++;
+				}
+
+				IRCode *label_begin = malloc(sizeof(IRCode));
+
+				assert(label_begin != NULL);
+
+				*label_begin = (IRCode){
+					.op = IR_OC_LABEL,
+					.result.num = for_label_begin,
+					.type = IR_TYPE_NUM
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), label_begin);
+				
+				if (expression_cond != NULL) {
+					if (ir_expression(ctx, expression_cond) != 0) {
+						return -1;
+					}
+					IRCode *jmp_end = malloc(sizeof(IRCode));
+				
+					assert(jmp_end != NULL);
+					
+					*jmp_end = (IRCode){
+						.op = IR_OC_JMP_ZERO,
+						.result.num = ctx->label_iter_end,
+						.type = IR_TYPE_NUM
+					};
+
+					list_insert(ctx->code, list_end(ctx->code), jmp_end);
+				}
+				
+				if (ir_statement(ctx, statement) != 0) {
+					return -1;
+				}
+				
+				if (expression_last != NULL) {
+					IRCode *label_expression_last = malloc(sizeof(IRCode));
+				
+					assert(label_expression_last != NULL);
+					
+					*label_expression_last = (IRCode){
+						.op = IR_OC_LABEL,
+						.result.num = ctx->label_iter_begin,
+						.type = IR_TYPE_NUM
+					};
+
+					list_insert(ctx->code, list_end(ctx->code), label_expression_last);
+
+					if (ir_expression(ctx, expression_last) != 0) {
+						return -1;
+					}
+				}
+
+				IRCode *jmp_begin = malloc(sizeof(IRCode));
+				
+				assert(jmp_begin != NULL);
+				
+				*jmp_begin = (IRCode){
+					.op = IR_OC_JMP,
+					.result.num = for_label_begin,
+					.type = IR_TYPE_NUM
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), jmp_begin);
 			} break;
 			case T_DO: {
+				IRCode *label_begin = malloc(sizeof(IRCode));
+
+				assert(label_begin != NULL);
+
+				*label_begin = (IRCode){
+					.op = IR_OC_LABEL,
+					.result.num = ctx->label_iter_begin,
+					.type = IR_TYPE_NUM
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), label_begin);
+
 				ParseTreeNode_C *statement = this_node->elements[0];
 
 				if (ir_statement(ctx, statement) != 0) {
