@@ -1430,7 +1430,21 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
 		switch(this_node->token.type) {
 			case T_GOTO: {
-				assert(0 && "TODO not implemented (goto)");
+				ParseTreeNode_C *identifier = this_node->elements[0];
+				
+				IRCode *jmp = malloc(sizeof(IRCode));
+				
+				assert(jmp != NULL);
+				
+				*jmp = (IRCode){
+					.op = IR_OC_JMP,
+					.result.view = &identifier->token.view,
+					.type = IR_TYPE_VIEW
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), jmp);
+				
+				return 0;
 			} break;
 			case T_CONTINUE: {
 				assert(0 && "TODO not implemented (continue)");
@@ -1462,7 +1476,5 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				assert(0 && "NOT REACHABLE");
 			}
 		}
-
-        return 0;
 }
 

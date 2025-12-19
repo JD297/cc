@@ -473,9 +473,16 @@ int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	fprintf(output, "\tjmp " SV_FMT "\n", SV_PARAMS(code->result.ptr->id));
-
-	return 0;
+	switch (code->type) {
+		case IR_TYPE_VIEW:
+			fprintf(output, "\tjmp\t"SV_FMT"\n", SV_PARAMS(code->result.view));
+			return 0;
+		case IR_TYPE_NUM:
+			fprintf(output, "\tjmp\t.L%zu\n", code->result.num);
+			return 0;
+		default:
+			assert(0 && "NOT REACHABLE");
+	}
 }
 
 int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code)
