@@ -2384,19 +2384,19 @@ ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C_CTX *ctx)
 {
     ParseTreeNode_C *this_node = parse_tree_node_c_create(PTT_C_LABELED_STATEMENT, NULL);
 
-    ParseTreeNode_C *identifier;
     ParseTreeNode_C *statement;
     ParseTreeNode_C *constant_expression;
 
 	Token_C tmp;
 
-    Lexer_C lexer_saved = *ctx->lexer;    
-
-    parser_c_parse_opt(ctx, this_node, identifier, rest);
+    Lexer_C lexer_saved = *ctx->lexer;
 
     Token_C token;
     
     switch (lexer_c_next(ctx->lexer, &token)) {
+    	case T_IDENTIFIER: {
+			this_node->token = token;
+		} break;
 		case T_DEFAULT: {
 			this_node->token = token;
 		} break;
@@ -2408,13 +2408,11 @@ ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C_CTX *ctx)
 		default: goto error;
 	}
 
-    rest: {
-        if (lexer_c_next(ctx->lexer, &tmp) != T_COLON) {
-            goto error;
-        }
-
-        parser_c_parse_required(ctx, this_node, statement, error);
+    if (lexer_c_next(ctx->lexer, &tmp) != T_COLON) {
+        goto error;
     }
+
+    parser_c_parse_required(ctx, this_node, statement, error);
 
     return this_node;
 
