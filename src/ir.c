@@ -1523,15 +1523,33 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				};
 
 				list_insert(ctx->code, list_end(ctx->code), jmp);
-				
-				return 0;
-			} break;
+			} return 0;
 			case T_CONTINUE: {
-				assert(0 && "TODO not implemented (continue)");
-			} break;
+				IRCode *code = malloc(sizeof(IRCode));
+				
+				assert(code != NULL);
+				
+				*code = (IRCode) {
+					.op = IR_OC_JMP,
+					.result.num = ctx->label_iter_begin,
+					.type = IR_TYPE_NUM,
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), code);
+			} return 0;
 			case T_BREAK: {
-				assert(0 && "TODO not implemented (break)");
-			} break;
+				IRCode *code = malloc(sizeof(IRCode));
+				
+				assert(code != NULL);
+				
+				*code = (IRCode) {
+					.op = IR_OC_JMP,
+					.result.num = ctx->label_iter_end,
+					.type = IR_TYPE_NUM,
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), code);
+			} return 0;
 			case T_RETURN: {
 				if (this_node->num > 0) {
 					if (ir_expression(ctx, this_node->elements[0]) != 0) {
@@ -1550,9 +1568,7 @@ int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				};
 
 				list_insert(ctx->code, list_end(ctx->code), code);
-
-				return 0;
-			} break;
+			} return 0;
 			default: {
 				assert(0 && "NOT REACHABLE");
 			}
