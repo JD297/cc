@@ -1421,12 +1421,89 @@ int ir_selection_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_iteration_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+		const size_t before_label_iter_begin = ctx->label_iter_begin;
+		const size_t before_label_iter_end = ctx->label_iter_end;
 
-        assert(0 && "TODO not implemented");
+		ctx->label_iter_begin = ctx->label_tmp++;
+		ctx->label_iter_end = ctx->label_tmp++;
 
-        return 0;
+		IRCode *label_begin = malloc(sizeof(IRCode));
+
+		assert(label_begin != NULL);
+
+		*label_begin = (IRCode){
+			.op = IR_OC_LABEL,
+			.result.num = ctx->label_iter_begin,
+			.type = IR_TYPE_NUM
+		};
+
+		list_insert(ctx->code, list_end(ctx->code), label_begin);
+
+        switch(this_node->token.type) {
+			case T_WHILE: {
+				ParseTreeNode_C *expression = this_node->elements[0];
+
+				if (ir_expression(ctx, expression) != 0) {
+					return -1;
+				}
+				
+				IRCode *jmp_end = malloc(sizeof(IRCode));
+				
+				assert(jmp_end != NULL);
+				
+				*jmp_end = (IRCode){
+					.op = IR_OC_JMP_ZERO,
+					.result.num = ctx->label_iter_end,
+					.type = IR_TYPE_NUM
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), jmp_end);
+				
+				ParseTreeNode_C *statement = this_node->elements[1];
+
+				if (ir_statement(ctx, statement) != 0) {
+					return -1;
+				}
+				
+				IRCode *jmp_begin = malloc(sizeof(IRCode));
+				
+				assert(jmp_begin != NULL);
+				
+				*jmp_begin = (IRCode){
+					.op = IR_OC_JMP,
+					.result.num = ctx->label_iter_begin,
+					.type = IR_TYPE_NUM
+				};
+
+				list_insert(ctx->code, list_end(ctx->code), jmp_begin);
+			} break;
+			case T_FOR: {
+				assert(0 && "TODO not implemented (for)");
+			} break;
+			case T_DO: {
+				assert(0 && "TODO not implemented (do)");
+			} break;
+			default: {
+				assert(0 && "NOT REACHABLE");
+			}
+        }
+        
+        IRCode *label_end = malloc(sizeof(IRCode));
+
+		assert(label_end != NULL);
+
+		*label_end = (IRCode){
+			.op = IR_OC_LABEL,
+			.result.num = ctx->label_iter_end,
+			.type = IR_TYPE_NUM
+		};
+
+		list_insert(ctx->code, list_end(ctx->code), label_end);
+		
+		ctx->label_iter_begin = before_label_iter_begin;
+		ctx->label_iter_end = before_label_iter_end;
+		
+		return 0;
 }
 
 int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)

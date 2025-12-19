@@ -31,6 +31,7 @@ extern int codegen_x86_64_gte(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_lte(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_jmp_zero(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_jmp_func_end(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_stack_alloc(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_store(IR_CTX *ctx, FILE *output, IRCode *code);
@@ -156,6 +157,11 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 			} break;
 			case IR_OC_JMP: {
 				if (codegen_x86_64_jmp(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_JMP_ZERO: {
+				if (codegen_x86_64_jmp_zero(ctx, output, code) != 0) {
 					return -1;
 				}
 			} break;
@@ -469,6 +475,16 @@ int codegen_x86_64_jmp(IR_CTX *ctx, FILE *output, IRCode *code)
 		default:
 			assert(0 && "NOT REACHABLE");
 	}
+}
+
+int codegen_x86_64_jmp_zero(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	fprintf(output, "\tcmpq\t$0, %%rax\n");
+	fprintf(output, "\tje\t.L%zu\n", code->result.num);
+
+	return 0;
 }
 
 int codegen_x86_64_label(IR_CTX *ctx, FILE *output, IRCode *code)

@@ -15,6 +15,8 @@ typedef struct {
 	size_t stack_offset;
 	size_t label_tmp;
 	size_t label_func_end;
+	size_t label_iter_begin;
+	size_t label_iter_end;
 } IR_CTX;
 
 typedef enum {
@@ -42,6 +44,7 @@ typedef enum {
 	IR_OC_LTE,
 	IR_OC_LABEL,
 	IR_OC_JMP,
+	IR_OC_JMP_ZERO,
 	IR_OC_RET,
 	IR_OC_LOCAL,
 	IR_OC_LOAD,

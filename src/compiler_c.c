@@ -65,6 +65,8 @@ int compiler_c_run(Compiler_C *compiler)
 		.stack_offset = 0,
 		.label_tmp = 0,
 		.label_func_end = 0,
+		.label_iter_begin = 0,
+		.label_iter_end = 0,
 	};
 
 	ir_run(&ir_ctx, translation_unit);
