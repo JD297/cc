@@ -51,8 +51,16 @@ typedef enum {
 	IR_OC_CALL,
 } IROpCode;
 
+typedef enum {
+	IR_TYPE_PTR,
+	IR_TYPE_STACK,
+	IR_TYPE_NUM,
+	IR_TYPE_VIEW,
+} IRType;
+
 typedef struct {
 	IROpCode op;
+	IRType type;
 	union {
 		SymTblEnt *ptr;
 		SymTblEnt stack;

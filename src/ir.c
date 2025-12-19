@@ -1363,10 +1363,38 @@ int ir_statement(IR_CTX *ctx, ParseTreeNode_C *statement)
 
 int ir_labeled_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-	(void) ctx;
-	(void) this_node;
+	switch (this_node->token.type) {
+		case T_IDENTIFIER: {
+			ParseTreeNode_C *statement = this_node->elements[0];
+	
+			IRCode *label = malloc(sizeof(IRCode));
 
-	assert(0 && "TODO ir_labeled_statement not implemented");
+			assert(label != NULL);
+
+			*label = (IRCode){
+				.op = IR_OC_LABEL,
+				.result.view = &this_node->token.view,
+				.type = IR_TYPE_VIEW
+			};
+
+			list_insert(ctx->code, list_end(ctx->code), label);
+			
+			return ir_statement(ctx, statement);
+		} break;
+		case T_DEFAULT: {
+			assert(0 && "TODO not implemented (default)");
+			// ParseTreeNode_C *statement = this_node->elements[0];
+		} break;
+		case T_CASE: {
+			assert(0 && "TODO not implemented (case)");
+			// TODO required a constant_expression evaluater
+			// ParseTreeNode_C *constant_expression = this_node->elements[0];
+			// ParseTreeNode_C *statement = this_node->elements[1];
+		}
+		default: {
+			assert(0 && "NOT REACHABLE");
+		}
+	}
 }
 
 int ir_expression_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
