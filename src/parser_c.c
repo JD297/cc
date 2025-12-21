@@ -1795,16 +1795,16 @@ ParseTreeNode_C *parser_c_parse_primary_expression(Parser_C_CTX *ctx)
         goto error;
     }
 
+    ret: {
+        return this_node;
+    }
+    
     error: {
         *ctx->lexer = lexer_saved;
 
         parse_tree_node_c_destroy(this_node);
 
         return NULL;
-    }
-
-    ret: {
-        return this_node;
     }
 }
 
