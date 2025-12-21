@@ -1042,7 +1042,7 @@ int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				return ir_string(ctx, node);
 			} break;
 			case PTT_C_EXPRESSION: {
-				assert(0 && "TODO not implemented: PTT_C_EXPRESSION");
+				return ir_expression(ctx, node);
 			} break;
 			default: {
 				assert(0 && "NOT REACHABLE");
