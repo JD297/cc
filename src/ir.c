@@ -1039,7 +1039,7 @@ int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				return ir_constant(ctx, node);
 			} break;
 			case PTT_C_STRING: {
-				assert(0 && "TODO not implemented: PTT_C_STRING");
+				return ir_string(ctx, node);
 			} break;
 			case PTT_C_EXPRESSION: {
 				assert(0 && "TODO not implemented: PTT_C_EXPRESSION");
@@ -1263,11 +1263,32 @@ int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_string(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+		const size_t label_str = ctx->label_str;
 
-        assert(0 && "TODO not implemented");
+        IRCode *string = malloc(sizeof(IRCode));
 
+		assert(string != NULL);
+
+		*string = (IRCode) {
+			.op = IR_OC_STRING,
+			.result.num = ctx->label_str++,
+			.arg1.literal = this_node->token.literal
+		};
+
+		list_insert(ctx->code, list_end(ctx->code), string);
+
+		IRCode *load = malloc(sizeof(IRCode));
+		
+		assert(load != NULL);
+		
+		*load = (IRCode) {
+			.op = IR_OC_LOAD_STRING,
+			.result.ptr = NULL,
+			.arg1.num = label_str,
+		};
+
+		list_insert(ctx->code, list_end(ctx->code), load);
+		
         return 0;
 }
 

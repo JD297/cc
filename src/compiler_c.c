@@ -69,6 +69,7 @@ int compiler_c_run(Compiler_C *compiler)
 		.label_iter_end = 0,
 		.label_select_begin = 0,
 		.label_select_end = 0,
+		.label_str = 0,
 	};
 
 	ir_run(&ir_ctx, translation_unit);

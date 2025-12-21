@@ -19,6 +19,7 @@ typedef struct {
 	size_t label_iter_end;
 	size_t label_select_begin;
 	size_t label_select_end;
+	size_t label_str;
 } IR_CTX;
 
 typedef enum {
@@ -56,6 +57,8 @@ typedef enum {
 	IR_OC_STACK_DEALLOC,
 	IR_OC_PARAM,
 	IR_OC_CALL,
+	IR_OC_STRING,
+	IR_OC_LOAD_STRING,
 } IROpCode;
 
 typedef enum {
@@ -72,6 +75,7 @@ typedef struct {
 		SymTblEnt *ptr;
 		SymTblEnt stack;
 		literal_t literal;
+		size_t num;
 	} arg1;
 	union {
 		SymTblEnt *ptr;

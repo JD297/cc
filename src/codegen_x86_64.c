@@ -39,6 +39,8 @@ extern int codegen_x86_64_store(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_load(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_param(IR_CTX *ctx, FILE *output, IRCode *code);
 extern int codegen_x86_64_call(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_string(IR_CTX *ctx, FILE *output, IRCode *code);
+extern int codegen_x86_64_load_string(IR_CTX *ctx, FILE *output, IRCode *code);
 
 int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 {
@@ -199,6 +201,16 @@ int codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 			} break;
 			case IR_OC_CALL: {
 				if (codegen_x86_64_call(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_STRING: {
+				if (codegen_x86_64_string(ctx, output, code) != 0) {
+					return -1;
+				}
+			} break;
+			case IR_OC_LOAD_STRING: {
+				if (codegen_x86_64_load_string(ctx, output, code) != 0) {
 					return -1;
 				}
 			} break;
@@ -586,6 +598,27 @@ int codegen_x86_64_call(IR_CTX *ctx, FILE *output, IRCode *code)
 	(void) ctx;
 
 	fprintf(output, "\tcallq\t"SV_FMT"@PLT\n", SV_PARAMS(code->result.view));
+
+	return 0;
+}
+
+int codegen_x86_64_string(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	fprintf(output, "\t.section\t.rodata\n");
+	fprintf(output, ".L.str.%zu:\n", code->result.num);
+	fprintf(output, "\t.asciz\t\""SV_FMT"\"\n", SV_PARAMS(&code->arg1.literal.sv));
+	fprintf(output, "\t.size\t.L.str.%zu, %zu\n", code->result.num, code->arg1.literal.sv.len);
+
+	return 0;
+}
+
+int codegen_x86_64_load_string(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	(void) ctx;
+
+	fprintf(output, "\tleaq\t.L.str.%zu(%%rip), %%rax\n", code->arg1.num);
 
 	return 0;
 }
