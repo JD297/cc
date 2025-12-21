@@ -1920,8 +1920,12 @@ ParseTreeNode_C *parser_c_parse_constant(Parser_C_CTX *ctx)
 ParseTreeNode_C *parser_c_parse_string(Parser_C_CTX *ctx)
 {
     Token_C token_string;
+    
+    Lexer_C lexer_saved = *ctx->lexer;
 
     if (lexer_c_next(ctx->lexer, &token_string) != T_STRING) {
+    	*ctx->lexer = lexer_saved;
+
         return NULL;
     }
 
