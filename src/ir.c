@@ -1108,101 +1108,48 @@ int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 		if (ir_assignment_expression(ctx, this_node->elements[2]) != 0) {
 			return -1;
 		}
-		
-		IRCode *calc = NULL;
-		
-		switch (this_node->elements[1]->token.type) {
-			case T_ASSIGNMENT: break;
-			case T_MULTIPLY_ASSIGN:
-		    case T_DIVIDE_ASSIGN:
-		    case T_MODULUS_ASSIGN:
-		    case T_PLUS_ASSIGN:
-		    case T_MINUS_ASSIGN:
-		    case T_BITWISE_LEFTSHIFT_ASSIGN:
-		    case T_BITWISE_RIGHTSHIFT_ASSIGN:
-		    case T_BITWISE_AND_ASSIGN:
-		    case T_BITWISE_XOR_ASSIGN:
-		    case T_BITWISE_OR_ASSIGN: {
-				IRCode *push = malloc(sizeof(IRCode));
+
+		if (this_node->elements[1]->token.type != T_ASSIGNMENT) {
+			/* TODO DEBUG */
+			assert(
+				this_node->elements[1]->token.type == T_MULTIPLY_ASSIGN ||
+				this_node->elements[1]->token.type == T_DIVIDE_ASSIGN ||
+				this_node->elements[1]->token.type == T_MODULUS_ASSIGN ||
+				this_node->elements[1]->token.type == T_PLUS_ASSIGN ||
+				this_node->elements[1]->token.type == T_MINUS_ASSIGN ||
+				this_node->elements[1]->token.type == T_BITWISE_LEFTSHIFT_ASSIGN ||
+				this_node->elements[1]->token.type == T_BITWISE_RIGHTSHIFT_ASSIGN ||
+				this_node->elements[1]->token.type == T_BITWISE_AND_ASSIGN ||
+				this_node->elements[1]->token.type == T_BITWISE_XOR_ASSIGN ||
+				this_node->elements[1]->token.type == T_BITWISE_OR_ASSIGN
+			);
+			
+			IRCode *push = malloc(sizeof(IRCode));
 				
-				assert(push != NULL);
+			assert(push != NULL);
 
-				*push = (IRCode) {
-					.op = IR_OC_PUSH,
-					.result.ptr = NULL,
-				};
+			*push = (IRCode) {
+				.op = IR_OC_PUSH,
+				.result.ptr = NULL,
+			};
 
-				list_insert(ctx->code, list_end(ctx->code), push);
+			list_insert(ctx->code, list_end(ctx->code), push);
 
-				IRCode *load = malloc(sizeof(IRCode));
-				
-				assert(load != NULL);
+			IRCode *load = malloc(sizeof(IRCode));
+			
+			assert(load != NULL);
 
-				*load = (IRCode) {
-					.op = IR_OC_LOAD,
-					.result.ptr = NULL,
-					.arg1.ptr = entry_id,
-				};
+			*load = (IRCode) {
+				.op = IR_OC_LOAD,
+				.result.ptr = NULL,
+				.arg1.ptr = entry_id,
+			};
 
-				list_insert(ctx->code, list_end(ctx->code), load);
-				
-				IRCode *pop = malloc(sizeof(IRCode));
-
-				assert(pop != NULL);
-
-                *pop = (IRCode) {
-                        .op = IR_OC_POP,
-                        .result.ptr = NULL,
-                };
-
-                list_insert(ctx->code, list_end(ctx->code), pop);
-
-				calc = malloc(sizeof(IRCode));
-				
-				assert(calc != NULL);
-
-				*calc = (IRCode) {
-					.result.ptr = NULL,
-				};
-
-				list_insert(ctx->code, list_end(ctx->code), calc);
-			} break;
-			default: assert(0 && "NOT REACHABLE");
-		}
-		
-		switch (this_node->elements[1]->token.type) {
-			case T_ASSIGNMENT: break;
-			case T_MULTIPLY_ASSIGN:
-				calc->op = IR_OC_MUL;
-		    	break;
-		    case T_DIVIDE_ASSIGN:
-		    	calc->op = IR_OC_DIV;
-		    	break;
-		    case T_MODULUS_ASSIGN:
-		    	calc->op = IR_OC_MOD;
-		    	break;
-		    case T_PLUS_ASSIGN:
-		    	calc->op = IR_OC_ADD;
-		    	break;
-		    case T_MINUS_ASSIGN:
-		    	calc->op = IR_OC_SUB;
-		    	break;
-		    case T_BITWISE_LEFTSHIFT_ASSIGN:
-		    	calc->op = IR_OC_SAL;
-		    	break;
-		    case T_BITWISE_RIGHTSHIFT_ASSIGN:
-		    	calc->op = IR_OC_SAR;
-		    	break;
-		    case T_BITWISE_AND_ASSIGN:
-		    	calc->op = IR_OC_AND;
-		    	break;
-		    case T_BITWISE_XOR_ASSIGN:
-		    	calc->op = IR_OC_XOR;
-		    	break;
-		    case T_BITWISE_OR_ASSIGN:
-		    	calc->op = IR_OC_OR;
-		    	break;
-			default: assert(0 && "NOT REACHABLE");
+			list_insert(ctx->code, list_end(ctx->code), load);
+			
+			if (ir_assignment_operator(ctx, this_node->elements[1]) != 0) {
+				return -1;
+			}
 		}
 
 		// TODO only works with identifiers aka a symtbl entry
@@ -1294,10 +1241,60 @@ int ir_string(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 int ir_assignment_operator(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
+        IRCode *pop = malloc(sizeof(IRCode));
 
-        assert(0 && "TODO not implemented");
+		assert(pop != NULL);
+
+        *pop = (IRCode) {
+                .op = IR_OC_POP,
+                .result.ptr = NULL,
+        };
+
+        list_insert(ctx->code, list_end(ctx->code), pop);
+
+		IRCode *calc = malloc(sizeof(IRCode));
+		
+		assert(calc != NULL);
+
+		*calc = (IRCode) {
+			.result.ptr = NULL,
+		};
+		
+		switch (this_node->token.type) {
+			case T_MULTIPLY_ASSIGN:
+				calc->op = IR_OC_MUL;
+		    	break;
+		    case T_DIVIDE_ASSIGN:
+		    	calc->op = IR_OC_DIV;
+		    	break;
+		    case T_MODULUS_ASSIGN:
+		    	calc->op = IR_OC_MOD;
+		    	break;
+		    case T_PLUS_ASSIGN:
+		    	calc->op = IR_OC_ADD;
+		    	break;
+		    case T_MINUS_ASSIGN:
+		    	calc->op = IR_OC_SUB;
+		    	break;
+		    case T_BITWISE_LEFTSHIFT_ASSIGN:
+		    	calc->op = IR_OC_SAL;
+		    	break;
+		    case T_BITWISE_RIGHTSHIFT_ASSIGN:
+		    	calc->op = IR_OC_SAR;
+		    	break;
+		    case T_BITWISE_AND_ASSIGN:
+		    	calc->op = IR_OC_AND;
+		    	break;
+		    case T_BITWISE_XOR_ASSIGN:
+		    	calc->op = IR_OC_XOR;
+		    	break;
+		    case T_BITWISE_OR_ASSIGN:
+		    	calc->op = IR_OC_OR;
+		    	break;
+			default: assert(0 && "NOT REACHABLE, hint: T_ASSIGNMENT is not allowed");
+		}
+
+		list_insert(ctx->code, list_end(ctx->code), calc);
 
         return 0;
 }
