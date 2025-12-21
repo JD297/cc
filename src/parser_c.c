@@ -1901,10 +1901,10 @@ ParseTreeNode_C *parser_c_parse_constant(Parser_C_CTX *ctx)
     Token_C token;
 
     switch(lexer_c_next(ctx->lexer, &token)) {
+    	// TODO: case enumeration-constant
     	case T_INTEGER_CONSTANT:
     	case T_FLOATING_CONSTANT:
-        case T_CHARACTER_CONSTANT:
-        case T_STRING: {
+        case T_CHARACTER_CONSTANT: {
             return parse_tree_node_c_create(PTT_C_CONSTANT, &token);
         } break;
         default: {
