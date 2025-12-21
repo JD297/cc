@@ -1593,6 +1593,8 @@ ParseTreeNode_C *parser_c_parse_unary_expression(Parser_C_CTX *ctx)
     
     parser_c_parse_required(ctx, this_node, cast_expression, error);
     
+    return this_node;
+    
     next_tokens: ;
     
     Token_C token;
