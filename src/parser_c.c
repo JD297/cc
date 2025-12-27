@@ -1,17 +1,17 @@
-#include "lexer_c.h"
-#include "symtbl.h"
-#include "parser_c.h"
-#include "parse_tree_node_c.h"
-#include "parse_tree_type_c.h"
+#include <assert.h>
+#include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include <jd297/logger.h>
 #include <jd297/sv.h>
 #include <jd297/lmap_sv.h>
 
-#include <assert.h>
-#include <stddef.h>
-#include <string.h>
-#include <stdlib.h>
+#include "lexer_c.h"
+#include "ir.h"
+#include "parser_c.h"
+#include "parse_tree_node_c.h"
+#include "parse_tree_type_c.h"
 
 ParseTreeNode_C *parser_c_parse(Parser_C_CTX *ctx)
 {
@@ -83,11 +83,11 @@ ParseTreeNode_C *parser_c_parse_function_definition(Parser_C_CTX *ctx)
 		assert(0 && "Only simple functions with identifieres are supported!");
 	}
 
-	symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, INT, FUNCTION, NULL); // TODO INT HARD
+	ir_symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, /* TODO HARD */IR_PTR_T, IR_SYMUSE_FUNCTION);
     
-    SymTbl *symtbl_parent = ctx->symtbl;
+    IRSymTbl *symtbl_parent = ctx->symtbl;
 
-    ctx->symtbl = symtbl_create(&identifier_node->token.view, symtbl_parent);
+    ctx->symtbl = ir_symtbl_create(&identifier_node->token.view, symtbl_parent);
     
     this_node->symtbl = ctx->symtbl;
 
@@ -147,7 +147,7 @@ ParseTreeNode_C *parser_c_parse_declaration(Parser_C_CTX *ctx)
 		}
 
 		// TODO add to symtbl HARD
-		init_declarator->symtblent = symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, INT, LOCAL, NULL); // TODO INT HARD
+		init_declarator->symtblent = ir_symtbl_add_entry(ctx->symtbl, &identifier_node->token.view, /* TODO HARD */IR_PTR_T, IR_SYMUSE_LOCAL);
 
 		// TODO extra typedef and enum
 	}
@@ -2401,7 +2401,18 @@ ParseTreeNode_C *parser_c_parse_labeled_statement(Parser_C_CTX *ctx)
     
     switch (lexer_c_next(ctx->lexer, &token)) {
     	case T_IDENTIFIER: {
+    		IRSymTbl *func_tbl;
+    	
 			this_node->token = token;
+
+			// TODO BUG if later an error occures then we need to revoke this entry
+			// TODO the bug will be solved if do this in sementical analyser,
+			// TODO so the symtbl stuff should later be moved to sementical analyser
+			func_tbl = ir_symtbl_current_function(ctx->symtbl);
+
+			this_node->symtblent = ir_symtbl_add_entry(func_tbl, &this_node->token.view, IR_PTR_T, IR_SYMUSE_LABEL);
+			
+			assert(this_node->symtblent != NULL);
 		} break;
 		case T_DEFAULT: {
 			this_node->token = token;

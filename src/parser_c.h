@@ -1,14 +1,14 @@
 #include "lexer_c.h"
 #include "parse_tree_node_c.h"
 #include "token_c.h"
-#include "symtbl.h"
+#include "ir.h"
 
 #include <jd297/lmap_sv.h>
 
 typedef struct {
 	int error_count;
 	Lexer_C *lexer;
-	SymTbl *symtbl;
+	IRSymTbl *symtbl;
 } Parser_C_CTX;
 
 extern ParseTreeNode_C *parser_c_parse(Parser_C_CTX *ctx);

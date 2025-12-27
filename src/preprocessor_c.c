@@ -323,12 +323,12 @@ int preprocessor_c_parse_conditional(Preprocessor_C *preprocessor, Lexer_C *lexe
 {
     (void)token;
 
-	SymTbl *symtbl_root = symtbl_create(NULL, NULL);
+	// IRSymTbl *symtbl_root = ir_symtbl_create(NULL, NULL);
 
 	Parser_C_CTX parser_ctx = {
 		.error_count = 0,
 		.lexer = lexer,
-		.symtbl = symtbl_root
+		.symtbl = NULL, /* symtbl_root */
 	};
 
     ParseTreeNode_C *conditional = parser_c_parse_preprocessor_conditional(&parser_ctx);

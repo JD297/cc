@@ -57,44 +57,23 @@ int optimizer_func_end(IR_CTX *ctx, list_node_t *it)
 
 int optimizer_stack_allocation(IR_CTX *ctx, list_node_t *begin)
 {
+	IRCode *func_begin_code = begin->value;
+
 	for (list_node_t *it = begin; it != list_end(ctx->code); ) {
 		IRCode *code = it->value;
 		
 		switch (code->op) {
 			case IR_OC_LOCAL: {
 				// TODO align to 8byte is there to make it simple
-				ctx->stack_offset += 8; // codegen_get_type_size(code->result.ptr->type);
+				ctx->stack_offset += 8; // codegen_get_type_size(code->result.rtype);
 			
-				code->result.ptr->addr = ctx->stack_offset;
+				*code->result.addr = ctx->stack_offset;
 
 				it = list_erase(ctx->code, it);
 			} break;
 			case IR_OC_FUNC_END: {
-				if (ctx->stack_offset == 0) {
-					return 0;
-				}
-
-				IRCode *stack_dealloc = malloc(sizeof(IRCode));
-
-				assert(stack_dealloc != NULL);
-
-				*stack_dealloc = (IRCode) {
-					.op = IR_OC_STACK_DEALLOC,
-					.result.stack = (SymTblEnt) { .addr = ctx->stack_offset }
-				};
-			
-				list_insert(ctx->code, list_next(begin), stack_dealloc);
-
-				IRCode *stack_alloc = malloc(sizeof(IRCode));
-
-				assert(stack_alloc != NULL);
-
-				*stack_alloc = (IRCode) {
-					.op = IR_OC_STACK_ALLOC,
-					.result.stack = (SymTblEnt) { .addr = ctx->stack_offset }
-				};
-
-				list_insert(ctx->code, list_next(begin), stack_alloc);
+				func_begin_code->arg1.num = ctx->stack_offset;
+				code->arg1.num = ctx->stack_offset;
 
 				ctx->stack_offset = 0;
 

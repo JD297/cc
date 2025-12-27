@@ -17,9 +17,10 @@ OBJFILES      = $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o 
                 $(BUILDDIR)/list.o $(BUILDDIR)/optimizer.o $(BUILDDIR)/ir.o \
                 $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o \
                 $(BUILDDIR)/codegen.o \
-                $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o $(BUILDDIR)/symtbl.o \
+                $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o \
                 $(BUILDDIR)/toolchain.o \
-                $(BUILDDIR)/toolchain_openbsd.o $(BUILDDIR)/toolchain_gnu_linux.o
+                $(BUILDDIR)/toolchain_openbsd.o $(BUILDDIR)/toolchain_gnu_linux.o \
+                $(BUILDDIR)/irgen_c.o
 
 HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/lexer_c.h $(SRCDIR)/parser_c.h \
@@ -29,7 +30,7 @@ HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
                 $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h \
                 $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h \
                 $(SRCDIR)/jd297/sv.h $(SRCDIR)/jd297/lmap_sv.h \
-                $(SRCDIR)/symtbl.h $(SRCDIR)/toolchain.h
+                $(SRCDIR)/toolchain.h $(SRCDIR)/irgen_c.h
 
 all: $(BUILDDIR)/$(TARGET) $(BUILDDIR)/cc_ir_test
 
@@ -81,6 +82,9 @@ $(BUILDDIR)/optimizer.o: $(HEADERS) $(SRCDIR)/optimizer.c
 $(BUILDDIR)/ir.o: $(HEADERS) $(SRCDIR)/ir.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/ir.c
 
+$(BUILDDIR)/irgen_c.o: $(HEADERS) $(SRCDIR)/irgen_c.c
+	$(CC) $(CFLAGS) -Wno-unused-function -c -o $@ $(SRCDIR)/irgen_c.c
+
 $(BUILDDIR)/codegen.o: $(HEADERS) $(SRCDIR)/codegen.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/codegen.c
 
@@ -92,9 +96,6 @@ $(BUILDDIR)/codegen_aarch64.o: $(HEADERS) $(SRCDIR)/codegen_aarch64.c
 
 $(BUILDDIR)/sv.o: $(HEADERS) $(SRCDIR)/sv.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/sv.c
-
-$(BUILDDIR)/symtbl.o: $(HEADERS) $(SRCDIR)/symtbl.c
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/symtbl.c
 
 $(BUILDDIR)/lmap_sv.o: $(HEADERS) $(SRCDIR)/lmap_sv.c
 	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/lmap_sv.c

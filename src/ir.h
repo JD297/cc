@@ -1,17 +1,90 @@
 #ifndef JD297_CC_IR_H
 #define JD297_CC_IR_H
 
-#include "symtbl.h"
-#include "parse_tree_node_c.h"
-#include "token_c.h"
+#include <stddef.h>
 
-#include <jd297/list.h>
-#include <jd297/lmap_sv.h>
 #include <jd297/sv.h>
+#include <jd297/list.h>
+#include <jd297/vector.h>
+#include <jd297/lmap_sv.h>
+
+typedef enum {
+	IR_U8_T,
+	IR_S8_T,
+	IR_U16_T,
+	IR_S16_T,
+	IR_U32_T,
+	IR_S32_T,
+	IR_U64_T,
+	IR_S64_T,
+	IR_F32_T,
+	IR_F64_T,
+	IR_PTR_T,
+} IRPrimitiveType;
+
+typedef union {
+	int d;
+	unsigned int u;
+	long int ld;
+	unsigned long int lu;
+	float f;
+	double lf;
+	long double Lf;
+	sv_t sv;
+} IRLiteral;
+
+extern IRLiteral ir_literal_from_d(int d);
+extern IRLiteral ir_literal_from_u(unsigned int u);
+extern IRLiteral ir_literal_from_ld(long int ld);
+extern IRLiteral ir_literal_from_lu(unsigned long int lu);
+extern IRLiteral ir_literal_from_f(float d);
+extern IRLiteral ir_literal_from_lf(double d);
+extern IRLiteral ir_literal_from_Lf(long double Lf);
+extern IRLiteral ir_literal_from_sv(sv_t sv);
+
+typedef enum {
+	IR_SYMUSE_FUNCTION,
+	IR_SYMUSE_LABEL,
+	IR_SYMUSE_LOCAL,
+	IR_SYMUSE_DATA,
+	IR_SYMUSE_CLASS,
+} IRSymTblEntUse;
+
+typedef struct {
+	sv_t *id;
+	IRPrimitiveType type;
+	IRSymTblEntUse use;
+	size_t addr;
+	// Lexer_Location_C loc;
+} IRSymTblEnt;
+
+typedef struct IRSymTbl {
+	sv_t *id;
+	struct IRSymTbl *parent;
+	lmap_sv_t entries;
+	lmap_sv_t labels;
+	/* TODO maybe */
+	/* lmap_sv_t locals; */
+	/* lmap_sv_t ...; */
+} IRSymTbl;
+
+extern vector_t ir_symtbl_refs;
+
+extern IRSymTbl *ir_symtbl_create(sv_t *id, IRSymTbl *parent);
+
+extern void ir_symtbl_free(IRSymTbl *tbl);
+
+extern IRSymTblEnt *ir_symtbl_add_entry(IRSymTbl *tbl, sv_t *id, IRPrimitiveType type, IRSymTblEntUse use);
+
+extern IRSymTblEnt *ir_symtbl_get(IRSymTbl *tbl, sv_t *id, IRSymTblEntUse use);
+
+extern IRSymTblEnt *ir_symtbl_function(IRSymTbl *tbl);
+
+extern IRSymTbl *ir_symtbl_current_function(IRSymTbl *tbl);
 
 typedef struct {
 	list_t *code;
-	SymTbl *symtbl;
+	IRSymTbl *symtbl;
 	size_t stack_offset;
 	size_t label_tmp;
 	size_t label_func_end;
@@ -22,11 +95,13 @@ typedef struct {
 	size_t label_str;
 } IR_CTX;
 
+extern IR_CTX *ir_ctx_create(IRSymTbl *symtbl);
+extern void ir_ctx_destroy(IR_CTX *ctx);
+
 typedef enum {
 	IR_OC_FUNC_BEGIN,
 	IR_OC_FUNC_END,
-	IR_OC_IMM_I32,
-	IR_OC_IMM_I64,
+	IR_OC_IMM,
 	IR_OC_PUSH,
 	IR_OC_POP,
 	IR_OC_SAL,
@@ -55,103 +130,85 @@ typedef enum {
 	IR_OC_STORE,
 	IR_OC_STACK_ALLOC,
 	IR_OC_STACK_DEALLOC,
-	IR_OC_PARAM,
+	IR_OC_PARAM_PUSH,
+	IR_OC_PARAM_POP,
 	IR_OC_CALL,
 	IR_OC_STRING,
 	IR_OC_LOAD_STRING,
 } IROpCode;
 
 typedef enum {
-	IR_TYPE_PTR,
-	IR_TYPE_STACK,
-	IR_TYPE_NUM,
-	IR_TYPE_VIEW,
-} IRType;
+	IR_ATYPE_ADDR,
+	IR_ATYPE_LITERAL,
+	IR_ATYPE_NUM,
+	IR_ATYPE_VIEW,
+	IR_ATYPE_REG,
+	// TODO ADD: IR_ATYPE_MEM, which is IR_ATYPE_VIEW ??
+} IRArgType;
+
+typedef enum {
+	IR_REG1,
+	IR_REG2,
+} IRRegister;
 
 typedef struct {
 	IROpCode op;
-	IRType type;
+	IRArgType atype1;
+	IRArgType atype2;
+	IRArgType rtype;
+	IRPrimitiveType ptype;
 	union {
-		SymTblEnt *ptr;
-		SymTblEnt stack;
-		literal_t literal;
+		IRLiteral literal;
+		IRRegister reg;
 		size_t num;
+		size_t *addr;
 	} arg1;
 	union {
-		SymTblEnt *ptr;
-		SymTblEnt stack;
+		size_t num;
+		IRLiteral literal;
+		IRRegister reg;
 	} arg2;
 	union {
-		SymTblEnt *ptr;
-		SymTblEnt stack;
+		size_t *addr;
 		size_t num;
 		sv_t *view;
+		IRRegister reg;
 	} result;
 } IRCode;
 
-extern int ir_run(IR_CTX *ctx, ParseTreeNode_C *translation_unit);
-
-extern int ir_translation_unit(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_external_declaration(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_function_definition(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_declaration(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_declaration_specifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_compound_statement(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_storage_class_specifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_type_specifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_type_qualifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_struct_or_union_specifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_enum_specifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_typedef_name(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_struct_or_union(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_identifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_struct_declaration(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_specifier_qualifier(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_struct_declarator_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_struct_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_constant_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_pointer(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_direct_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_parameter_type_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_logical_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_inclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_exclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_equality_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_relational_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_shift_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_additive_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_multiplicative_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_cast_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_type_name(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_postfix_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_unary_operator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_constant(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_string(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_assignment_operator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_abstract_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_parameter_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_parameter_declaration(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_direct_abstract_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_enumerator_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_enumerator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_init_declarator_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_init_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_initializer(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_initializer_list(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_statement(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_labeled_statement(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_expression_statement(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_selection_statement(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_iteration_statement(IR_CTX *ctx, ParseTreeNode_C *this_node);
-extern int ir_jump_statement(IR_CTX *ctx, ParseTreeNode_C *this_node);
+extern void ir_emit_push        (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, /* IRRegister|IRLiteral*/...                                   );
+extern void ir_emit_pop         (IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1                                                                   );
+extern void ir_emit_func_begin  (IR_CTX *ctx, sv_t *result                                                                                          );
+extern void ir_emit_func_end    (IR_CTX *ctx);
+extern void ir_emit_sal         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_sar         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_add         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_sub         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_mul         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_div         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_mod         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_or          (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_xor         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_and         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_eq          (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_neq         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_gt          (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_lt          (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_gte         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_lte         (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, IRArgType atype2, IRRegister rreg, /* IRRegister|IRLiteral*/...);
+extern void ir_emit_jmp_zero    (IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1      , size_t result                                                                    );
+extern void ir_emit_jmp_not_zero(IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1      , size_t result                                                                    );
+extern void ir_emit_string      (IR_CTX *ctx, IRLiteral arg1       , size_t arg2     , size_t result                                                  );
+extern void ir_emit_load_string (IR_CTX *ctx, size_t arg1          , IRRegister result                                                                );
+extern void ir_emit_param_push  (IR_CTX *ctx, size_t arg2          , IRPrimitiveType ptype, IRArgType atype1, /* IRRegister|IRLiteral*/...            );
+extern void ir_emit_param_pop   (IR_CTX *ctx, IRPrimitiveType ptype, size_t arg1                                                                      );
+extern void ir_emit_call        (IR_CTX *ctx, size_t arg1          , sv_t *result                                                                     );
+extern void ir_emit_imm         (IR_CTX *ctx, IRPrimitiveType ptype, IRLiteral arg1, IRRegister result                                                );
+extern void ir_emit_local       (IR_CTX *ctx, IRPrimitiveType ptype, size_t *result);
+extern void ir_emit_store       (IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1, size_t *result);
+extern void ir_emit_load        (IR_CTX *ctx, IRPrimitiveType ptype, size_t *arg1, IRRegister result);
+extern void ir_emit_jmp         (IR_CTX *ctx, IRArgType rtype, /* size_t|size_t* result */...                                                                                           );
+extern void ir_emit_label       (IR_CTX *ctx, IRArgType rtype, /* size_t|size_t* result */...                                                                                           );
 
 #endif
 
