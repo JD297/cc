@@ -1,11 +1,10 @@
 #include "lexer_c.h"
 #include "token_type_c.h"
 #include "token_c.h"
+
 #include <jd297/sv.h>
-#include <jd297/lmap_sv.h>
 
 #include <assert.h>
-
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -251,7 +250,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
         	
         	lexer_c_set_token(lexer, token, T_IDENTIFIER);
         	
-        	TokenType_C_LookupEntry *entry = lmap_sv_get(&token_type_c_lookup_keywords, &token->view);
+        	TokenType_C_LookupEntry *entry = token_type_c_lookup_keyword(&token->view);
 
         	if (entry != NULL) {
         		token->type = entry->type;

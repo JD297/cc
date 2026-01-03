@@ -398,12 +398,6 @@ int main(int argc, char **argv)
 	vec_push_back(&lib_dirs, "/usr/lib");
 	vec_push_back(&lib_dirs, "/lib");
 
-    if (token_type_c_create_lookups() == -1) {
-        return EXIT_FAILURE;
-    }
-
-    // TODO atexit(token_type_c_destroy_lookups);
-
     if (toolchain_create_lookups() == -1) {
         return EXIT_FAILURE;
     }

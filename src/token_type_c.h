@@ -2,7 +2,6 @@
 #define JD297_CC_TOKEN_TYPE_C_H
 
 #include <jd297/sv.h>
-#include <jd297/lmap_sv.h>
 
 typedef enum TokenType_C {
 	T_UNKNOWN = 0, /* default type value for Token_C */
@@ -140,10 +139,8 @@ typedef struct {
 	TokenType_C type;
 } TokenType_C_LookupEntry;
 
-extern lmap_sv_t token_type_c_lookup_keywords;
+extern TokenType_C_LookupEntry *token_type_c_lookup_keyword(sv_t *key);
 
-extern lmap_sv_t token_type_c_lookup_preprocessor;
-
-extern int token_type_c_create_lookups(void);
+extern TokenType_C_LookupEntry *token_type_c_lookup_preprocessor(sv_t *key);
 
 #endif

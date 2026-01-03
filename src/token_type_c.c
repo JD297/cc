@@ -1,11 +1,11 @@
+#include <stdlib.h>
+#include <string.h>
+
+#include <jd297/sv.h>
+
 #include "token_type_c.h"
-#include <jd297/lmap_sv.h>
 
-lmap_sv_t token_type_c_lookup_keywords;
-
-lmap_sv_t token_type_c_lookup_preprocessor;
-
-static TokenType_C_LookupEntry token_type_c_lookup_keyword_entries[] = {
+static const TokenType_C_LookupEntry token_type_c_lookup_keyword_entries[] = {
 	{.value = {.value = "auto", .len = 4}, .type = T_AUTO},
 	{.value = {.value = "break", .len = 5}, .type = T_BREAK},
 	{.value = {.value = "case", .len = 4}, .type = T_CASE},
@@ -40,7 +40,7 @@ static TokenType_C_LookupEntry token_type_c_lookup_keyword_entries[] = {
 	{.value = {.value = "while", .len = 5}, .type = T_WHILE},
 };
 
-static TokenType_C_LookupEntry token_type_c_lookup_preprocessor_entries[] = {
+static const TokenType_C_LookupEntry token_type_c_lookup_preprocessor_entries[] = {
 	{.value = {.value = "ifndef", .len = 6}, .type = T_MACRO_IFNDEF},
 	{.value = {.value = "if", .len = 2}, .type = T_MACRO_IF},
 	{.value = {.value = "elif", .len = 4}, .type = T_MACRO_ELIF},
@@ -54,42 +54,39 @@ static TokenType_C_LookupEntry token_type_c_lookup_preprocessor_entries[] = {
 	{.value = {.value = "pragma", .len = 6}, .type = T_MACRO_PRAGMA},
 };
 
-static int token_type_c_create_lookup_keywords(void)
+#define TOKEN_TYPE_C_LOOKUP_KEYWORD_ENTRIES_NMEMB sizeof(token_type_c_lookup_keyword_entries) / sizeof(TokenType_C_LookupEntry)
+#define TOKEN_TYPE_C_LOOKUP_PREPROCESSOR_ENTRIES_NMEMB sizeof(token_type_c_lookup_preprocessor_entries) / sizeof(TokenType_C_LookupEntry)
+
+int token_type_c_lookup_entry_cmp(const void *a, const void *b)
 {
-	int ret = 0;
+	TokenType_C_LookupEntry *le_a = (TokenType_C_LookupEntry *)a;
+	TokenType_C_LookupEntry *le_b = (TokenType_C_LookupEntry *)b;
 	
-	for (size_t i = 0; i < sizeof(token_type_c_lookup_keyword_entries) / sizeof(TokenType_C_LookupEntry) && ret == 0; i++) {
-		ret = lmap_sv_add(&token_type_c_lookup_keywords, &token_type_c_lookup_keyword_entries[i].value, &token_type_c_lookup_keyword_entries[i]);
+	size_t le_a_len = le_a->value.len;
+	size_t le_b_len = le_b->value.len;
+	
+	if (le_a_len < le_b_len) {
+		return strncmp(le_a->value.value, le_b->value.value, le_b->value.len);
 	}
-	
-	return ret;
+
+	return strncmp(le_a->value.value, le_b->value.value, le_a->value.len);
 }
 
-static int token_type_c_create_lookup_preprocessor(void)
+TokenType_C_LookupEntry *token_type_c_lookup_keyword(sv_t *key)
 {
-	int ret = 0;
-	
-	for (size_t i = 0; i < sizeof(token_type_c_lookup_preprocessor_entries) / sizeof(TokenType_C_LookupEntry) && ret == 0; i++) {
-		ret = lmap_sv_add(&token_type_c_lookup_preprocessor, &token_type_c_lookup_preprocessor_entries[i].value, &token_type_c_lookup_preprocessor_entries[i]);
-	}
-	
-	return ret;
+	TokenType_C_LookupEntry key_entry;
+	key_entry.value = *key;
+
+	return bsearch(&key_entry, token_type_c_lookup_keyword_entries, TOKEN_TYPE_C_LOOKUP_KEYWORD_ENTRIES_NMEMB, sizeof(TokenType_C_LookupEntry), token_type_c_lookup_entry_cmp);
 }
 
-int token_type_c_create_lookups(void)
+TokenType_C_LookupEntry *token_type_c_lookup_preprocessor(sv_t *key)
 {
-	if (token_type_c_create_lookup_keywords() != 0) {
-		return -1;
-	}
-	
-	if (token_type_c_create_lookup_preprocessor() != 0) {
-		return -1;
-	}
-	
-	return 0;
-}
+	TokenType_C_LookupEntry key_entry;
+	key_entry.value = *key;
 
-// TODO token_type_c_destroy_lookups
+	return bsearch(&key_entry, token_type_c_lookup_preprocessor_entries, TOKEN_TYPE_C_LOOKUP_PREPROCESSOR_ENTRIES_NMEMB, sizeof(TokenType_C_LookupEntry), token_type_c_lookup_entry_cmp);
+}
 
 #if 3 > 4
 
