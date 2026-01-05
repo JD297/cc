@@ -5,6 +5,7 @@
 #include <jd297/sv.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -20,8 +21,6 @@ static char lexer_c_peek(Lexer_C *lexer, size_t n);
 static int lexer_c_match(Lexer_C *lexer, char expected);
 
 static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type);
-
-static int lexer_c_isalnum(Lexer_C *lexer);
 
 void lexer_c_create(Lexer_C *lexer, sv_t pathname, const char *source, Lexer_Mode_C mode)
 {
@@ -244,7 +243,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
         case 's': case 't': case 'u': case 'v': case 'w': case 'x':
         case 'y': case 'z': 
         case '_': {
-        	while (lexer_c_isalnum(lexer) != 0) {
+        	while (isalnum(*lexer->current) != 0  || *lexer->current == '_') {
         		lexer_c_advance(lexer);
         	}
 
@@ -562,25 +561,4 @@ static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C 
 	token->type = type;
 	token->view.value = lexer->start;
 	token->view.len = lexer->current - lexer->start;
-}
-
-static int lexer_c_isalnum(Lexer_C *lexer)
-{
-	if (*lexer->current >= 'A' && *lexer->current <= 'Z') {
-		return 1;
-	}
-	
-	if (*lexer->current >= 'a' && *lexer->current <= 'z') {
-		return 1;
-	}
-
-	if (*lexer->current >= '0' && *lexer->current <= '9') {
-		return 1;
-	}
-
-	if (*lexer->current == '_') {
-		return 1;
-	}
-
-	return 0;
 }
