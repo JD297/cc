@@ -247,14 +247,10 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
         	while (lexer_c_isalnum(lexer) != 0) {
         		lexer_c_advance(lexer);
         	}
-        	
-        	lexer_c_set_token(lexer, token, T_IDENTIFIER);
-        	
-        	TokenType_C_LookupEntry *entry = token_type_c_lookup_keyword(&token->view);
 
-        	if (entry != NULL) {
-        		token->type = entry->type;
-        	}    	
+			lexer_c_set_token(lexer, token, T_IDENTIFIER);
+
+        	token->type = token_type_c_lookup_keyword(&token->view);
         } break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9': {

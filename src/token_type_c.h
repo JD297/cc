@@ -139,8 +139,8 @@ typedef struct {
 	TokenType_C type;
 } TokenType_C_LookupEntry;
 
-extern TokenType_C_LookupEntry *token_type_c_lookup_keyword(sv_t *key);
+extern TokenType_C token_type_c_lookup_keyword(sv_t *key);
 
-extern TokenType_C_LookupEntry *token_type_c_lookup_preprocessor(sv_t *key);
+// TODO extern TokenType_C *token_type_c_lookup_preprocessor(sv_t *key);
 
 #endif
