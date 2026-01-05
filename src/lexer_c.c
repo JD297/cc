@@ -14,7 +14,8 @@
 
 static int lexer_c_is_at_end(Lexer_C *lexer);
 
-static char lexer_c_advance(Lexer_C *lexer);
+#define lexer_c_advance(lexer_ptr) \
+	++(lexer_ptr)->loc.col, *((lexer_ptr)->current++)
 
 static char lexer_c_peek(Lexer_C *lexer, size_t n);
 
@@ -531,13 +532,6 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 static int lexer_c_is_at_end(Lexer_C *lexer)
 {
 	return *lexer->current == '\0';
-}
-
-static char lexer_c_advance(Lexer_C *lexer)
-{
-	++lexer->loc.col;
-
-	return *(lexer->current++);
 }
 
 static char lexer_c_peek(Lexer_C *lexer, size_t n)
