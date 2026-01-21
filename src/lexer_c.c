@@ -12,15 +12,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int lexer_c_is_at_end(Lexer_C *lexer);
+static int lexer_c_match(Lexer_C *lexer, char expected);
 
 static char lexer_c_advance(Lexer_C *lexer);
 
-static char lexer_c_peek(Lexer_C *lexer, size_t n);
+#define lexer_c_is_at_end(lexer_ptr) \
+	*(lexer_ptr)->current == '\0'
 
-static int lexer_c_match(Lexer_C *lexer, char expected);
+#define lexer_c_peek(lexer_ptr, n) \
+	*((lexer_ptr)->current + n)
 
-static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type);
+#define lexer_c_set_token(lexer_ptr, token_ptr, type_val) \
+	(token_ptr)->type = type_val; \
+	(token_ptr)->view.value = (lexer_ptr)->start; \
+	(token_ptr)->view.len = (lexer_ptr)->current - (lexer_ptr)->start
 
 void lexer_c_create(Lexer_C *lexer, sv_t pathname, const char *source, Lexer_Mode_C mode)
 {
@@ -163,7 +168,7 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 			break;
 		case '/': {
 			if (lexer_c_match(lexer, '/') == 0) {
-				while (lexer_c_peek(lexer, 0) != '\n' && !lexer_c_is_at_end(lexer)) {
+				while (lexer_c_peek(lexer, 0) != '\n' && !(lexer_c_is_at_end(lexer))) {
 					lexer_c_advance(lexer);
 				}
 
@@ -528,21 +533,11 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
     return token->type;
 }
 
-static int lexer_c_is_at_end(Lexer_C *lexer)
-{
-	return *lexer->current == '\0';
-}
-
 static char lexer_c_advance(Lexer_C *lexer)
 {
 	++lexer->loc.col;
 
 	return *(lexer->current++);
-}
-
-static char lexer_c_peek(Lexer_C *lexer, size_t n)
-{
-	return *(lexer->current + n);
 }
 
 static int lexer_c_match(Lexer_C *lexer, char expected)
@@ -554,11 +549,4 @@ static int lexer_c_match(Lexer_C *lexer, char expected)
 	lexer->current++;
 
 	return 0;
-}
-
-static void lexer_c_set_token(Lexer_C *lexer, Token_C *token, const TokenType_C type)
-{
-	token->type = type;
-	token->view.value = lexer->start;
-	token->view.len = lexer->current - lexer->start;
 }
