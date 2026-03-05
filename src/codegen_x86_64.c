@@ -536,6 +536,8 @@ static void codegen_x86_64_mov(IR_CTX *ctx, FILE *output, IRPrimitiveType ptype,
 static void codegen_x86_64_bin_op(IR_CTX *ctx, FILE *output, IRCode *code, const char *op)
 {
 	IRSSAEnt *operand;
+
+	fprintf(output, "\t# %s, %d\n", __FUNCTION__, __LINE__);
 	
 	/* optimization to avoid mutation of arg1 and setting the result correct right away */
 	if (code->result->type == IR_ATYPE_REG) {
