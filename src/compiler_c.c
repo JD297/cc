@@ -65,7 +65,7 @@ int compiler_c_run(Compiler_C *compiler)
 
 	assert(optimizer_run(ir_ctx) == 0);
 
-	assert(codegen_func(ir_ctx, compiler->output) == 0);
+	codegen_func(ir_ctx, compiler->output);
 
 	parse_tree_node_c_destroy(translation_unit);
 	munmap(src, filesize);

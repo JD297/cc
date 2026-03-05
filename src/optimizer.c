@@ -67,19 +67,49 @@ int optimizer_stack_allocation(IR_CTX *ctx, list_node_t *begin)
 				// TODO align to 8byte is there to make it simple
 				ctx->stack_offset += 8; // codegen_get_type_size(code->result.rtype);
 			
-				*code->result.addr = ctx->stack_offset;
+				*code->result->as.stack = ctx->stack_offset;
 
 				it = list_erase(ctx->code, it);
 			} break;
 			case IR_OC_FUNC_END: {
-				func_begin_code->arg1.num = ctx->stack_offset;
-				code->arg1.num = ctx->stack_offset;
+				func_begin_code->arg1->as.num = ctx->stack_offset;
+				code->arg1->as.num = ctx->stack_offset;
 
 				ctx->stack_offset = 0;
 
 				return 0;
 			} break;
-			default: it = list_next(it); break;
+			case IR_OC_IMM:
+			case IR_OC_SAL:
+			case IR_OC_SAR:
+			case IR_OC_ADD:
+			case IR_OC_SUB:
+			case IR_OC_MUL:
+			case IR_OC_DIV:
+			case IR_OC_MOD:
+			case IR_OC_OR:
+			case IR_OC_XOR:
+			case IR_OC_AND:
+			case IR_OC_EQ:
+			case IR_OC_NEQ:
+			case IR_OC_GT:
+			case IR_OC_LT:
+			case IR_OC_GTE:
+			case IR_OC_LTE:
+			case IR_OC_RET:
+			case IR_OC_LOAD:
+			case IR_OC_STORE:
+			case IR_OC_CALL:
+			case IR_OC_STRING: {
+				if (code->result != NULL && code->result->type == IR_ATYPE_NUM) {
+					ctx->stack_offset += 8; // codegen_get_type_size(code->result.rtype);
+			
+					code->result->as.num = ctx->stack_offset;
+				}
+			} // NO BREAK
+			default: {
+				it = list_next(it);
+			} break;
 		}
 	}
 

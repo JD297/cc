@@ -8,6 +8,6 @@
 #include "ir.h"
 #include "parse_tree_node_c.h"
 
-extern int irgen_c_run(IR_CTX *ctx, ParseTreeNode_C *translation_unit);
+extern void irgen_c_run(IR_CTX *ctx, ParseTreeNode_C *translation_unit);
 
 #endif

@@ -5,14 +5,14 @@
 
 #include "ir.h"
 
-typedef int (*codegen_run_func)(IR_CTX *ctx, FILE *output);
+typedef void (*codegen_run_func)(IR_CTX *ctx, FILE *output);
 
 extern codegen_run_func codegen_func;
 
 extern size_t codegen_get_type_size(IRPrimitiveType type);
 
-extern int codegen_x86_64_run(IR_CTX *ctx, FILE *output);
+extern void codegen_x86_64_run(IR_CTX *ctx, FILE *output);
 
-extern int codegen_aarch64_run(IR_CTX *ctx, FILE *output);
+extern void codegen_aarch64_run(IR_CTX *ctx, FILE *output);
 
 #endif
