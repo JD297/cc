@@ -516,7 +516,17 @@ static void codegen_x86_64_imm(IR_CTX *ctx, FILE *output, IRCode *code)
 
 static void codegen_x86_64_mov(IR_CTX *ctx, FILE *output, IRPrimitiveType ptype, IRSSAEnt *src, IRSSAEnt *dst)
 {
-	(void)ctx;
+	if (
+		(src->type == IR_ATYPE_NUM || src->type == IR_ATYPE_STACK || src->type == IR_ATYPE_ADDR) 
+			&& 
+		(dst->type == IR_ATYPE_NUM || dst->type == IR_ATYPE_STACK || dst->type == IR_ATYPE_ADDR)
+	) {
+		IRSSAEnt *tmp = ir_ssa_from_reg(ctx, REGISTER_TEMPORARY);
+	
+		codegen_x86_64_mov(ctx, output, ptype, src, tmp);
+		
+		src = tmp;
+	}
 
 	fputs("\tmov", output);
 

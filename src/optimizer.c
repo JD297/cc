@@ -41,9 +41,10 @@ int optimizer_run(IR_CTX *ctx)
 
 int optimizer_func_begin(IR_CTX *ctx, list_node_t *it)
 {
-	if (optimizer_tac_reduction(ctx, it) == -1) {
+	// TODO: removes to much code, so logically wrong :(
+	/*if (optimizer_tac_reduction(ctx, it) == -1) {
 		return -1;	
-	}
+	}*/
 
 	if (optimizer_stack_allocation(ctx, it) == -1) {
 		return -1;	
