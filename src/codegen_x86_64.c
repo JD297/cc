@@ -62,8 +62,7 @@ static void codegen_x86_64_store(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_load(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_param(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_call(IR_CTX *ctx, FILE *output, IRCode *code);
-//static void codegen_x86_64_string(IR_CTX *ctx, FILE *output, IRCode *code);
-//static void codegen_x86_64_load_string(IR_CTX *ctx, FILE *output, IRCode *code);
+static void codegen_x86_64_string(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_ret(IR_CTX *ctx, FILE *output, IRCode *code);
 
 static const char *codegen_x86_64_suffix(IRPrimitiveType ptype)
@@ -291,6 +290,8 @@ static int codegen_x86_64_fput_operand(FILE *output, IRPrimitiveType ptype, IRSS
 			return fprintf(output, "-%zu(%%rbp)", *operand->as.addr);
 		case IR_ATYPE_NUM:
 			return fprintf(output, "-%zu(%%rbp)", operand->as.num);
+		case IR_ATYPE_STR:
+			return fprintf(output, ".L.str.%zu(%%rip)", operand->as.str);
 		case IR_ATYPE_MEM:
 			return fprintf(output, SV_FMT"(%%rip)", SV_PARAMS(operand->as.view));
 		case IR_ATYPE_VIEW:
@@ -352,15 +353,21 @@ static void codegen_x86_64_mov(IR_CTX *ctx, FILE *output, IRPrimitiveType ptype,
 				&&
 			(dst->type != IR_ATYPE_REG)
 		)
+			||
+		(src->type == IR_ATYPE_STR && dst->type != IR_ATYPE_REG)
 	) {
 		IRSSAEnt *tmp = ir_ssa_from_reg(ctx, REGISTER_TEMPORARY);
-	
+
 		codegen_x86_64_mov(ctx, output, ptype, src, tmp);
-		
+
 		src = tmp;
 	}
 
-	fputs("\tmov", output);
+	if (src->type == IR_ATYPE_STR) {
+		fputs("\tlea", output);
+	} else {
+		fputs("\tmov", output);
+	}
 
 	fputs(codegen_x86_64_suffix(ptype), output);
 
@@ -545,12 +552,7 @@ void codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 				codegen_x86_64_call(ctx, output, code);
 				break;
 			case IR_OC_STRING:
-				assert(0 && "TODO: IR_OC_STRING");
-				// codegen_x86_64_string(ctx, output, code);
-				break;
-			case IR_OC_LOAD_STRING:
-				assert(0 && "TODO: IR_OC_LOAD_STRING");
-				// codegen_x86_64_load_string(ctx, output, code);
+				codegen_x86_64_string(ctx, output, code);
 				break;
 			case IR_OC_RET:
 				codegen_x86_64_ret(ctx, output, code);
@@ -890,32 +892,20 @@ static void codegen_x86_64_call(IR_CTX *ctx, FILE *output, IRCode *code)
 	
 	codegen_x86_64_mov(ctx, output, code->ptype, ir_ssa_from_reg(ctx, REGISTER_RETURN), code->result);
 }
-/*
+
 static void codegen_x86_64_string(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	(void) ctx;
 
-	assert(code->arg2.num == 1 && "TODO: not implemented: arg2 with other value then 1");
+	fprintf(output, "\t# %s, %d\n", __FUNCTION__, __LINE__);
+
+	//  assert(code->arg2->as.num == 1 && "TODO: not implemented: arg2 with other value then 1");
 
 	fprintf(output, "\t.section\t.rodata\n");
-	fprintf(output, ".L.str.%zu:\n", code->result.num);
-	fprintf(output, "\t.asciz\t\""SV_FMT"\"\n", SV_PARAMS(&code->arg1.literal.sv));
-	fprintf(output, "\t.size\t.L.str.%zu, %zu\n", code->result.num, code->arg1.literal.sv.len);
+	fprintf(output, ".L.str.%zu:\n", code->result->as.str);
+	fprintf(output, "\t.asciz\t\""SV_FMT"\"\n", SV_PARAMS(&code->arg1->as.literal.sv));
+	fprintf(output, "\t.size\t.L.str.%zu, %zu\n", code->result->as.str, code->arg1->as.literal.sv.len);
 }
-
-static void codegen_x86_64_load_string(IR_CTX *ctx, FILE *output, IRCode *code)
-{
-	codegen_x86_64_mov(ctx, output, code->ptype, code->arg1, code->result);
-	TODO DELETE: ?? leaq string is a novalty...
-
-	const char *ret_reg_name;
-
-	(void) ctx;
-	
-	ret_reg_name = codegen_x86_64_register_name(code->result.reg);
-
-	fprintf(output, "\tleaq\t.L.str.%zu(%%rip), %%r%sx\n", code->arg1.num, ret_reg_name);
-}*/
 
 static void codegen_x86_64_ret(IR_CTX *ctx, FILE *output, IRCode *code)
 {

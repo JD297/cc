@@ -1072,11 +1072,11 @@ static void irgen_c_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 static void irgen_c_string(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-	const size_t label_str = ctx->label_str;
+	const size_t label_str = ctx->label_str++;
 
-    ir_emit(ctx, IR_OC_STRING, IR_PTR_T, ir_ssa_from_num(ctx, ctx->label_str++), ir_ssa_from_literal(ctx, this_node->token.literal) , NULL);
+    ir_emit(ctx, IR_OC_STRING, IR_PTR_T, ir_ssa_from_str(ctx, label_str), ir_ssa_from_literal(ctx, this_node->token.literal) , NULL);
 
-	ir_emit(ctx, IR_OC_LOAD_STRING, IR_PTR_T, ir_ssa_default(ctx), ir_ssa_from_num(ctx, label_str), NULL);
+	ir_emit(ctx, IR_OC_LOAD, IR_PTR_T, ir_ssa_default(ctx), ir_ssa_from_str(ctx, label_str), NULL);
 }
 
 static void irgen_c_assignment_operator(IR_CTX *ctx, ParseTreeNode_C *this_node)

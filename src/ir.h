@@ -147,6 +147,7 @@ typedef enum {
 	IR_ATYPE_REG,
 	IR_ATYPE_STACK,
 	IR_ATYPE_MEM,
+	IR_ATYPE_STR,
 	IR_ATYPE_VIEW,
 	IR_ATYPE_SSA,
 	IR_ATYPE_NONE
@@ -157,6 +158,7 @@ struct IRSSAEnt {
 	
 	union {
 		size_t num;
+		size_t str;
 		size_t *addr;
 		IRLiteral literal;
 		size_t reg;
@@ -179,6 +181,7 @@ extern IRSSAEnt *ir_ssa_latest(IR_CTX *ctx);
 extern IRSSAEnt *ir_ssa_default(IR_CTX *ctx);
 extern IRSSAEnt *ir_ssa_from_view(IR_CTX *ctx, sv_t *view);
 extern IRSSAEnt *ir_ssa_from_num(IR_CTX *ctx, size_t num);
+extern IRSSAEnt *ir_ssa_from_str(IR_CTX *ctx, size_t str);
 extern IRSSAEnt *ir_ssa_from_stack(IR_CTX *ctx, size_t *stack);
 extern IRSSAEnt *ir_ssa_from_addr(IR_CTX *ctx, size_t *addr);
 extern IRSSAEnt *ir_ssa_from_literal(IR_CTX *ctx, IRLiteral literal);

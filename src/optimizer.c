@@ -182,8 +182,7 @@ int optimizer_stack_allocation(IR_CTX *ctx, list_node_t *begin)
 			case IR_OC_LTE:
 			case IR_OC_LOAD:
 			case IR_OC_STORE:
-			case IR_OC_CALL:
-			case IR_OC_STRING: {
+			case IR_OC_CALL: {
 				if (code->result != NULL && code->result->type == IR_ATYPE_NUM) {
 					ctx->stack_offset += 8; // codegen_get_type_size(code->result.rtype);
 			

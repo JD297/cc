@@ -315,6 +315,18 @@ IRSSAEnt *ir_ssa_from_num(IR_CTX *ctx, size_t num)
 	return ssa;
 }
 
+IRSSAEnt *ir_ssa_from_str(IR_CTX *ctx, size_t str)
+{
+	IRSSAEnt *ssa = malloc(sizeof(IRSSAEnt));
+
+	ssa->type = IR_ATYPE_STR;
+	ssa->as.str = str;
+
+	list_insert(ctx->ssa, list_end(ctx->ssa), ssa);
+
+	return ssa;
+}
+
 IRSSAEnt *ir_ssa_from_stack(IR_CTX *ctx, size_t *stack)
 {
 	IRSSAEnt *ssa = malloc(sizeof(IRSSAEnt));
