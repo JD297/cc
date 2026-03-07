@@ -307,13 +307,39 @@ static void irgen_c_parameter_type_list(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 static void irgen_c_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+        IRSSAEnt *dssa;
+        const size_t logical_label_end = ctx->label_tmp++;
+        const size_t logical_label_false = ctx->label_tmp++;
         
-        if (node->token.type == T_TERNARY) {
-        	assert(0 && "TODO not implemented: with T_TERNARY");
+        assert(this_node->num == 1 || this_node->num == 3);
+
+        irgen_c_logical_or_expression(ctx, this_node->elements[0]);
+        
+        if (this_node->num == 1) {
+        	return;
         }
-        
-        irgen_c_logical_or_expression(ctx, node);
+
+        dssa = ir_ssa_default(ctx);
+
+        ir_emit(ctx, IR_OC_JMP_ZERO, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, logical_label_false), ir_ssa_latest(ctx), NULL);
+
+        irgen_c_expression(ctx, this_node->elements[1]);
+
+		ir_emit(ctx, IR_OC_STORE, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_latest(ctx), NULL);
+
+        ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_end), NULL, NULL);
+
+		/* label false */
+        ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_false), NULL, NULL);
+
+        irgen_c_conditional_expression(ctx, this_node->elements[2]);
+
+        ir_emit(ctx, IR_OC_STORE, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_latest(ctx), NULL);
+
+        /* label end */
+        ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_end), NULL, NULL);
+
+        ctx->ssa_latest = dssa;
 }
 
 static void irgen_c_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -354,7 +380,7 @@ static void irgen_c_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_nod
 
         ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_end), NULL, NULL);
         
-        /* label false */
+        /* label true */
         ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_true), NULL, NULL);
 
         ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_from_literal(ctx, ir_literal_from_lu(1)), NULL);
