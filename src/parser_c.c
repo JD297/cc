@@ -838,7 +838,7 @@ ParseTreeNode_C *parser_c_parse_conditional_expression(Parser_C_CTX *ctx)
 
     parser_c_parse_required(ctx, this_node, expression, error);
     
-    if (lexer_c_next(ctx->lexer, &tmp) != T_TERNARY) {
+    if (lexer_c_next(ctx->lexer, &tmp) != T_COLON) {
         goto error;
     }
     
