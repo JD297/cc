@@ -151,10 +151,6 @@ typedef enum {
 	IR_ATYPE_SSA,
 	IR_ATYPE_NONE
 } IRArgType;
-
-typedef enum {
-	IR_REG_ACC,
-} IRRegister;
 	
 struct IRSSAEnt {
 	IRArgType type;
@@ -189,42 +185,6 @@ extern IRSSAEnt *ir_ssa_from_literal(IR_CTX *ctx, IRLiteral literal);
 extern IRSSAEnt *ir_ssa_from_reg(IR_CTX *ctx, size_t reg);
 
 extern void ir_emit(IR_CTX *ctx, IROpCode op, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-
-//extern void ir_emit_push        (IR_CTX *ctx, IRPrimitiveType ptype, IRArgType atype1, /* IRRegister|IRLiteral*/...                                   );
-//extern void ir_emit_pop         (IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1);
-
-/*
-extern void ir_emit_sal(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_sar(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_add(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_sub(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_mul(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_div(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_mod(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_or(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_xor(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_and(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_eq(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_neq(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_gt(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_lt(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_gte(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-extern void ir_emit_lte(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
-*/
-//extern void ir_emit_jmp_zero    (IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1      , size_t result                                                                    );
-//extern void ir_emit_jmp_not_zero(IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1      , size_t result                                                                    );
-//extern void ir_emit_string      (IR_CTX *ctx, IRLiteral arg1       , size_t arg2     , size_t result                                                  );
-//extern void ir_emit_load_string (IR_CTX *ctx, size_t arg1          , IRRegister result                                                                );
-//extern void ir_emit_param_push  (IR_CTX *ctx, size_t arg2          , IRPrimitiveType ptype, IRArgType atype1, /* IRRegister|IRLiteral*/...            );
-//extern void ir_emit_param_pop   (IR_CTX *ctx, IRPrimitiveType ptype, size_t arg1                                                                      );
-//extern void ir_emit_call        (IR_CTX *ctx, size_t arg1          , sv_t *result                                                                     );
-// extern void ir_emit_imm(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1);
-// extern void ir_emit_ret(IR_CTX *ctx, IRPrimitiveType ptype, IRSSAEnt *result);
-//extern void ir_emit_local       (IR_CTX *ctx, IRPrimitiveType ptype, size_t *result);
-//extern void ir_emit_store       (IR_CTX *ctx, IRPrimitiveType ptype, IRRegister arg1, size_t *result);
-//extern void ir_emit_load        (IR_CTX *ctx, IRPrimitiveType ptype, size_t *arg1, IRRegister result);
-// extern void ir_emit_jmp(IR_CTX *ctx, IRSSAEnt *result);
-// extern void ir_emit_label(IR_CTX *ctx, IRSSAEnt *result);
 
 #endif
 
