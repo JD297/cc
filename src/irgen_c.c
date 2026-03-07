@@ -318,13 +318,51 @@ static void irgen_c_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_no
 
 static void irgen_c_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+		ParseTreeNode_C *lnode;
+		ParseTreeNode_C *rnode;
+        IRSSAEnt *dssa;
+        const size_t logical_label_end = ctx->label_tmp++;
+        const size_t logical_label_true = ctx->label_tmp++;
+
+        assert(this_node->num > 0);
+
+        lnode = this_node->elements[0];
+
+        if (this_node->num == 1) {
+			irgen_c_logical_and_expression(ctx, lnode);
+
+			return;
+		}
+
+        if (lnode->type == PTT_C_LOGICAL_OR_EXPRESSION) {
+			irgen_c_logical_or_expression(ctx, lnode);
+		} else {
+			irgen_c_logical_and_expression(ctx, lnode);
+		}
+
+		ir_emit(ctx, IR_OC_JMP_NOT_ZERO, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, logical_label_true), ir_ssa_latest(ctx), NULL);
+		
+		rnode = this_node->elements[1];
+
+		irgen_c_logical_and_expression(ctx, rnode);
+
+		ir_emit(ctx, IR_OC_JMP_NOT_ZERO, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, logical_label_true), ir_ssa_latest(ctx), NULL);
+
+		dssa = ir_ssa_default(ctx);
+
+        ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_from_literal(ctx, ir_literal_from_lu(0)), NULL);
+
+        ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_end), NULL, NULL);
         
-        if (node->token.type == T_LOGICAL_OR) {
-        	assert(0 && "TODO not implemented: with T_LOGICAL_OR");
-        }
+        /* label false */
+        ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_true), NULL, NULL);
+
+        ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_from_literal(ctx, ir_literal_from_lu(1)), NULL);
         
-        irgen_c_logical_and_expression(ctx, node);
+        /* label end */
+        ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_end), NULL, NULL);
+
+        ctx->ssa_latest = dssa;
 }
 
 static void irgen_c_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -342,13 +380,51 @@ static void irgen_c_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 static void irgen_c_logical_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+		ParseTreeNode_C *lnode;
+		ParseTreeNode_C *rnode;
+        IRSSAEnt *dssa;
+        const size_t logical_label_end = ctx->label_tmp++;
+        const size_t logical_label_false = ctx->label_tmp++;
+
+        assert(this_node->num > 0);
+
+        lnode = this_node->elements[0];
+
+        if (this_node->num == 1) {
+			irgen_c_inclusive_or_expression(ctx, lnode);
+
+			return;
+		}
+
+        if (lnode->type == PTT_C_LOGICAL_AND_EXPRESSION) {
+			irgen_c_logical_and_expression(ctx, lnode);
+		} else {
+			irgen_c_inclusive_or_expression(ctx, lnode);
+		}
+
+		ir_emit(ctx, IR_OC_JMP_ZERO, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, logical_label_false), ir_ssa_latest(ctx), NULL);
+		
+		rnode = this_node->elements[1];
+
+		irgen_c_inclusive_or_expression(ctx, rnode);
+
+		ir_emit(ctx, IR_OC_JMP_ZERO, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, logical_label_false), ir_ssa_latest(ctx), NULL);
+
+		dssa = ir_ssa_default(ctx);
+
+        ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_from_literal(ctx, ir_literal_from_lu(1)), NULL);
+
+        ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_end), NULL, NULL);
         
-        if (node->token.type == T_LOGICAL_AND) {
-        	assert(0 && "TODO not implemented: with T_LOGICAL_AND");
-        }
+        /* label false */
+        ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_false), NULL, NULL);
+
+        ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_from_literal(ctx, ir_literal_from_lu(0)), NULL);
         
-        irgen_c_inclusive_or_expression(ctx, node);
+        /* label end */
+        ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, logical_label_end), NULL, NULL);
+
+        ctx->ssa_latest = dssa;
 }
 
 static void irgen_c_inclusive_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
