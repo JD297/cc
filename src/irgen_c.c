@@ -876,8 +876,8 @@ static void irgen_c_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				assert(0 && "TODO not implemented: T_INCREMENT");
 			case T_DECREMENT:
 				assert(0 && "TODO not implemented: T_DECREMENT");
-			case T_OPEN_BRACE:
-				assert(0 && "TODO not implemented: T_OPEN_BRACE");
+			case T_OPEN_BRACKET:
+				assert(0 && "TODO not implemented: T_OPEN_BRACKET");
 			default:
 				assert(0 && "NOT REACHABLE");
 		}
