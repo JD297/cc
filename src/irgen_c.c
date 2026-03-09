@@ -822,7 +822,7 @@ static void irgen_c_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 		switch (node->token.type) {
 			case T_UNKNOWN: {
 				irgen_c_postfix_expression(ctx, node);
-			} return;
+			} break;
 			case T_OPEN_PARENT: {
 				size_t argument_number = 0;
 				IRSSAEnt *dssa;
@@ -867,7 +867,7 @@ static void irgen_c_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				dssa = ir_ssa_default(ctx);
 
 				ir_emit(ctx, IR_OC_CALL, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_from_view(ctx, &identifier->token.view), ir_ssa_from_num(ctx, argument_number));
-			} return;
+			} break;
 			case T_DOT:
 				assert(0 && "TODO not implemented: T_DOT");
 			case T_ARROW:
@@ -878,6 +878,14 @@ static void irgen_c_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				assert(0 && "TODO not implemented: T_DECREMENT");
 			case T_OPEN_BRACKET:
 				assert(0 && "TODO not implemented: T_OPEN_BRACKET");
+			case T_MINUS: {
+				irgen_c_cast_expression(ctx, this_node->elements[1]);
+				
+				ir_emit(ctx, IR_OC_SUB, /* TODO HARD*/IR_PTR_T, ir_ssa_default(ctx), ir_ssa_from_literal(ctx, ir_literal_from_lu(0)), ir_ssa_latest(ctx));
+			} break;
+			case T_PLUS: {
+				irgen_c_cast_expression(ctx, this_node->elements[1]);
+			} break;
 			default:
 				assert(0 && "NOT REACHABLE");
 		}
