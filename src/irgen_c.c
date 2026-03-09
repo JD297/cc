@@ -930,7 +930,7 @@ static void irgen_c_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 				
 				assert(ent != NULL);
 				
-				ir_emit(ctx, IR_OC_LOAD, ent->type, ir_ssa_default(ctx), ir_ssa_from_addr(ctx, &ent->addr), NULL);
+				ctx->ssa_latest = ir_ssa_from_stack(ctx, &ent->addr);
 			} break;
 			case PTT_C_CONSTANT:
 				irgen_c_constant(ctx, node);
@@ -948,114 +948,72 @@ static void irgen_c_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 static void irgen_c_assignment_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-    ParseTreeNode_C *node = this_node->elements[0];
-	
-	IRSymTblEnt *entry_id = NULL;
-	
-	switch (node->type) {
+    switch (this_node->elements[0]->type) {
 		case PTT_C_CONDITIONAL_EXPRESSION: {
-			irgen_c_conditional_expression(ctx, node);
-			
-			return; // NEEDS TO RETURN
+			irgen_c_conditional_expression(ctx, this_node->elements[0]);
 		} break;
 		case PTT_C_UNARY_EXPRESSION: {
-			/*switch (node->token->type) {
-				case T_INCREMENT:
-					assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (T_INCREMENT)");
-				case T_DECREMENT:
-					assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (T_DECREMENT)");
-				case T_DECREMENT:
-					assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (T_DECREMENT)");
+			IROpCode op;
+			IRSSAEnt *lval, *rval, *arg1 = NULL, *arg2 = NULL;
+
+			irgen_c_unary_expression(ctx, this_node->elements[0]);
+			
+			lval = ir_ssa_latest(ctx);
+
+			irgen_c_assignment_expression(ctx, this_node->elements[2]);
+
+			rval = ir_ssa_latest(ctx);
+
+			if (this_node->elements[1]->token.type != T_ASSIGNMENT) {
+				arg1 = lval;
+				arg2 = rval;
+			} else {
+				arg1 = rval;
 			}
-			assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION");*/
-			
-			// TODO only with PTT_C_IDENTIFIER
-			ParseTreeNode_C *expr_node = node->elements[0];
-			
-			if (expr_node->type != PTT_C_POSTFIX_EXPRESSION) {
-				assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (without PTT_C_POSTFIX_EXPRESSION)");
+
+			switch (this_node->elements[1]->token.type) {
+				case T_MULTIPLY_ASSIGN:
+					op = IR_OC_MUL;
+					break;
+				case T_DIVIDE_ASSIGN:
+					op = IR_OC_DIV;
+					break;
+				case T_MODULUS_ASSIGN:
+					op = IR_OC_MOD;
+					break;
+				case T_PLUS_ASSIGN:
+					op = IR_OC_ADD;
+					break;
+				case T_MINUS_ASSIGN:
+					op = IR_OC_SUB;
+					break;
+				case T_BITWISE_LEFTSHIFT_ASSIGN:
+					op = IR_OC_SAL;
+					break;
+				case T_BITWISE_RIGHTSHIFT_ASSIGN:
+					op = IR_OC_SAR;
+					break;
+				case T_BITWISE_AND_ASSIGN:
+					op = IR_OC_AND;
+					break;
+				case T_BITWISE_XOR_ASSIGN:
+					op = IR_OC_XOR;
+					break;
+				case T_BITWISE_OR_ASSIGN:
+					op = IR_OC_OR;
+					break;
+				case T_ASSIGNMENT:
+					op = IR_OC_STORE;
+					break;
+				default:
+					assert(0 && "NOT REACHABLE");
 			}
 			
-			if (expr_node->token.type != T_UNKNOWN) {
-				assert(0 && "TODO not implemented: PTT_C_UNARY_EXPRESSION (without T_UNKNOWN)");
-			}
-			
-			if (expr_node->elements[0]->type != PTT_C_PRIMARY_EXPRESSION) {
-				assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_PRIMARY_EXPRESSION)");
-			}
-			
-			if (expr_node->elements[0]->elements[0]->type != PTT_C_IDENTIFIER) {
-				assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_IDENTIFIER)");
-			}
-			
-			ParseTreeNode_C *identifier = expr_node->elements[0]->elements[0];
-			
-			entry_id = ir_symtbl_get(ctx->symtbl, &identifier->token.view, IR_SYMUSE_LOCAL);
-			
-			assert(entry_id != NULL && "SYMTBL entry not found :(!");
+			ir_emit(ctx, op, /* TODO HARD */IR_PTR_T, lval, arg1, arg2);
 		} break;
 		default:
 			assert(0 && "NOT REACHABLE");
 	}
-	
-	assert(entry_id != NULL);
-
-	IRSSAEnt *lval, *rval, *arg1 = NULL, *arg2 = NULL;
-
-	irgen_c_assignment_expression(ctx, this_node->elements[2]);
-
-	rval = ir_ssa_latest(ctx);
-
-	lval = ir_ssa_from_stack(ctx, &entry_id->addr); // TODO stack is hard currently only LOCAL
-
-	if (this_node->elements[1]->token.type != T_ASSIGNMENT) {
-		arg1 = lval;
-		arg2 = rval;
-	} else {
-		arg1 = rval;
-	}
-
-	IROpCode op;
-
-	switch (this_node->elements[1]->token.type) {
-		case T_MULTIPLY_ASSIGN:
-			op = IR_OC_MUL;
-			break;
-		case T_DIVIDE_ASSIGN:
-			op = IR_OC_DIV;
-			break;
-		case T_MODULUS_ASSIGN:
-			op = IR_OC_MOD;
-			break;
-		case T_PLUS_ASSIGN:
-			op = IR_OC_ADD;
-			break;
-		case T_MINUS_ASSIGN:
-			op = IR_OC_SUB;
-			break;
-		case T_BITWISE_LEFTSHIFT_ASSIGN:
-			op = IR_OC_SAL;
-			break;
-		case T_BITWISE_RIGHTSHIFT_ASSIGN:
-			op = IR_OC_SAR;
-			break;
-		case T_BITWISE_AND_ASSIGN:
-			op = IR_OC_AND;
-			break;
-		case T_BITWISE_XOR_ASSIGN:
-			op = IR_OC_XOR;
-			break;
-		case T_BITWISE_OR_ASSIGN:
-			op = IR_OC_OR;
-			break;
-		case T_ASSIGNMENT:
-			op = IR_OC_STORE;
-			break;
-		default:
-			assert(0 && "NOT REACHABLE");
-	}
-	
-	ir_emit(ctx, op, entry_id->type, lval, arg1, arg2);
 }
 
 static void irgen_c_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
