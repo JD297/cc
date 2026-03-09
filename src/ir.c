@@ -243,6 +243,8 @@ IR_CTX *ir_ctx_create(IRSymTbl *symtbl)
 	assert(code != NULL);
 	
 	assert(list_create(code) != -1);
+	
+	ctx->code_current = list_begin(code);
 
 	ssa = malloc(sizeof(list_t));
 
@@ -391,7 +393,7 @@ void ir_emit(IR_CTX *ctx, IROpCode op, IRPrimitiveType ptype, IRSSAEnt *result, 
 	code->arg2 = arg2;
 	code->result = result;
 
-	list_insert(ctx->code, list_end(ctx->code), code);
+	ctx->code_current = list_insert(ctx->code, ctx->code_current == list_end(ctx->code) ? ctx->code_current : list_next(ctx->code_current), code);
 	
 	if (result != NULL) {
 		ctx->ssa_latest = result;

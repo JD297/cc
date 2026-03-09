@@ -89,6 +89,10 @@ typedef struct {
 	list_t *ssa;
 	IRSymTbl *symtbl;
 	IRSSAEnt *ssa_latest;
+	IRSSAEnt *switch_expression;
+	list_node_t *switch_stmt_section;
+	list_node_t *switch_test_section;
+	list_node_t *code_current;
 	size_t stack_offset;
 	size_t label_tmp;
 	size_t label_func_end;

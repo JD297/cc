@@ -275,10 +275,7 @@ static void irgen_c_struct_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 static void irgen_c_constant_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        (void) ctx;
-        (void) this_node;
-
-        assert(0 && "TODO not implemented");
+        irgen_c_conditional_expression(ctx, this_node->elements[0]);
 }
 
 static void irgen_c_pointer(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -1231,15 +1228,46 @@ static void irgen_c_labeled_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 			irgen_c_statement(ctx, statement);
 		} break;
 		case T_DEFAULT: {
-			assert(0 && "TODO not implemented (default)");
-			// ParseTreeNode_C *statement = this_node->elements[0];
+			ParseTreeNode_C *statement = this_node->elements[0];
+			const size_t label = ctx->label_tmp++;
+			
+			ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, label), NULL, NULL);
+			
+			irgen_c_statement(ctx, statement);
+
+			ctx->switch_stmt_section = ctx->code_current;
+			
+			ctx->code_current = ctx->switch_test_section;
+			
+			ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, label), NULL, NULL);
+			
+			ctx->switch_test_section = list_prev(ctx->code_current);
+			
+			ctx->code_current = ctx->switch_stmt_section;
 		} break;
 		case T_CASE: {
-			assert(0 && "TODO not implemented (case)");
-			// TODO requires a constant_expression evaluater ??
-			// ParseTreeNode_C *constant_expression = this_node->elements[0];
-			// ParseTreeNode_C *statement = this_node->elements[1];
-		}
+			ParseTreeNode_C *constant_expression = this_node->elements[0];
+			ParseTreeNode_C *statement = this_node->elements[1];
+			const size_t label = ctx->label_tmp++;
+			
+			ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, label), NULL, NULL);
+			
+			irgen_c_statement(ctx, statement);
+
+			ctx->switch_stmt_section = ctx->code_current;
+			
+			ctx->code_current = ctx->switch_test_section;
+			
+			irgen_c_constant_expression(ctx, constant_expression);
+			
+			ir_emit(ctx, IR_OC_EQ, /* TODO HARD */IR_PTR_T, ir_ssa_default(ctx), ir_ssa_latest(ctx), ctx->switch_expression);
+			
+			ir_emit(ctx, IR_OC_JMP_NOT_ZERO, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, label), ir_ssa_latest(ctx), NULL);
+			
+			ctx->switch_test_section = ctx->code_current;
+			
+			ctx->code_current = ctx->switch_stmt_section;
+		} break;
 		default: {
 			assert(0 && "NOT REACHABLE");
 		}
@@ -1257,14 +1285,14 @@ static void irgen_c_expression_statement(IR_CTX *ctx, ParseTreeNode_C *this_node
 
 static void irgen_c_selection_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-	const size_t before_label_select_begin = ctx->label_select_begin;
-	const size_t before_label_select_end = ctx->label_select_end;
-
-	ctx->label_select_begin = ctx->label_tmp++;
-	ctx->label_select_end = ctx->label_tmp++;
-
 	switch(this_node->token.type) {
     	case T_IF: {
+    		const size_t before_label_select_begin = ctx->label_select_begin;
+			const size_t before_label_select_end = ctx->label_select_end;
+
+			ctx->label_select_begin = ctx->label_tmp++;
+			ctx->label_select_end = ctx->label_tmp++;
+
     		irgen_c_expression(ctx, this_node->elements[0]);
     		
     		ir_emit(ctx, IR_OC_JMP_ZERO, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, ctx->label_select_begin), ir_ssa_latest(ctx), NULL);
@@ -1283,20 +1311,61 @@ static void irgen_c_selection_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
     			/* jmp_if_end */
 				ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, ctx->label_select_end), NULL, NULL);
 			}
+			
+			/* label_end */
+			ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, ctx->label_select_end), NULL, NULL);
+
+			ctx->label_select_begin = before_label_select_begin;
+			ctx->label_select_end = before_label_select_end;
     	} break;
     	case T_SWITCH: {
-    		assert(0 && "TODO: not implemented: ir_selection_statement with (switch)");
+    		IRSSAEnt *before_switch_expression = ctx->switch_expression;
+    		const size_t label_switch_test = ctx->label_tmp++;
+    		const size_t before_label_iter_end = ctx->label_iter_end;
+    		list_node_t *before_switch_stmt_section = ctx->switch_stmt_section;
+    		list_node_t *before_switch_test_section = ctx->switch_test_section;
+    		list_node_t *switch_end;
+    		
+    		ctx->label_iter_end = ctx->label_tmp++;
+    		
+    		irgen_c_expression(ctx, this_node->elements[0]);
+    		
+    		ctx->switch_expression = ir_ssa_latest(ctx);
+    		
+    		/* jmp switch_test */
+			ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, label_switch_test), NULL, NULL);
+    		
+    		/* ...[switch_stmt_section] */
+    		ctx->switch_stmt_section = ctx->code_current;
+    		
+    		/* jmp switch_end */
+			ir_emit(ctx, IR_OC_JMP, IR_PTR_T, ir_ssa_from_num(ctx, ctx->label_iter_end), NULL, NULL);
+			
+			/* label switch_test */
+			ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, label_switch_test), NULL, NULL);
+    		
+    		/* ...[switch_test_section] */
+    		ctx->switch_test_section = ctx->code_current;
+    		
+    		/* label switch_end */
+			ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, ctx->label_iter_end), NULL, NULL);
+    		
+    		switch_end = ctx->code_current;
+    		
+    		ctx->code_current = ctx->switch_stmt_section;
+    		
+    		irgen_c_statement(ctx, this_node->elements[1]);
+
+    		ctx->code_current = switch_end;
+    		ctx->switch_expression = before_switch_expression;
+    		ctx->label_iter_end = before_label_iter_end;
+    		ctx->switch_stmt_section = before_switch_stmt_section;
+    		ctx->switch_test_section = before_switch_test_section;
     	} break;
     	default: {
 			assert(0 && "NOT REACHABLE");
 		}
     }
-
-	/* label_end */
-	ir_emit(ctx, IR_OC_LABEL, IR_PTR_T, ir_ssa_from_num(ctx, ctx->label_select_end), NULL, NULL);
-
-	ctx->label_select_begin = before_label_select_begin;
-	ctx->label_select_end = before_label_select_end;
 }
 
 static void irgen_c_iteration_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
