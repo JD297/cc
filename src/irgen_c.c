@@ -305,8 +305,6 @@ static void irgen_c_parameter_type_list(IR_CTX *ctx, ParseTreeNode_C *this_node)
 static void irgen_c_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         IRSSAEnt *dssa;
-        const size_t logical_label_end = ctx->label_tmp++;
-        const size_t logical_label_false = ctx->label_tmp++;
         
         assert(this_node->num == 1 || this_node->num == 3);
 
@@ -315,6 +313,9 @@ static void irgen_c_conditional_expression(IR_CTX *ctx, ParseTreeNode_C *this_no
         if (this_node->num == 1) {
         	return;
         }
+        
+        const size_t logical_label_end = ctx->label_tmp++;
+        const size_t logical_label_false = ctx->label_tmp++;
 
         dssa = ir_ssa_default(ctx);
 
@@ -344,8 +345,6 @@ static void irgen_c_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_nod
 		ParseTreeNode_C *lnode;
 		ParseTreeNode_C *rnode;
         IRSSAEnt *dssa;
-        const size_t logical_label_end = ctx->label_tmp++;
-        const size_t logical_label_true = ctx->label_tmp++;
 
         assert(this_node->num > 0);
 
@@ -356,6 +355,9 @@ static void irgen_c_logical_or_expression(IR_CTX *ctx, ParseTreeNode_C *this_nod
 
 			return;
 		}
+
+		const size_t logical_label_end = ctx->label_tmp++;
+        const size_t logical_label_true = ctx->label_tmp++;
 
         if (lnode->type == PTT_C_LOGICAL_OR_EXPRESSION) {
 			irgen_c_logical_or_expression(ctx, lnode);
@@ -406,8 +408,6 @@ static void irgen_c_logical_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_no
 		ParseTreeNode_C *lnode;
 		ParseTreeNode_C *rnode;
         IRSSAEnt *dssa;
-        const size_t logical_label_end = ctx->label_tmp++;
-        const size_t logical_label_false = ctx->label_tmp++;
 
         assert(this_node->num > 0);
 
@@ -418,6 +418,9 @@ static void irgen_c_logical_and_expression(IR_CTX *ctx, ParseTreeNode_C *this_no
 
 			return;
 		}
+
+		const size_t logical_label_end = ctx->label_tmp++;
+        const size_t logical_label_false = ctx->label_tmp++;
 
         if (lnode->type == PTT_C_LOGICAL_AND_EXPRESSION) {
 			irgen_c_logical_and_expression(ctx, lnode);
