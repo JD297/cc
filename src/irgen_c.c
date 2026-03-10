@@ -819,72 +819,53 @@ static void irgen_c_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
         ParseTreeNode_C *node = this_node->elements[0];
 
-		switch (node->token.type) {
-			case T_UNKNOWN: {
+		switch (node->type) {
+			case PTT_C_POSTFIX_EXPRESSION: {
 				irgen_c_postfix_expression(ctx, node);
 			} break;
-			case T_OPEN_PARENT: {
-				size_t argument_number = 0;
-				IRSSAEnt *dssa;
-				IRSSAEnt **argument_ssas = NULL;
-
-				if (node->num == 2) {
-					ParseTreeNode_C *argument_expression_list = node->elements[1];
-					
-					argument_number = argument_expression_list->num;
-
-					argument_ssas = malloc(sizeof(IRSSAEnt *) * argument_expression_list->num);
-
-					for (size_t i = 0; i < argument_expression_list->num; ++i) {
-						irgen_c_assignment_expression(ctx, argument_expression_list->elements[i]);
-
-						argument_ssas[i] = ir_ssa_latest(ctx);
-					}
+			case PTT_C_UNARY_EXPRESSION: {
+				switch (this_node->token.type) {
+					case T_INCREMENT: {
+						assert(0 && "TODO not implemented with (T_INCREMENT)");
+					} break;
+					case T_DECREMENT: {
+						assert(0 && "TODO not implemented with (T_DECREMENT)");
+					} break;
+					case T_SIZEOF: {
+						assert(0 && "TODO not implemented with (T_SIZEOF)");
+					} break;
+					default:
+						assert(0 && "NOT REACHABLE");
 				}
-
-				if (node->elements[0]->type != PTT_C_POSTFIX_EXPRESSION) {
-					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_PRIMARY_EXPRESSION) ?? FAST HACK");
-				}
-				
-				if (node->elements[0]->elements[0]->type != PTT_C_PRIMARY_EXPRESSION) {
-					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_PRIMARY_EXPRESSION) ?? FAST HACK");
-				}
-				
-				if (node->elements[0]->elements[0]->elements[0]->type != PTT_C_IDENTIFIER) {
-					assert(0 && "PTT_C_UNARY_EXPRESSION (must sementically be PTT_C_IDENTIFIER) ?? FAST HACK");
-				}
-				
-				ParseTreeNode_C *identifier = node->elements[0]->elements[0]->elements[0];
-
-				for (size_t i = 0; i < argument_number; ++i) {
-					ir_emit(ctx, IR_OC_PARAM, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, i + 1), argument_ssas[i], NULL);
-				}
-
-				if (argument_ssas != NULL) {
-					free(argument_ssas);
-				}
-
-				dssa = ir_ssa_default(ctx);
-
-				ir_emit(ctx, IR_OC_CALL, /* TODO HARD */IR_PTR_T, dssa, ir_ssa_from_view(ctx, &identifier->token.view), ir_ssa_from_num(ctx, argument_number));
+				// irgen_c_unary_expression(ctx, node); // TODO ??
 			} break;
-			case T_DOT:
-				assert(0 && "TODO not implemented: T_DOT");
-			case T_ARROW:
-				assert(0 && "TODO not implemented: T_ARROW");
-			case T_INCREMENT:
-				assert(0 && "TODO not implemented: T_INCREMENT");
-			case T_DECREMENT:
-				assert(0 && "TODO not implemented: T_DECREMENT");
-			case T_OPEN_BRACKET:
-				assert(0 && "TODO not implemented: T_OPEN_BRACKET");
-			case T_MINUS: {
-				irgen_c_cast_expression(ctx, this_node->elements[1]);
-				
-				ir_emit(ctx, IR_OC_SUB, /* TODO HARD*/IR_PTR_T, ir_ssa_default(ctx), ir_ssa_from_literal(ctx, ir_literal_from_lu(0)), ir_ssa_latest(ctx));
-			} break;
-			case T_PLUS: {
-				irgen_c_cast_expression(ctx, this_node->elements[1]);
+			case PTT_C_UNARY_OPERATOR: {
+				switch (node->token.type) {
+					case T_BITWISE_AND: {
+						assert(0 && "TODO not implemented with (T_BITWISE_AND)");
+					} break;
+					case T_MULTIPLY: {
+						assert(0 && "TODO not implemented with (T_MULTIPLY)");
+					} break;
+					case T_TILDE: {
+						assert(0 && "TODO not implemented with (T_TILDE)");
+					} break;
+					case T_LOGICAL_NOT: {
+						irgen_c_cast_expression(ctx, this_node->elements[1]);
+						
+						ir_emit(ctx, IR_OC_EQ, /* TODO HARD*/IR_PTR_T, ir_ssa_default(ctx), ir_ssa_from_literal(ctx, ir_literal_from_lu(0)), ir_ssa_latest(ctx));
+					} break;
+					case T_MINUS: {
+						irgen_c_cast_expression(ctx, this_node->elements[1]);
+						
+						ir_emit(ctx, IR_OC_SUB, /* TODO HARD*/IR_PTR_T, ir_ssa_default(ctx), ir_ssa_from_literal(ctx, ir_literal_from_lu(0)), ir_ssa_latest(ctx));
+					} break;
+					case T_PLUS: {
+						irgen_c_cast_expression(ctx, this_node->elements[1]);
+					} break;
+					default:
+						assert(0 && "NOT REACHABLE");
+				}
 			} break;
 			default:
 				assert(0 && "NOT REACHABLE");
@@ -901,13 +882,57 @@ static void irgen_c_type_name(IR_CTX *ctx, ParseTreeNode_C *this_node)
 
 static void irgen_c_postfix_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-        ParseTreeNode_C *node = this_node->elements[0];
+        switch (this_node->token.type) {
+			case T_UNKNOWN:
+				irgen_c_primary_expression(ctx, this_node->elements[0]);
+				break;
+			case T_OPEN_BRACKET:
+				assert(0 && "TODO not implemented: T_OPEN_BRACKET");
+			case T_OPEN_PARENT: {
+				IRSSAEnt **argument_ssas = NULL;
+				IRSSAEnt *function;
 
-		if (node->token.type != 0) {
-        	assert(0 && "TODO not implemented: with ANY TOKEN");
-        }
+				if (this_node->num == 2) {
+					ParseTreeNode_C *argument_expression_list = this_node->elements[1];
 
-        irgen_c_primary_expression(ctx, node);
+					argument_ssas = malloc(sizeof(IRSSAEnt *) * argument_expression_list->num);
+
+					for (size_t i = 0; i < argument_expression_list->num; ++i) {
+						irgen_c_assignment_expression(ctx, argument_expression_list->elements[i]);
+
+						argument_ssas[i] = ir_ssa_latest(ctx);
+					}
+					
+					for (size_t i = 0; i < argument_expression_list->num; ++i) {
+						irgen_c_assignment_expression(ctx, argument_expression_list->elements[i]);
+
+						argument_ssas[i] = ir_ssa_latest(ctx);
+					}
+					
+					for (size_t i = 0; i < argument_expression_list->num; ++i) {
+						ir_emit(ctx, IR_OC_PARAM, /* TODO HARD */IR_PTR_T, ir_ssa_from_num(ctx, i + 1), argument_ssas[i], NULL);
+					}
+
+					free(argument_ssas);
+				}
+
+				irgen_c_postfix_expression(ctx, this_node->elements[0]);
+
+				function = ir_ssa_latest(ctx);
+
+				ir_emit(ctx, IR_OC_CALL, /* TODO HARD */IR_PTR_T, ir_ssa_default(ctx), function, ir_ssa_from_num(ctx, this_node->elements[1]->num));
+			} break;
+			case T_DOT:
+				assert(0 && "TODO not implemented: T_DOT");
+			case T_ARROW:
+				assert(0 && "TODO not implemented: T_ARROW");
+			case T_INCREMENT:
+				assert(0 && "TODO not implemented: T_INCREMENT");
+			case T_DECREMENT:
+				assert(0 && "TODO not implemented: T_DECREMENT");
+			default:
+				assert(0 && "NOT REACHABLE");
+		}
 }
 
 static void irgen_c_unary_operator(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -915,7 +940,7 @@ static void irgen_c_unary_operator(IR_CTX *ctx, ParseTreeNode_C *this_node)
         (void) ctx;
         (void) this_node;
 
-        assert(0 && "TODO not implemented");
+        assert(0 && "FUNCTION IS DEPRECATED!");
 }
 
 static void irgen_c_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
@@ -926,11 +951,15 @@ static void irgen_c_primary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 			case PTT_C_IDENTIFIER: {
 				// TODO probably incomplete but fine for now...
 				// TODO need globals etc.
-				IRSymTblEnt *ent = ir_symtbl_get(ctx->symtbl, &node->token.view, IR_SYMUSE_LOCAL);
+				IRSymTblEnt *entry = ir_symtbl_get(ctx->symtbl, &node->token.view, IR_SYMUSE_LOCAL);
 				
-				assert(ent != NULL);
+				if(entry == NULL) {
+					ctx->ssa_latest = ir_ssa_from_view(ctx, &node->token.view);
+					
+					return;
+				}
 				
-				ctx->ssa_latest = ir_ssa_from_stack(ctx, &ent->addr);
+				ctx->ssa_latest = ir_ssa_from_stack(ctx, &entry->addr);
 			} break;
 			case PTT_C_CONSTANT:
 				irgen_c_constant(ctx, node);
