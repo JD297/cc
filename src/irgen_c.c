@@ -848,7 +848,9 @@ static void irgen_c_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 						assert(0 && "TODO not implemented with (T_MULTIPLY)");
 					} break;
 					case T_TILDE: {
-						assert(0 && "TODO not implemented with (T_TILDE)");
+						irgen_c_cast_expression(ctx, this_node->elements[1]);
+						
+						ir_emit(ctx, IR_OC_NOT, /* TODO HARD*/IR_PTR_T, ir_ssa_default(ctx), ir_ssa_latest(ctx), NULL);
 					} break;
 					case T_LOGICAL_NOT: {
 						irgen_c_cast_expression(ctx, this_node->elements[1]);

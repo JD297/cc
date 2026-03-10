@@ -33,6 +33,7 @@ static IRSSAEnt *codegen_x86_64_param_register(IR_CTX *ctx, size_t n);
 
 static void codegen_x86_64_mov(IR_CTX *ctx, FILE *output, IRPrimitiveType ptype, IRSSAEnt *src, IRSSAEnt *dst);
 static void codegen_x86_64_bin_op(IR_CTX *ctx, FILE *output, IRCode *code, const char *op);
+static void codegen_x86_64_unary_op(IR_CTX *ctx, FILE *output, IRCode *code, const char *op);
 static void codegen_x86_64_logical_cmp(IR_CTX *ctx, FILE *output, IRCode *code, const char *op);
 
 static void codegen_x86_64_func_begin(IR_CTX *ctx, FILE *output, IRCode *code);
@@ -48,6 +49,7 @@ static void codegen_x86_64_div(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_or(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_xor(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_and(IR_CTX *ctx, FILE *output, IRCode *code);
+static void codegen_x86_64_not(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_eq(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_neq(IR_CTX *ctx, FILE *output, IRCode *code);
 static void codegen_x86_64_gt(IR_CTX *ctx, FILE *output, IRCode *code);
@@ -420,6 +422,40 @@ static void codegen_x86_64_bin_op(IR_CTX *ctx, FILE *output, IRCode *code, const
 	}
 }
 
+static void codegen_x86_64_unary_op(IR_CTX *ctx, FILE *output, IRCode *code, const char *op)
+{
+	IRSSAEnt *operand;
+
+	fprintf(output, "\t# %s, %d\n", __FUNCTION__, __LINE__);
+	
+	/* optimization to avoid mutation of arg1 and setting the result correct right away */
+	if (code->result->type == IR_ATYPE_REG) {
+		if (code->result != code->arg1) {
+			codegen_x86_64_mov(ctx, output, code->ptype, code->arg1, code->result);
+		}
+		
+		operand = code->result;
+	} else {
+		operand = ir_ssa_from_reg(ctx, REGISTER_TEMPORARY);
+
+		codegen_x86_64_mov(ctx, output, code->ptype, code->arg1, operand);
+	}
+
+	fprintf(output, "\t%s", op);
+	
+	fputs(codegen_x86_64_suffix(code->ptype), output);
+
+	fputs("\t", output);
+
+	codegen_x86_64_fput_operand(output, code->ptype, operand);
+
+	fputs("\n", output);
+
+	if (code->result != operand) {
+		codegen_x86_64_mov(ctx, output, code->ptype, operand, code->result);
+	}
+}
+
 static void codegen_x86_64_logical_cmp(IR_CTX *ctx, FILE *output, IRCode *code, const char *op)
 {
 	IRSSAEnt *result = code->result;
@@ -505,6 +541,9 @@ void codegen_x86_64_run(IR_CTX *ctx, FILE *output)
 				break;
 			case IR_OC_AND:
 				codegen_x86_64_and(ctx, output, code);
+				break;
+			case IR_OC_NOT:
+				codegen_x86_64_not(ctx, output, code);
 				break;
 			case IR_OC_EQ:
 				codegen_x86_64_eq(ctx, output, code);
@@ -762,6 +801,11 @@ static void codegen_x86_64_xor(IR_CTX *ctx, FILE *output, IRCode *code)
 static void codegen_x86_64_and(IR_CTX *ctx, FILE *output, IRCode *code)
 {
 	codegen_x86_64_bin_op(ctx, output, code, "and");
+}
+
+static void codegen_x86_64_not(IR_CTX *ctx, FILE *output, IRCode *code)
+{
+	codegen_x86_64_unary_op(ctx, output, code, "not");
 }
 
 static void codegen_x86_64_eq(IR_CTX *ctx, FILE *output, IRCode *code)

@@ -121,6 +121,7 @@ typedef enum {
 	IR_OC_MOD,
 	IR_OC_OR,
 	IR_OC_XOR,
+	IR_OC_NOT,
 	IR_OC_AND,
 	IR_OC_EQ,
 	IR_OC_NEQ,
