@@ -884,6 +884,8 @@ static void codegen_x86_64_call(IR_CTX *ctx, FILE *output, IRCode *code)
 	
 	fprintf(output, "\t# %s, %d\n", __FUNCTION__, __LINE__);
 
+	assert(code->arg1->type == IR_ATYPE_VIEW);
+
 	// TODO really??
 	// TODO call from a reg value
 	// TODO call from a imm value
