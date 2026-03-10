@@ -1755,7 +1755,7 @@ ParseTreeNode_C *parser_c_parse_unary_operator(Parser_C_CTX *ctx)
         case T_PLUS:
         case T_MINUS:
         case T_TILDE:
-        case T_BITWISE_OR: {
+        case T_LOGICAL_NOT: {
             return parse_tree_node_c_create(PTT_C_UNARY_OPERATOR, &token_unary_operator);
         }
         default: break;
