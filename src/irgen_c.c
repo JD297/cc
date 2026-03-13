@@ -1057,7 +1057,7 @@ static void irgen_c_constant(IR_CTX *ctx, ParseTreeNode_C *this_node)
 			ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_F64_T, ir_ssa_default(ctx), ir_ssa_from_literal(ctx, this_node->token.literal), NULL);
 			break;
 		case T_CHARACTER_CONSTANT:
-			ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_S32_T, ir_ssa_default(ctx), ir_ssa_from_literal(ctx, this_node->token.literal), NULL);
+			ir_emit(ctx, IR_OC_IMM, /* TODO HARD */IR_PTR_T, ir_ssa_default(ctx), ir_ssa_from_literal(ctx, this_node->token.literal), NULL);
 			break;
 		case T_IDENTIFIER:
 			assert(0 && "TODO not implemented: PTT_C_ENUMERATION_CONSTANT");
