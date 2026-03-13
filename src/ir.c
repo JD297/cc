@@ -377,6 +377,18 @@ IRSSAEnt *ir_ssa_from_reg(IR_CTX *ctx, size_t reg)
 	return ssa;
 }
 
+IRSSAEnt *ir_ssa_from_ssa(IR_CTX *ctx, IRSSAEnt *ssa)
+{
+	IRSSAEnt *ent = malloc(sizeof(IRSSAEnt));
+
+	ent->type = IR_ATYPE_SSA;
+	ent->as.ssa = ssa;
+
+	list_insert(ctx->ssa, list_end(ctx->ssa), ent);
+
+	return ent;
+}
+
 void ir_emit(IR_CTX *ctx, IROpCode op, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2)
 {
 	IRCode *code;

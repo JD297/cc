@@ -191,6 +191,7 @@ extern IRSSAEnt *ir_ssa_from_stack(IR_CTX *ctx, size_t *stack);
 extern IRSSAEnt *ir_ssa_from_addr(IR_CTX *ctx, size_t *addr);
 extern IRSSAEnt *ir_ssa_from_literal(IR_CTX *ctx, IRLiteral literal);
 extern IRSSAEnt *ir_ssa_from_reg(IR_CTX *ctx, size_t reg);
+extern IRSSAEnt *ir_ssa_from_ssa(IR_CTX *ctx, IRSSAEnt *ssa);
 
 extern void ir_emit(IR_CTX *ctx, IROpCode op, IRPrimitiveType ptype, IRSSAEnt *result, IRSSAEnt *arg1, IRSSAEnt *arg2);
 

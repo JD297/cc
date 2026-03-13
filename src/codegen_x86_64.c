@@ -24,6 +24,7 @@
 #define REGISTER_ADDITIONAL_7      14 // R14 (non-volatile)
 #define REGISTER_ADDITIONAL_8      15 // R15 (non-volatile)
 #define REGISTER_TEMPORARY         11 // R11 (volatile) is the compiler temp register
+#define REGISTER_TEMPORARY_2       12 // R12 (volatile) is the compiler temp register 2
 #define REGISTER_RETURN             0 // RAX (volatile)
 
 static const char *codegen_x86_64_suffix(IRPrimitiveType ptype);
@@ -261,6 +262,10 @@ static const char *codegen_x86_64_reg_name(IRPrimitiveType ptype, IRSSAEnt *reg)
 
 static int codegen_x86_64_fput_operand(FILE *output, IRPrimitiveType ptype, IRSSAEnt *operand)
 {
+	if (operand->type == IR_ATYPE_SSA) {
+		operand = operand->as.ssa;
+	}
+
 	switch (operand->type) {
 		case IR_ATYPE_REG:
 			fputs("%", output);
@@ -335,12 +340,47 @@ static IRSSAEnt *codegen_x86_64_param_register(IR_CTX *ctx, size_t n)
 
 static void codegen_x86_64_mov(IR_CTX *ctx, FILE *output, IRPrimitiveType ptype, IRSSAEnt *src, IRSSAEnt *dst)
 {
+	IRSSAEnt *org_src = src;
+	IRSSAEnt *org_dst = dst;
+
 	if (src == NULL || dst == NULL) {
 		return;
 	}
 
 	if (src == dst) {
 		return;
+	}
+
+	if (src->type == IR_ATYPE_SSA) {
+		IRSSAEnt *tmp = ir_ssa_from_reg(ctx, REGISTER_TEMPORARY);
+
+		/*if (src->type != IR_ATYPE_REG) {
+			IRSSAEnt *tmp = ir_ssa_from_reg(ctx, REGISTER_TEMPORARY);
+
+			codegen_x86_64_mov(ctx, output, ptype, src, tmp);
+
+			src = tmp;
+		}*/
+
+		codegen_x86_64_mov(ctx, output, ptype, src->as.ssa, tmp);
+
+		src = tmp;
+	}
+
+	if (dst->type == IR_ATYPE_SSA) {
+		IRSSAEnt *tmp = ir_ssa_from_reg(ctx, REGISTER_TEMPORARY_2);
+
+		if (src->type != IR_ATYPE_REG) {
+			IRSSAEnt *tmp = ir_ssa_from_reg(ctx, REGISTER_TEMPORARY);
+
+			codegen_x86_64_mov(ctx, output, ptype, src, tmp);
+
+			src = tmp;
+		}
+
+		codegen_x86_64_mov(ctx, output, ptype, dst->as.ssa, tmp);
+
+		dst = tmp;
 	}
 
 	if (
@@ -375,11 +415,27 @@ static void codegen_x86_64_mov(IR_CTX *ctx, FILE *output, IRPrimitiveType ptype,
 
 	fputs("\t", output);
 
+	if (org_src->type == IR_ATYPE_SSA) {
+		fputs("(", output);
+	}
+
 	codegen_x86_64_fput_operand(output, ptype, src);
+	
+	if (org_src->type == IR_ATYPE_SSA) {
+		fputs(")", output);
+	}
 
 	fputs(", ", output);
 
+	if (org_dst->type == IR_ATYPE_SSA) {
+		fputs("(", output);
+	}
+
 	codegen_x86_64_fput_operand(output, ptype, dst);
+	
+	if (org_dst->type == IR_ATYPE_SSA) {
+		fputs(")", output);
+	}
 	
 	fputs("\n", output);
 }

@@ -845,7 +845,9 @@ static void irgen_c_unary_expression(IR_CTX *ctx, ParseTreeNode_C *this_node)
 						assert(0 && "TODO not implemented with (T_BITWISE_AND)");
 					} break;
 					case T_MULTIPLY: {
-						assert(0 && "TODO not implemented with (T_MULTIPLY)");
+						irgen_c_cast_expression(ctx, this_node->elements[1]);
+						
+						ctx->ssa_latest = ir_ssa_from_ssa(ctx, ir_ssa_latest(ctx));
 					} break;
 					case T_TILDE: {
 						irgen_c_cast_expression(ctx, this_node->elements[1]);
