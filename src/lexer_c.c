@@ -436,21 +436,21 @@ TokenType_C lexer_c_next(Lexer_C *lexer, Token_C *token)
 			
 			switch (type) {
 				case C_LIT_CHAR: {
-					token->literal.d = *(lexer->current - 2);
+					token->literal.lu = *(lexer->current - 2);
 				} break;
 				case C_LIT_ESC: {
 					switch (*(lexer->current - 2)) {
-						case 'n':  token->literal.d = '\n'; break;
-						case 't':  token->literal.d = '\t'; break;
-						case 'v':  token->literal.d = '\v'; break;
-						case 'b':  token->literal.d = '\b'; break;
-						case 'r':  token->literal.d = '\r'; break;
-						case 'f':  token->literal.d = '\f'; break;
-						case 'a':  token->literal.d = '\a'; break;
-						case '\\': token->literal.d = '\\'; break;
-						case '?':  token->literal.d = '\?'; break;
-						case '\'': token->literal.d = '\''; break;
-						case '\"': token->literal.d = '\"'; break;
+						case 'n':  token->literal.lu = '\n'; break;
+						case 't':  token->literal.lu = '\t'; break;
+						case 'v':  token->literal.lu = '\v'; break;
+						case 'b':  token->literal.lu = '\b'; break;
+						case 'r':  token->literal.lu = '\r'; break;
+						case 'f':  token->literal.lu = '\f'; break;
+						case 'a':  token->literal.lu = '\a'; break;
+						case '\\': token->literal.lu = '\\'; break;
+						case '?':  token->literal.lu = '\?'; break;
+						case '\'': token->literal.lu = '\''; break;
+						case '\"': token->literal.lu = '\"'; break;
 					}
 				} break;
 				case C_LIT_HEX: {
