@@ -11,25 +11,25 @@ MANDIR        = $(PREFIX)/share/man
 SRCDIR        = src
 BUILDDIR      = build
 
-OBJFILES      = $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o \
-                $(BUILDDIR)/parse_tree_node_c.o $(BUILDDIR)/preprocessor_c.o $(BUILDDIR)/token_type_c.o \
-                $(BUILDDIR)/vector.o $(BUILDDIR)/logger.o $(BUILDDIR)/compiler_c.o \
-                $(BUILDDIR)/list.o $(BUILDDIR)/optimizer.o $(BUILDDIR)/ir.o \
-                $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o \
-                $(BUILDDIR)/codegen.o \
-                $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o \
-                $(BUILDDIR)/toolchain.o \
-                $(BUILDDIR)/toolchain_openbsd.o $(BUILDDIR)/toolchain_gnu_linux.o \
+OBJFILES      = $(BUILDDIR)/lexer_c.o $(BUILDDIR)/lmap.o $(BUILDDIR)/parser_c.o\
+                $(BUILDDIR)/parse_tree_node_c.o $(BUILDDIR)/preprocessor_c.o $(BUILDDIR)/token_type_c.o\
+                $(BUILDDIR)/vector.o $(BUILDDIR)/logger.o $(BUILDDIR)/compiler_c.o\
+                $(BUILDDIR)/list.o $(BUILDDIR)/optimizer.o $(BUILDDIR)/ir.o\
+                $(BUILDDIR)/codegen_x86_64.o $(BUILDDIR)/codegen_aarch64.o\
+                $(BUILDDIR)/codegen.o\
+                $(BUILDDIR)/sv.o $(BUILDDIR)/lmap_sv.o\
+                $(BUILDDIR)/toolchain.o\
+                $(BUILDDIR)/toolchain_openbsd.o $(BUILDDIR)/toolchain_gnu_linux.o\
                 $(BUILDDIR)/irgen_c.o
 
-HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h \
-                $(SRCDIR)/lexer_c.h $(SRCDIR)/parser_c.h \
-                $(SRCDIR)/parse_tree_node_c.h  $(SRCDIR)/parse_tree_type_c.h \
-                $(SRCDIR)/preprocessor_c.h $(SRCDIR)/token_c.h \
-                $(SRCDIR)/token_type_c.h $(SRCDIR)/jd297/logger.h \
-                $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h \
-                $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h \
-                $(SRCDIR)/jd297/sv.h $(SRCDIR)/jd297/lmap_sv.h \
+HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h\
+                $(SRCDIR)/lexer_c.h $(SRCDIR)/parser_c.h\
+                $(SRCDIR)/parse_tree_node_c.h  $(SRCDIR)/parse_tree_type_c.h\
+                $(SRCDIR)/preprocessor_c.h $(SRCDIR)/token_c.h\
+                $(SRCDIR)/token_type_c.h $(SRCDIR)/jd297/logger.h\
+                $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h\
+                $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h\
+                $(SRCDIR)/jd297/sv.h $(SRCDIR)/jd297/lmap_sv.h\
                 $(SRCDIR)/toolchain.h $(SRCDIR)/irgen_c.h
 
 all: $(BUILDDIR)/$(TARGET) $(BUILDDIR)/cc_ir_test
