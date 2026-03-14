@@ -158,10 +158,10 @@ static void irgen_c_declarator(IR_CTX *ctx, ParseTreeNode_C *this_node)
         assert(0 && "TODO not implemented");
 }
 
-static void irgen_c_compound_statement(IR_CTX *ctx, ParseTreeNode_C *compound_statement)
+static void irgen_c_compound_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-	for (size_t i = 0; i < compound_statement->num; ++i) {
-		ParseTreeNode_C *node = compound_statement->elements[i];
+	for (size_t i = 0; i < this_node->num; ++i) {
+		ParseTreeNode_C *node = this_node->elements[i];
 		
 		switch (node->type) {
 			case PTT_C_DECLARATION: {
@@ -1182,9 +1182,9 @@ static void irgen_c_initializer_list(IR_CTX *ctx, ParseTreeNode_C *this_node)
     assert(0 && "TODO not implemented");
 }
 
-static void irgen_c_statement(IR_CTX *ctx, ParseTreeNode_C *statement)
+static void irgen_c_statement(IR_CTX *ctx, ParseTreeNode_C *this_node)
 {
-	ParseTreeNode_C *node = statement->elements[0];
+	ParseTreeNode_C *node = this_node->elements[0];
 	
 	switch (node->type) {
 		case PTT_C_LABELED_STATEMENT: {
