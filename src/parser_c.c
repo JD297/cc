@@ -727,6 +727,8 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C_CTX *ctx)
         
         switch(lexer_c_next(ctx->lexer, &token_after_direct_declarator)) {
             case T_OPEN_PARENT: {
+            	this_node->token = token_after_direct_declarator;
+
                 parser_c_parse_required(ctx, this_node, parameter_type_list, next_after_direct_declarator_check_identifier_list);
                 
                 goto next_after_direct_declarator_parent;
@@ -744,6 +746,8 @@ ParseTreeNode_C *parser_c_parse_direct_declarator(Parser_C_CTX *ctx)
                 break;
             }
             case T_OPEN_BRACKET: {
+            	this_node->token = token_after_direct_declarator;
+
                 parser_c_parse_opt(ctx, this_node, constant_expression, next_after_direct_declarator_bracket);
                 
                 next_after_direct_declarator_bracket:
