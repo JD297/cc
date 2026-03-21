@@ -30,15 +30,10 @@ HEADERS       = $(SRCDIR)/jd297/lmap.h $(SRCDIR)/jd297/vector.h\
                 $(SRCDIR)/compiler_c.h $(SRCDIR)/jd297/list.h\
                 $(SRCDIR)/optimizer.h $(SRCDIR)/ir.h $(SRCDIR)/codegen.h\
                 $(SRCDIR)/jd297/sv.h $(SRCDIR)/jd297/lmap_sv.h\
-                $(SRCDIR)/toolchain.h $(SRCDIR)/irgen_c.h
+                $(SRCDIR)/toolchain.h $(SRCDIR)/irgen_c.h $(SRCDIR)/semantic_c.h\
+                $(SRCDIR)/symtbl.h
 
-all: $(BUILDDIR)/$(TARGET) $(BUILDDIR)/cc_ir_test
-
-$(BUILDDIR)/cc_ir_test: $(OBJFILES) $(BUILDDIR)/cc_ir_test.o
-	$(CC) -o $@ $(OBJFILES) $(BUILDDIR)/cc_ir_test.o $(LDFLAGS)
-
-$(BUILDDIR)/cc_ir_test.o: $(HEADERS) $(SRCDIR)/cc_ir_test.c
-	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/cc_ir_test.c
+all: $(BUILDDIR)/$(TARGET)
 
 $(BUILDDIR)/$(TARGET): $(OBJFILES) $(BUILDDIR)/cc.o
 	$(CC) -o $@ $(OBJFILES) $(BUILDDIR)/cc.o $(LDFLAGS)
